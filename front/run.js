@@ -37,6 +37,7 @@ var marks = [{
   style: {
     color: 'red',
   },
+  /*
 }, {
   start: {verse: 3, word: 1},
   end: {verse: 3, word: 3},
@@ -49,16 +50,29 @@ var marks = [{
   style: {
     color: 'blue',
   },
+  */
 }];
 
-remarkup(canv, {
-  width: 500,
-  height: 1500,
-  margin: 50,
-}, verses, marks, {
-  family: 'serif',
-  space: fontSize / 3,
-  lineHeight: fontSize * 1.4,
-  size: fontSize,
-  indent: fontSize,
-});
+function highlight(verse, word) {
+  var themarks = marks;
+  if (arguments.length > 0) {
+    themarks = marks.concat([{
+      start: {verse, word},
+      end: {verse, word},
+      style: {color: 'blue'},
+    }]);
+  }
+  remarkup(canv, {
+    width: 500,
+    height: 1500,
+    margin: 50,
+  }, verses, themarks, {
+    family: 'serif',
+    space: fontSize / 3,
+    lineHeight: fontSize * 1.4,
+    size: fontSize,
+    indent: fontSize,
+  }, highlight);
+}
+
+highlight();

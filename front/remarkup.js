@@ -1,11 +1,61 @@
 
-export default function remarkup(canv, size, verses, marks, font) {
+function getMousePos(canv, e, size, font, lines, pos, verses) {
+  var rect = canv.getBoundingClientRect();
+  var x = e.clientX - rect.left;
+  var y = e.clientY - rect.top;
+  if (x < size.margin || y < size.margin || x > size.width - size.margin || y > size.height - size.margin) {
+    return; // out of bounds
+  }
+  for (var i=0; i<lines.length; i++) {
+    var line = lines[i];
+    if (y > line[2] + font.space) continue;
+    if (y < line[2] - font.size) {
+      // console.log('not on a line');
+      return;
+    }
+    if (x < line[3] || x > line[3] + line[4]) {
+      // console.log('out of bounds');
+      return;
+    }
+    var nextLine = lines[i + 1];
+    var lastWord =
+      (nextLine && nextLine[0] === line[0]) ?
+        nextLine[1] :
+        verses[line[0]].words.length;
+    for (var word = line[1]; word < lastWord; word++) {
+      if (pos[line[0]][word].left + pos[line[0]][word].width + font.space < x) {
+        continue;
+      }
+      return {verse: line[0], word};
+    }
+    return;
+  }
+}
+
+export default function remarkup(canv, size, verses, marks, font, onHighlight) {
   var ctx = canv.getContext('2d');
+  ctx.clearRect(0, 0, canv.width, canv.height);
   ctx.fillStyle = 'black';
   ctx.globalAlpha = 1;
   ctx.font = font.size + 'px ' + font.family;
 
   var {lines, pos} = drawText(ctx, font, size, verses);
+
+  canv.onclick = e => {
+    var target = getMousePos(canv, e, size, font, lines, pos, verses);
+    if (target) {
+      var {verse, word} = target;
+      console.log('clicked', verses[verse].words[word]);
+    }
+  };
+
+  canv.onmousemove = e => {
+    var target = getMousePos(canv, e, size, font, lines, pos, verses);
+    if (!target) return;
+    var {verse, word} = target;
+    // console.log('clicked', verses[verse].words[word]);
+    onHighlight(verse, word);
+  };
 
   drawMarks(ctx, lines, pos, marks, font);
 
@@ -18,7 +68,7 @@ function drawText(ctx, font, size, verses) {
   var pos = [];
   var {width, height} = size;
 
-  var top = font.size + size.margin;;
+  var top = font.size + size.margin;
   var left = size.margin + font.indent;
   var lineHeight = font.lineHeight;
 
