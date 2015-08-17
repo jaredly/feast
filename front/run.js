@@ -4,7 +4,7 @@
 // React.render(<Provider store={store}><App/></Provider>, node);
 
 // import Remarkable from './Remarkable';
-import remarkup from './remarkup';
+import Remarkup from './remarkup';
 
 var canv = document.createElement('canvas');
 document.body.appendChild(canv)
@@ -53,26 +53,57 @@ var marks = [{
   */
 }];
 
-function highlight(verse, word) {
-  var themarks = marks;
-  if (arguments.length > 0) {
-    themarks = marks.concat([{
-      start: {verse, word},
-      end: {verse, word},
-      style: {color: 'blue'},
-    }]);
+var size = {
+  width: 500,
+  height: 1500,
+  margin: 50,
+};
+var font = {
+  family: 'serif',
+  space: fontSize / 3,
+  lineHeight: fontSize * 1.4,
+  size: fontSize,
+  indent: fontSize,
+};
+
+function balance(mark) {
+  if (mark.end.verse < mark.start.verse ||
+      (mark.end.verse === mark.start.verse &&
+       mark.end.word < mark.start.word)) {
+    return {
+      start: mark.end,
+      end: mark.start,
+      style: mark.style
+    };
   }
-  remarkup(canv, {
-    width: 500,
-    height: 1500,
-    margin: 50,
-  }, verses, themarks, {
-    family: 'serif',
-    space: fontSize / 3,
-    lineHeight: fontSize * 1.4,
-    size: fontSize,
-    indent: fontSize,
-  }, highlight);
+  return mark;
 }
 
-highlight();
+var rem = new Remarkup(canv, verses, {
+  size,
+  font,
+});
+
+rem.draw(marks);
+
+var pending = null;
+rem.on('down', target => {
+  if (!target) return;
+  pending = {
+    start: target,
+    end: target,
+    style: {color: 'blue'},
+  };
+  var sub = rem.on('move', target => {
+    if (!target || !pending) return;
+    pending.end = target;
+    rem.draw(marks.concat([balance(pending)]));
+  });
+  var sub2 = rem.on('up', target => {
+    sub(); sub2();
+    marks.push(balance(pending));
+    pending = null;
+    rem.draw(marks);
+  });
+  rem.draw(marks.concat([pending]));
+});

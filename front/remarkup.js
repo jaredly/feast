@@ -1,5 +1,73 @@
 
-function getMousePos(canv, e, size, font, lines, pos, verses) {
+var evts = {
+  move: 'mousemove',
+  down: 'mousedown',
+  up: 'mouseup',
+  click: 'click',
+};
+
+export default class Remarkup {
+  constructor(canv, verses, options) {
+    this.options = options;
+    this.canv = canv;
+    this.ctx = canv.getContext('2d');
+    this.predraw(verses);
+    this._listeners = {};
+    this._handlers = {};
+  }
+
+  predraw(verses) {
+    this.ctx.clearRect(0, 0, this.canv.width, this.canv.height);
+    this.ctx.fillStyle = 'black';
+    this.ctx.globalAlpha = 1;
+    this.ctx.font = this.options.font.size + 'px ' + this.options.font.family;
+
+    var {lines, pos} = drawText(this.ctx, this.options.font, this.options.size, verses);
+    this.lines = lines;
+    this.pos = pos;
+    this.renderedText = this.ctx.getImageData(0, 0, this.canv.width, this.canv.height);
+  }
+
+  draw(marks) {
+    this.ctx.clearRect(0, 0, this.canv.width, this.canv.height);
+    this.ctx.putImageData(this.renderedText, 0, 0);
+
+    drawMarks(this.ctx, this.lines, this.pos, marks, this.options.font);
+  }
+
+  on(evt, fn) {
+    if (!this._listeners[evt]) {
+      this._listeners[evt] = [fn];
+      this._attach(evt);
+    } else {
+      this._listeners[evt].push(fn);
+    }
+    return () => this.off(evt, fn);
+  }
+
+  off(evt, fn) {
+    var ix = this._listeners[evt].indexOf(fn);
+    if (ix === -1) return;
+    this._listeners[evt].splice(ix, 1);
+    if (!this._listeners[evt].length) {
+      var target = (evt === 'click' || evt === 'down') ? this.canv : window;
+      target.removeEventListener(evts[evt], this._handlers[evt]);
+      this._listeners[evt] = null;
+      this._handlers[evt] = null;
+    }
+  }
+
+  _attach(evt) {
+    this._handlers[evt] = e => {
+      var target = getMousePos(this.canv, e, this.options.size, this.options.font, this.lines, this.pos);
+      this._listeners[evt].forEach(fn => fn(target, e));
+    };
+    var target = (evt === 'click' || evt === 'down') ? this.canv : window;
+    target.addEventListener(evts[evt], this._handlers[evt]);
+  }
+}
+
+function getMousePos(canv, e, size, font, lines, pos) {
   var rect = canv.getBoundingClientRect();
   var x = e.clientX - rect.left;
   var y = e.clientY - rect.top;
@@ -21,7 +89,7 @@ function getMousePos(canv, e, size, font, lines, pos, verses) {
     var lastWord =
       (nextLine && nextLine[0] === line[0]) ?
         nextLine[1] :
-        verses[line[0]].words.length;
+        pos[line[0]].length;
     for (var word = line[1]; word < lastWord; word++) {
       if (pos[line[0]][word].left + pos[line[0]][word].width + font.space < x) {
         continue;
@@ -32,7 +100,8 @@ function getMousePos(canv, e, size, font, lines, pos, verses) {
   }
 }
 
-export default function remarkup(canv, size, verses, marks, font, onHighlight) {
+/*
+export default function remarkup(canv, size, verses, marks, font, handlers) {
   var ctx = canv.getContext('2d');
   ctx.clearRect(0, 0, canv.width, canv.height);
   ctx.fillStyle = 'black';
@@ -41,27 +110,12 @@ export default function remarkup(canv, size, verses, marks, font, onHighlight) {
 
   var {lines, pos} = drawText(ctx, font, size, verses);
 
-  canv.onclick = e => {
-    var target = getMousePos(canv, e, size, font, lines, pos, verses);
-    if (target) {
-      var {verse, word} = target;
-      console.log('clicked', verses[verse].words[word]);
-    }
-  };
-
-  canv.onmousemove = e => {
-    var target = getMousePos(canv, e, size, font, lines, pos, verses);
-    if (!target) return;
-    var {verse, word} = target;
-    // console.log('clicked', verses[verse].words[word]);
-    onHighlight(verse, word);
-  };
-
   drawMarks(ctx, lines, pos, marks, font);
 
   window.lines = lines;
   window.poss = pos;
 }
+*/
 
 function drawText(ctx, font, size, verses) {
   var lines = [];
