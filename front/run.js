@@ -44,7 +44,7 @@ remarkup({
   },
 }, {
   start: {verse: 0, word: 7},
-  end: {verse: 2, word: 4},
+  end: {verse: 3, word: 4},
   style: {
     color: 'blue',
   },
