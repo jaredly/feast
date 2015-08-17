@@ -1,4 +1,18 @@
 
+export default function remarkup(canv, size, verses, marks, font) {
+  var ctx = canv.getContext('2d');
+  ctx.fillStyle = 'black';
+  ctx.globalAlpha = 1;
+  ctx.font = font.size + 'px ' + font.family;
+
+  var {lines, pos} = drawText(ctx, font, size, verses);
+
+  drawMarks(ctx, lines, pos, marks, font);
+
+  window.lines = lines;
+  window.poss = pos;
+}
+
 function drawText(ctx, font, size, verses) {
   var lines = [];
   var pos = [];
@@ -33,13 +47,7 @@ function drawText(ctx, font, size, verses) {
   return {lines, pos};
 }
 
-export default function remarkup(size, ctx, verses, marks, font) {
-  ctx.fillStyle = 'black';
-  ctx.globalAlpha = 1;
-  ctx.font = font.size + 'px ' + font.family;
-
-  var {lines, pos} = drawText(ctx, font, size, verses);
-
+function drawMarks(ctx, lines, pos, marks, font) {
   var wordMarginV = font.space;
   var wordMarginH = font.space;
 
@@ -82,8 +90,6 @@ export default function remarkup(size, ctx, verses, marks, font) {
       font.size + wordMarginV
     );
   });
-  window.lines = lines;
-  window.poss = pos;
 }
 
 function roundRect(ctx, x, y, width, height, radius, fill, stroke) {

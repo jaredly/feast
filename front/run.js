@@ -10,7 +10,6 @@ var canv = document.createElement('canvas');
 document.body.appendChild(canv)
 canv.width = 500
 canv.height = 1500;
-var ctx = canv.getContext('2d');
 canv.style.backgroundColor = 'white';
 canv.style.margin = '40px';
 
@@ -32,11 +31,7 @@ for (var i=0; i<20; i++) {
 
 var fontSize = 25;
 
-remarkup({
-  width: 500,
-  height: 1500,
-  margin: 50,
-}, ctx, verses, [{
+var marks = [{
   start: {verse: 0, word: 5},
   end: {verse: 0, word: 8},
   style: {
@@ -54,7 +49,13 @@ remarkup({
   style: {
     color: 'blue',
   },
-}], {
+}];
+
+remarkup(canv, {
+  width: 500,
+  height: 1500,
+  margin: 50,
+}, verses, marks, {
   family: 'serif',
   space: fontSize / 3,
   lineHeight: fontSize * 1.4,
