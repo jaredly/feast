@@ -1,20 +1,13 @@
 
-export default function remarkup(size, ctx, verses, marks, font) {
-  ctx.font = font.size + 'px ' + font.family;
+function drawText(ctx, font, size, verses) {
+  var lines = [];
+  var pos = [];
   var {width, height} = size;
 
   var top = font.size + size.margin;;
   var left = size.margin + font.indent;
   var lineHeight = font.lineHeight;
 
-  var lines = [];
-  var pos = [];
-
-  var wordMarginV = font.space;
-  var wordMarginH = font.space;
-
-  ctx.fillStyle = 'black';
-  ctx.globalAlpha = 1;
   verses.forEach((verse, i) => {
     var wordPos = [];
     pos.push(wordPos);
@@ -37,9 +30,18 @@ export default function remarkup(size, ctx, verses, marks, font) {
     top += lineHeight * 2;
     left = size.margin + font.indent;
   });
+  return {lines, pos};
+}
 
-  function findLine({verse, word}) {
-  }
+export default function remarkup(size, ctx, verses, marks, font) {
+  ctx.fillStyle = 'black';
+  ctx.globalAlpha = 1;
+  ctx.font = font.size + 'px ' + font.family;
+
+  var {lines, pos} = drawText(ctx, font, size, verses);
+
+  var wordMarginV = font.space;
+  var wordMarginH = font.space;
 
   marks.forEach(mark => {
     var startPos = pos[mark.start.verse][mark.start.word];
