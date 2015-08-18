@@ -31,6 +31,7 @@ for (var i=0; i<20; i++) {
 
 var fontSize = 25;
 
+/*
 var marks = [{
   start: {verse: 0, word: 5},
   end: {verse: 0, word: 8},
@@ -53,11 +54,37 @@ var marks = [{
     underline: true,
   },
 }];
+*/
+
+var sidelines = [{
+  start: {verse: 0, word: 2},
+  end: {verse: 5, word: 5},
+  type: 'sideline',
+  style: {color: 'blue'},
+}, {
+  start: {verse: 0, word: 2},
+  end: {verse: 2, word: 5},
+  type: 'sideline',
+  style: {color: 'orange'},
+}, {
+  start: {verse: 1, word: 2},
+  end: {verse: 3, word: 5},
+  type: 'sideline',
+  style: {color: 'green'},
+}, {
+  start: {verse: 3, word: 9},
+  end: {verse: 5, word: 5},
+  type: 'sideline',
+  style: {color: 'red'},
+}];
+
+var marks = sidelines;
 
 var size = {
   width: 500,
   height: 1500,
-  margin: 50,
+  vmargin: 50,
+  hmargin: 100,
 };
 var font = {
   family: 'serif',
@@ -111,6 +138,7 @@ if (DEBUG) {
     pending = {
       start: target,
       end: target,
+      type: 'sideline',
       style: {
         // underline: true,
         color: 'blue'
