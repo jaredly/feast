@@ -91,30 +91,30 @@ function getWordForPos(x, y, size, font, lines, pos) {
   }
   for (var i=0; i<lines.length; i++) {
     var line = lines[i];
-    if (y > line[2] + font.space) continue;
-    if (y < line[2] - font.size) {
+    if (y > line.top + font.space) continue;
+    if (y < line.top - font.size) {
       // console.log('not on a line');
       return;
     }
-    if (x < line[3]) {
-      return {verse: line[0], word: line[1]};
+    if (x < line.left) {
+      return {verse: line.verse, word: line.word};
     }
-    if (x > line[4]) {
-      if (lines[i + 1] && lines[i + 1][0] === line[0]) {
-        return {verse: line[0], word: lines[i + 1][1] - 1};
+    if (x > line.right) {
+      if (lines[i + 1] && lines[i + 1].verse === line.verse) {
+        return {verse: line.verse, word: lines[i + 1].word - 1};
       }
-      return {verse: line[0], word: pos[line[0]].length - 1};
+      return {verse: line.verse, word: pos[line.verse].length - 1};
     }
     var nextLine = lines[i + 1];
     var lastWord =
-      (nextLine && nextLine[0] === line[0]) ?
-        nextLine[1] :
-        pos[line[0]].length;
-    for (var word = line[1]; word < lastWord; word++) {
-      if (pos[line[0]][word].left + pos[line[0]][word].width + font.space < x) {
+      (nextLine && nextLine.verse === line.verse) ?
+        nextLine.word :
+        pos[line.verse].length;
+    for (var word = line.word; word < lastWord; word++) {
+      if (pos[line.verse][word].left + pos[line.verse][word].width + font.space < x) {
         continue;
       }
-      return {verse: line[0], word};
+      return {verse: line.verse, word};
     }
     return;
   }
@@ -157,21 +157,33 @@ function drawText(ctx, font, size, verses) {
     var wordPos = [];
     pos.push(wordPos);
     var words = verse.words;
-    lines.push([i, 0, top, left]);
+    lines.push({
+      verse: i,
+      word: 0,
+      top,
+      left,
+      right: 0,
+    });
     words.forEach((word, w) => {
       var ww = measure(word, ctx).width;
       if (left + font.space + ww > width - size.margin) {
-        lines[lines.length - 1].push(left - font.space);
+        lines[lines.length - 1].right = left - font.space;
         top += lineHeight;
         left = size.margin;
-        lines.push([i, w, top, left]);
+        lines.push({
+          verse: i,
+          word: w,
+          top,
+          left,
+          right: 0,
+        });
       }
       wordPos.push({left, top, width: ww, line: lines.length - 1});
       ctx.fillText(word, left, top);
       left += ww + font.space;
     });
 
-    lines[lines.length - 1].push(left - font.space);
+    lines[lines.length - 1].right = left - font.space;
     top += lineHeight * 2;
     left = size.margin + font.indent;
   });
@@ -201,23 +213,23 @@ function drawMarks(ctx, lines, pos, marks, font) {
     roundRect(ctx,
       startPos.left - wordMarginH,
       startPos.top - font.size,
-      lines[startPos.line][4] - startPos.left + wordMarginH * 2,
+      lines[startPos.line].right - startPos.left + wordMarginH * 2,
       font.size + wordMarginV
     );
 
     for (var l = startPos.line + 1; l < endPos.line; l++) {
       roundRect(ctx,
-        lines[l][3] - wordMarginH,
-        lines[l][2] - font.size,
-        lines[l][4] - lines[l][3] + wordMarginH * 2,
+        lines[l].left - wordMarginH,
+        lines[l].top - font.size,
+        lines[l].right - lines[l].left + wordMarginH * 2,
         font.size + wordMarginV
       );
     }
 
     roundRect(ctx,
-      lines[endPos.line][3] - wordMarginH,
+      lines[endPos.line].left - wordMarginH,
       endPos.top - font.size,
-      endPos.left + endPos.width - lines[endPos.line][3] + wordMarginH * 2,
+      endPos.left + endPos.width - lines[endPos.line].left + wordMarginH * 2,
       font.size + wordMarginV
     );
   });

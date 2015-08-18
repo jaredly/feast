@@ -37,7 +37,6 @@ var marks = [{
   style: {
     color: 'red',
   },
-  /*
 }, {
   start: {verse: 3, word: 1},
   end: {verse: 3, word: 3},
@@ -47,10 +46,10 @@ var marks = [{
 }, {
   start: {verse: 0, word: 7},
   end: {verse: 2, word: 4},
+  type: 'sideline',
   style: {
     color: 'blue',
   },
-  */
 }];
 
 var size = {
