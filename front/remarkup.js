@@ -35,6 +35,23 @@ export default class Remarkup {
     drawMarks(this.ctx, this.lines, this.pos, marks, this.options.font);
   }
 
+  // mark up all the places that don't have an associated target
+  drawDebug() {
+    this.ctx.clearRect(0, 0, this.canv.width, this.canv.height);
+    this.ctx.putImageData(this.renderedText, 0, 0);
+
+    this.ctx.fillStyle = 'red';
+    var w = 1;
+    for (var x=0; x<this.canv.width; x += w) {
+      for (var y=0; y<this.canv.height; y += w) {
+        var target = getWordForPos(x, y, this.options.size, this.options.font, this.lines, this.pos);
+        if (!target) {
+          this.ctx.fillRect(x, y, w, w);
+        }
+      }
+    }
+  }
+
   on(evt, fn) {
     if (!this._listeners[evt]) {
       this._listeners[evt] = [fn];
@@ -67,11 +84,9 @@ export default class Remarkup {
   }
 }
 
-function getMousePos(canv, e, size, font, lines, pos) {
-  var rect = canv.getBoundingClientRect();
-  var x = e.clientX - rect.left;
-  var y = e.clientY - rect.top;
-  if (x < size.margin || y < size.margin || x > size.width - size.margin || y > size.height - size.margin) {
+function getWordForPos(x, y, size, font, lines, pos) {
+  var margin = 0; // size.margin;
+  if (x < margin || y < margin || x > size.width - margin || y > size.height - margin) {
     return; // out of bounds
   }
   for (var i=0; i<lines.length; i++) {
@@ -81,9 +96,14 @@ function getMousePos(canv, e, size, font, lines, pos) {
       // console.log('not on a line');
       return;
     }
-    if (x < line[3] || x > line[3] + line[4]) {
-      // console.log('out of bounds');
-      return;
+    if (x < line[3]) {
+      return {verse: line[0], word: line[1]};
+    }
+    if (x > line[4]) {
+      if (lines[i + 1] && lines[i + 1][0] === line[0]) {
+        return {verse: line[0], word: lines[i + 1][1] - 1};
+      }
+      return {verse: line[0], word: pos[line[0]].length - 1};
     }
     var nextLine = lines[i + 1];
     var lastWord =
@@ -98,6 +118,13 @@ function getMousePos(canv, e, size, font, lines, pos) {
     }
     return;
   }
+}
+
+function getMousePos(canv, e, size, font, lines, pos) {
+  var rect = canv.getBoundingClientRect();
+  var x = e.clientX - rect.left;
+  var y = e.clientY - rect.top;
+  return getWordForPos(x, y, size, font, lines, pos);
 }
 
 /*

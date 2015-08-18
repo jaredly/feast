@@ -86,6 +86,23 @@ var rem = new Remarkup(canv, verses, {
 
 rem.draw(marks);
 
+// rem.drawDebug();
+
+var DEBUG = false;
+
+if (DEBUG) {
+
+rem.on('move', target => {
+  if (!target) return;
+  rem.draw(marks.concat([{
+    start: target,
+    end: target,
+    style: {color: 'green'},
+  }]));
+});
+
+} else {
+
 var pending = null;
 rem.on('down', target => {
   if (!target) return;
@@ -107,3 +124,5 @@ rem.on('down', target => {
   });
   rem.draw(marks.concat([pending]));
 });
+
+}
