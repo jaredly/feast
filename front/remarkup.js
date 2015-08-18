@@ -10,6 +10,7 @@ export default class Remarkup {
   constructor(canv, verses, options) {
     this.options = options;
     this.canv = canv;
+    this.img = document.createElement('img');
     this.ctx = canv.getContext('2d');
     this.predraw(verses);
     this._listeners = {};
@@ -25,20 +26,20 @@ export default class Remarkup {
     var {lines, pos} = drawText(this.ctx, this.options.font, this.options.size, verses);
     this.lines = lines;
     this.pos = pos;
-    this.renderedText = this.ctx.getImageData(0, 0, this.canv.width, this.canv.height);
+    this.img.src = this.canv.toDataURL();
   }
 
   draw(marks) {
     this.ctx.clearRect(0, 0, this.canv.width, this.canv.height);
-    this.ctx.putImageData(this.renderedText, 0, 0);
 
-    drawMarks(this.ctx, this.lines, this.pos, marks, this.options.font);
+    drawMarks(this.ctx, this.lines, this.pos, marks, this.options.font, this.options.size);
+    this.ctx.globalAlpha = 1;
+    this.ctx.drawImage(this.img, 0, 0);
   }
 
   // mark up all the places that don't have an associated target
   drawDebug() {
     this.ctx.clearRect(0, 0, this.canv.width, this.canv.height);
-    this.ctx.putImageData(this.renderedText, 0, 0);
 
     this.ctx.fillStyle = 'red';
     var w = 1;
@@ -50,6 +51,8 @@ export default class Remarkup {
         }
       }
     }
+    this.ctx.globalAlpha = 1;
+    this.ctx.drawImage(this.img, 0, 0);
   }
 
   on(evt, fn) {
@@ -190,34 +193,50 @@ function drawText(ctx, font, size, verses) {
   return {lines, pos};
 }
 
-function drawMarks(ctx, lines, pos, marks, font) {
+function highlight(ctx, mark, lines, pos, font) {
   var wordMarginV = font.space;
   var wordMarginH = font.space;
 
-  marks.forEach(mark => {
-    var startPos = pos[mark.start.verse][mark.start.word];
-    var endPos = pos[mark.end.verse][mark.end.word];
-    ctx.fillStyle = mark.style.color;
+  var startPos = pos[mark.start.verse][mark.start.word];
+  var endPos = pos[mark.end.verse][mark.end.word];
+  ctx.fillStyle = mark.style.color;
+  ctx.strokeStyle = mark.style.color;
+  ctx.lineWidth = 2;
+  if (mark.style.underline) {
+    ctx.globalAlpha = 1;
+  } else {
     ctx.globalAlpha = 0.4;
-    if (startPos.line === endPos.line) {
+  }
+  if (startPos.line === endPos.line) {
+    if (mark.style.underline) {
+      line(ctx, startPos.top + wordMarginV, startPos.left, endPos.left + endPos.width);
+    } else {
       roundRect(ctx,
         startPos.left - wordMarginH,
         startPos.top - font.size,
         endPos.left - startPos.left + endPos.width + wordMarginH * 2,
         font.size + wordMarginV
       );
-      return;
     }
+    return;
+  }
 
-    // word to end
+  // word to end
+  if (mark.style.underline) {
+    line(ctx, startPos.top + wordMarginV, startPos.left, lines[startPos.line].right);
+  } else {
     roundRect(ctx,
       startPos.left - wordMarginH,
       startPos.top - font.size,
       lines[startPos.line].right - startPos.left + wordMarginH * 2,
       font.size + wordMarginV
     );
+  }
 
-    for (var l = startPos.line + 1; l < endPos.line; l++) {
+  for (var l = startPos.line + 1; l < endPos.line; l++) {
+    if (mark.style.underline) {
+      line(ctx, lines[l].top + wordMarginV, lines[l].left, lines[l].right);
+    } else {
       roundRect(ctx,
         lines[l].left - wordMarginH,
         lines[l].top - font.size,
@@ -225,19 +244,59 @@ function drawMarks(ctx, lines, pos, marks, font) {
         font.size + wordMarginV
       );
     }
+  }
 
+  if (mark.style.underline) {
+    line(ctx, lines[endPos.line].top + wordMarginV, lines[endPos.line].left, endPos.left + endPos.width);
+  } else {
     roundRect(ctx,
       lines[endPos.line].left - wordMarginH,
       endPos.top - font.size,
       endPos.left + endPos.width - lines[endPos.line].left + wordMarginH * 2,
       font.size + wordMarginV
     );
+  }
+}
+
+function sideline(ctx, mark, lines, pos, font, size) {
+  ctx.globalAlpha = 1;
+  var wordMarginV = font.space;
+  var wordMarginH = font.space;
+  var top = pos[mark.start.verse][mark.start.word].top - font.size;
+  var bottom = pos[mark.end.verse][mark.end.word].top + wordMarginV;
+  ctx.beginPath();
+  ctx.strokeStyle = mark.style.color;
+  ctx.lineWidth = 2;
+  ctx.moveTo(size.margin - font.space * 2, top);
+  ctx.lineTo(size.margin - font.space * 2, bottom);
+  ctx.stroke();
+}
+
+function drawMarks(ctx, lines, pos, marks, font, size) {
+  marks.forEach(mark => {
+    if (mark.type === 'sideline') {
+      sideline(ctx, mark, lines, pos, font, size);
+    } else {
+      highlight(ctx, mark, lines, pos, font);
+    }
   });
+}
+
+function line(ctx, top, left, right) {
+  ctx.beginPath();
+  top = parseInt(top);
+  ctx.moveTo(left, top);
+  ctx.lineTo(right, top);
+  ctx.stroke();
 }
 
 function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
   stroke = false;
   fill = true;
+  x = parseInt(x);
+  y = parseInt(y);
+  width = parseInt(width);
+  height = parseInt(height);
   if (typeof stroke == "undefined" ) {
     stroke = true;
   }

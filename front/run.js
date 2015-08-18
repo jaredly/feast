@@ -36,10 +36,11 @@ var marks = [{
   end: {verse: 0, word: 8},
   style: {
     color: 'red',
+    underline: true,
   },
 }, {
   start: {verse: 3, word: 1},
-  end: {verse: 3, word: 3},
+  end: {verse: 3, word: 8},
   style: {
     color: 'green',
   },
@@ -49,6 +50,7 @@ var marks = [{
   type: 'sideline',
   style: {
     color: 'blue',
+    underline: true,
   },
 }];
 
@@ -72,6 +74,7 @@ function balance(mark) {
     return {
       start: mark.end,
       end: mark.start,
+      type: mark.type,
       style: mark.style
     };
   }
@@ -91,37 +94,40 @@ var DEBUG = false;
 
 if (DEBUG) {
 
-rem.on('move', target => {
-  if (!target) return;
-  rem.draw(marks.concat([{
-    start: target,
-    end: target,
-    style: {color: 'green'},
-  }]));
-});
+  rem.on('move', target => {
+    if (!target) return;
+    rem.draw(marks.concat([{
+      start: target,
+      end: target,
+      style: {color: 'green'},
+    }]));
+  });
 
 } else {
 
-var pending = null;
-rem.on('down', target => {
-  if (!target) return;
-  pending = {
-    start: target,
-    end: target,
-    style: {color: 'blue'},
-  };
-  var sub = rem.on('move', target => {
-    if (!target || !pending) return;
-    pending.end = target;
-    rem.draw(marks.concat([balance(pending)]));
+  var pending = null;
+  rem.on('down', target => {
+    if (!target) return;
+    pending = {
+      start: target,
+      end: target,
+      style: {
+        // underline: true,
+        color: 'blue'
+      },
+    };
+    var sub = rem.on('move', target => {
+      if (!target || !pending) return;
+      pending.end = target;
+      rem.draw(marks.concat([balance(pending)]));
+    });
+    var sub2 = rem.on('up', target => {
+      sub(); sub2();
+      marks.push(balance(pending));
+      pending = null;
+      rem.draw(marks);
+    });
+    rem.draw(marks.concat([pending]));
   });
-  var sub2 = rem.on('up', target => {
-    sub(); sub2();
-    marks.push(balance(pending));
-    pending = null;
-    rem.draw(marks);
-  });
-  rem.draw(marks.concat([pending]));
-});
 
 }
