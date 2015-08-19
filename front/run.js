@@ -134,12 +134,10 @@ function balance(mark) {
   return mark;
 }
 
-var rem = new Remarkup(canv, verses, {
+var rem = new Remarkup(canv, verses, marks, {
   size,
   font,
 });
-
-rem.draw(marks);
 
 // rem.drawDebug();
 
@@ -149,7 +147,7 @@ if (DEBUG) {
 
   rem.on('move', target => {
     if (!target) return;
-    rem.draw(marks.concat([{
+    rem.setMarks(marks.concat([{
       start: target,
       end: target,
       style: {color: 'green'},
@@ -158,23 +156,38 @@ if (DEBUG) {
 
 } else {
 
+  rem.on('mark:click', (target, e) => {
+    if (pending) return;
+  });
+
   var pending = null;
-  rem.on('down', target => {
+  rem.on('down', (target, e) => {
     if (!target) return;
     if (target.word === false) {
       target = {verse: target.verse, word: target.left};
     }
-    pending = {
-      start: target,
-      end: target,
-      //type: 'sideline',
-      style: {
-        // underline: true,
-        color: 'blue'
-      },
-    };
-    var sub = rem.on('move', target => {
-      if (!target || !pending) return;
+    var initialTarget = target;
+    var ix = e.pageX;
+    var iy = e.pageY;
+    var sub = rem.on('move', (target, e) => {
+      if (!pending) {
+        if (Math.abs(e.pageX - ix) + Math.abs(e.pageY - iy) < 10) {
+          return;
+        }
+        pending = {
+          start: initialTarget,
+          end: initialTarget,
+          //type: 'sideline',
+          style: {
+            // underline: true,
+            color: 'blue'
+          },
+        };
+      }
+      if (!target) {
+        rem.setMarks(marks.concat([balance(pending)]));
+        return;
+      }
       if (target.word === false) {
         target = {
           verse: target.verse,
@@ -182,15 +195,17 @@ if (DEBUG) {
         };
       }
       pending.end = target;
-      rem.draw(marks.concat([balance(pending)]));
+      rem.setMarks(marks.concat([balance(pending)]));
     });
     var sub2 = rem.on('up', target => {
       sub(); sub2();
-      marks.push(balance(pending));
-      pending = null;
-      rem.draw(marks);
+      if (pending) {
+        marks.push(balance(pending));
+        pending = null;
+        rem.setMarks(marks);
+      }
     });
-    rem.draw(marks.concat([pending]));
+    // rem.setMarks(marks.concat([pending]));
   });
 
 }

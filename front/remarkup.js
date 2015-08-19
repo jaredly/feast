@@ -8,10 +8,12 @@ var evts = {
   down: 'mousedown',
   up: 'mouseup',
   click: 'click',
+  'mark:hover': 'mousemove',
+  'mark:click': 'click',
 };
 
 export default class Remarkup {
-  constructor(canv, verses, options) {
+  constructor(canv, verses, marks, options) {
     this.options = options;
     this.canv = canv;
     this.img = document.createElement('img');
@@ -19,6 +21,22 @@ export default class Remarkup {
     this.predraw(verses);
     this._listeners = {};
     this._handlers = {};
+    this.marks = marks;
+
+    this.draw();
+
+    this.on('hovermark', mark => {
+      if (mark) {
+        this.canv.style.cursor = 'pointer';
+      } else {
+        this.canv.style.cursor = 'default';
+      }
+    });
+  }
+
+  setMarks(marks) {
+    this.marks = marks;
+    this.draw();
   }
 
   predraw(verses) {
@@ -33,10 +51,10 @@ export default class Remarkup {
     this.img.src = this.canv.toDataURL();
   }
 
-  draw(marks) {
+  draw() {
     this.ctx.clearRect(0, 0, this.canv.width, this.canv.height);
 
-    drawMarks(this.ctx, this.lines, this.pos, marks, this.options.font, this.options.size);
+    drawMarks(this.ctx, this.lines, this.pos, this.marks, this.options.font, this.options.size);
     this.ctx.globalAlpha = 1;
     this.ctx.drawImage(this.img, 0, 0);
   }
@@ -82,10 +100,17 @@ export default class Remarkup {
   }
 
   _attach(evt) {
-    this._handlers[evt] = e => {
-      var target = getMousePos(this.canv, e, this.options.size, this.options.font, this.lines, this.pos);
-      this._listeners[evt].forEach(fn => fn(target, e));
-    };
+    if (evt.match(/^mark:/)) {
+      this._handlers[evt] = e => {
+        var target = getMousePos(this.canv, e, this.options.size, this.options.font, this.lines, this.pos);
+        this._listeners[evt].forEach(fn => fn(target, e));
+      };
+    } else {
+      this._handlers[evt] = e => {
+        var target = getMousePos(this.canv, e, this.options.size, this.options.font, this.lines, this.pos);
+        this._listeners[evt].forEach(fn => fn(target, e));
+      };
+    }
     var target = (evt === 'click' || evt === 'down') ? this.canv : window;
     target.addEventListener(evts[evt], this._handlers[evt]);
   }
