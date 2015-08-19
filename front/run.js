@@ -6,10 +6,13 @@
 // import Remarkable from './Remarkable';
 import Remarkup from './remarkup';
 
+var WIDTH = 700;
+var HEIGHT = 1500;
+
 var canv = document.createElement('canvas');
 document.body.appendChild(canv)
-canv.width = 500
-canv.height = 1500;
+canv.width = WIDTH
+canv.height = HEIGHT;
 canv.style.backgroundColor = 'white';
 canv.style.margin = '40px';
 
@@ -57,10 +60,23 @@ var marks = [{
 */
 
 var sidelines = [{
-  start: {verse: 0, word: 2},
+  start: {verse: 1, word: 10},
   end: {verse: 5, word: 5},
   type: 'sideline',
   style: {color: 'blue'},
+}, {
+  start: {verse: 0, word: 5},
+  end: {verse: 0, word: 8},
+  style: {
+    color: 'red',
+    underline: true,
+  },
+}, {
+  start: {verse: 1, word: 1},
+  end: {verse: 1, word: 8},
+  style: {
+    color: 'green',
+  },
 }, {
   start: {verse: 0, word: 2},
   end: {verse: 2, word: 5},
@@ -81,8 +97,8 @@ var sidelines = [{
 var marks = sidelines;
 
 var size = {
-  width: 500,
-  height: 1500,
+  width: WIDTH,
+  height: HEIGHT,
   vmargin: 50,
   hmargin: 100,
 };
@@ -94,10 +110,20 @@ var font = {
   indent: fontSize,
 };
 
+function isGreater(pos1, pos2) {
+  return (pos1.verse > pos2.verse) || (
+    pos1.verse === pos2.verse &&
+    pos1.word > pos2.word
+  );
+}
+
 function balance(mark) {
+  if (isGreater(mark.start, mark.end)) {
+    /*
   if (mark.end.verse < mark.start.verse ||
       (mark.end.verse === mark.start.verse &&
        mark.end.word < mark.start.word)) {
+       */
     return {
       start: mark.end,
       end: mark.start,
@@ -135,10 +161,13 @@ if (DEBUG) {
   var pending = null;
   rem.on('down', target => {
     if (!target) return;
+    if (target.word === false) {
+      target = {verse: target.verse, word: target.left};
+    }
     pending = {
       start: target,
       end: target,
-      type: 'sideline',
+      //type: 'sideline',
       style: {
         // underline: true,
         color: 'blue'
@@ -146,6 +175,12 @@ if (DEBUG) {
     };
     var sub = rem.on('move', target => {
       if (!target || !pending) return;
+      if (target.word === false) {
+        target = {
+          verse: target.verse,
+          word: isGreater(pending.start, pending.end) ? target.left : target.right, // pickSide(pending.start, pending.end)
+        };
+      }
       pending.end = target;
       rem.draw(marks.concat([balance(pending)]));
     });

@@ -18,6 +18,18 @@ export function getWordForPos(x, y, size, font, lines, pos) {
       // console.log('not on a line');
       return;
     }
+    if (x < line.left || x > line.right) {
+      return {
+        verse: line.verse,
+        word: false,
+        side: x < line.left ? 'left' : 'right',
+        left: line.word,
+        right: (lines[i + 1] && lines[i + 1].verse === line.verse) ?
+          lines[i + 1].word - 1 :
+          pos[line.verse].length - 1,
+      };
+    }
+    /*
     if (x < line.left) {
       return {verse: line.verse, word: line.word};
     }
@@ -27,6 +39,7 @@ export function getWordForPos(x, y, size, font, lines, pos) {
       }
       return {verse: line.verse, word: pos[line.verse].length - 1};
     }
+    */
     var nextLine = lines[i + 1];
     var lastWord =
       (nextLine && nextLine.verse === line.verse) ?
