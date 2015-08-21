@@ -4,9 +4,10 @@ import calcSideLeft from './calcSideLeft';
 export default function calcSideCoords(marks, pos, font, size) {
   var sideCoords = {};
   var levels = [];
-  marks.forEach(mark => {
+  for (var id in marks) {
+    var mark = marks[id];
     if (mark.type !== 'sideline') {
-      return;
+      continue;
     }
     var wordMarginV = font.space;
     var wordMarginH = font.space;
@@ -15,6 +16,6 @@ export default function calcSideCoords(marks, pos, font, size) {
     var level = calcSideLeft(levels, top, bottom) + 2;
     var left = parseInt(size.hmargin - font.space * level);
     sideCoords[mark.id] = {top, bottom, left};
-  });
+  }
   return sideCoords;
 }

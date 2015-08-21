@@ -3,7 +3,8 @@ import sideline from './sideline';
 import highlight from './highlight';
 
 export default function drawMarks(ctx, lines, pos, sideCoords, marks, font, size, editing) {
-  marks.forEach(mark => {
+  for (var id in marks) {
+    var mark = marks[id];
     if (mark.type === 'sideline') {
       sideline(ctx, mark, sideCoords[mark.id]);
       if (mark.id === editing) {
@@ -12,6 +13,6 @@ export default function drawMarks(ctx, lines, pos, sideCoords, marks, font, size
     } else {
       highlight(ctx, mark, lines, pos, font);
     }
-  });
+  }
 }
 

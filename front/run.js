@@ -3,6 +3,7 @@
 
 // React.render(<Provider store={store}><App/></Provider>, node);
 
+import {Map} from 'immutable';
 import React from 'react';
 import Remarkable from './Rem2';
 

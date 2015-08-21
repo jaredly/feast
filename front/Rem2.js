@@ -16,33 +16,9 @@ import drawMarks from './drawMarks';
 import getMousePos, {getWordForPos} from './getMousePos';
 import calcSideCoords from './calcSideCoords';
 import drawEditHandles, {editHandleBoxes} from './drawEditHandles';
+import {fromJS} from 'immutable';
 
-/*
-var marks = [{
-  start: {verse: 0, word: 5},
-  end: {verse: 0, word: 8},
-  style: {
-    color: 'red',
-    underline: true,
-  },
-}, {
-  start: {verse: 3, word: 1},
-  end: {verse: 3, word: 8},
-  style: {
-    color: 'green',
-  },
-}, {
-  start: {verse: 0, word: 7},
-  end: {verse: 2, word: 4},
-  type: 'sideline',
-  style: {
-    color: 'blue',
-    underline: true,
-  },
-}];
-*/
-
-var sidelines = [{
+var MARKS = [{
   start: {verse: 1, word: 10},
   end: {verse: 5, word: 5},
   type: 'sideline',
@@ -77,14 +53,15 @@ var sidelines = [{
   style: {color: 'red'},
 }];
 
-var marks = sidelines;
 var MID = 0;
-marks.forEach(mark => mark.id = MID++);
+MARKS.forEach(mark => mark.id = MID++);
 
 export default class Remarkable extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {marks};
+    var marks = {};
+    MARKS.forEach(mark => marks[mark.id] = mark);
+    this.state = {marks: fromJS(marks)};
   }
 
   componentWillMount() {
@@ -102,10 +79,12 @@ export default class Remarkable extends React.Component {
     this.draw();
   }
 
+  /*
   setMarks(marks) {
     var sideCoords = this.calcMarks(marks, this.state.pos);
     this.setState({marks, sideCoords});
   }
+  */
 
   componentDidUpdate(prevProps, prevState) {
     if (prevState !== this.state) {
@@ -114,7 +93,7 @@ export default class Remarkable extends React.Component {
   }
 
   calcMarks(marks, pos) {
-    return calcSideCoords(marks, pos, this.props.font, this.props.size);
+    return calcSideCoords(marks.toJS(), pos, this.props.font, this.props.size);
   }
 
   predraw(verses) {
@@ -135,18 +114,17 @@ export default class Remarkable extends React.Component {
     this._ctx.clearRect(0, 0, this._canv.width, this._canv.height);
     var marks = this.state.marks;
     if (this.state.pending) {
-      marks = marks.concat([balance(this.state.pending)]);
+      marks = marks.set('pending', balance(this.state.pending));
     }
     if (this.state.editing) {
-      marks = marks.map(mark => mark.id === this.state.editing ?
-                        balance(mark) : mark);
+      marks = marks.set(this.state.editing, balance(marks.get(this.state.editing).toJS()));
     }
     drawMarks(
       this._ctx,
       this.state.lines,
       this.state.pos,
       this.state.sideCoords,
-      marks,
+      marks.toJS(),
       this.props.font,
       this.props.size,
       this.state.editing
@@ -156,7 +134,7 @@ export default class Remarkable extends React.Component {
     if (this.state.editing != null) {
       var editMark = this.getEditing();
       if (editMark != null) {
-        drawEditHandles(this._ctx, balance(editMark), this.state.lines, this.state.pos, this.props.font);
+        drawEditHandles(this._ctx, balance(editMark.toJS()), this.state.lines, this.state.pos, this.props.font);
       }
     }
     if (this.state.pending) {
@@ -165,14 +143,7 @@ export default class Remarkable extends React.Component {
   }
 
   getEditing() {
-    var editMark = null;
-    this.state.marks.some(mark => {
-      if (mark.id === this.state.editing) {
-        editMark = mark;
-        return true;
-      }
-    })
-    return editMark;
+    return this.state.marks.get(this.state.editing);
   }
 
   wordAt(e) {
@@ -220,14 +191,14 @@ export default class Remarkable extends React.Component {
 
   marksFor(target) {
     return this.state.marks.filter(mark =>
-      mark.type !== 'sideline' &&
-      (mark.start.verse < target.verse ||
-       (mark.start.verse === target.verse &&
-        mark.start.word <= target.word)) &&
-      (mark.end.verse > target.verse ||
-       (mark.end.verse === target.verse &&
-        mark.end.word >= target.word))
-    ).map(m => m.id);
+      mark.get('type') !== 'sideline' &&
+      (mark.getIn(['start', 'verse']) < target.verse ||
+       (mark.getIn(['start', 'verse']) === target.verse &&
+        mark.getIn(['start', 'word']) <= target.word)) &&
+      (mark.getIn(['end', 'verse']) > target.verse ||
+       (mark.getIn(['end', 'verse']) === target.verse &&
+        mark.getIn(['end', 'word']) >= target.word))
+    ).keySeq().toArray(); // TODO remove?
   }
 
   checkEditHandle(e) {
@@ -236,6 +207,7 @@ export default class Remarkable extends React.Component {
     if (!mark) {
       return;
     }
+    mark = mark.toJS();
     var startPos = this.state.pos[mark.start.verse][mark.start.word];
     var endPos = this.state.pos[mark.end.verse][mark.end.word];
     var {start, end} = editHandleBoxes(startPos, endPos, this.props.font);
@@ -285,7 +257,7 @@ export default class Remarkable extends React.Component {
     if (!target) {
       return;
     }
-    var mark = this.getEditing();
+    var mark = this.getEditing().toJS();
     if (target.word === false) {
       target = {
         verse: target.verse,
@@ -295,8 +267,12 @@ export default class Remarkable extends React.Component {
         ) ? target.left : target.right,
       };
     }
-    mark[this.state.editHandle] = target;
-    this.setState({marks: this.state.marks, sideCoords: this.calcMarks(this.state.marks, this.state.pos)});
+    var marks = this.state.marks.setIn([this.state.editing, this.state.editHandle], fromJS(target));
+    // mark[this.state.editHandle] = target;
+    this.setState({
+      marks: marks,
+      sideCoords: this.calcMarks(marks, this.state.pos)
+    });
   }
 
   movePending(e) {
@@ -341,24 +317,20 @@ export default class Remarkable extends React.Component {
     if (this.state.pending) {
       var id = MID++;
       this.setState({
-        marks: this.state.marks.concat([{
+        marks: this.state.marks.set(id, fromJS({
           ...balance(this.state.pending),
           id,
-        }]),
+        })),
         pending: null,
         editHandle: null,
         editing: id,
       });
     }
     if (this.state.editing != null) {
-      for (var i=0; i<this.state.marks.length; i++) {
-        if (this.state.marks[i].id === this.state.editing) {
-          this.state.marks.splice(i, 1, balance(this.state.marks[i]));
-        }
-      }
+      var marks = this.state.marks.set(this.state.editing, fromJS(balance(this.getEditing().toJS())))
       // todo sidelines recalc
       this.setState({
-        marks: this.state.marks,
+        marks: marks,
         editHandle: null,
       });
     }
