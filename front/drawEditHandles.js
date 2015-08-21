@@ -3,7 +3,7 @@ import roundRect from './roundRect';
 
 export default function drawEditHandles(ctx, mark, lines, pos, font) {
   ctx.globalAlpha = 0.6;
-  ctx.fillStyle = mark.style.color;
+  ctx.fillStyle = 'white';//mark.style.color;
   ctx.strokeStyle = mark.style.color;
   ctx.lineWidth = 2;
 
@@ -17,14 +17,29 @@ export default function drawEditHandles(ctx, mark, lines, pos, font) {
             start.y,
             start.width,
             start.height,
-            5);
+            5)
 
   roundRect(ctx,
             end.x,
             end.y,
             end.width,
             end.height,
-            5);
+            5)
+
+  ctx.globalAlpha = 1;
+  roundRect(ctx,
+            start.x,
+            start.y,
+            start.width,
+            start.height,
+            5, false, true);
+
+  roundRect(ctx,
+            end.x,
+            end.y,
+            end.width,
+            end.height,
+            5, false, true);
 }
 
 export function editHandleBoxes(startPos, endPos, font) {

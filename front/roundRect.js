@@ -1,7 +1,9 @@
 
 export default function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
-  stroke = false;
-  fill = true;
+  if (fill == null) {
+    fill = true;
+    stroke = false;
+  }
   x = parseInt(x);
   y = parseInt(y);
   width = parseInt(width);
