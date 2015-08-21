@@ -1,11 +1,4 @@
 
-export default function getMousePos(canv, e, size, font, lines, pos) {
-  var rect = canv.getBoundingClientRect();
-  var x = e.clientX - rect.left;
-  var y = e.clientY - rect.top;
-  return getWordForPos(x, y, size, font, lines, pos);
-}
-
 export function getWordForPos(x, y, size, font, lines, pos) {
   var margin = 0; // size.margin;
   if (x < margin || y < margin || x > size.width - margin || y > size.height - margin) {

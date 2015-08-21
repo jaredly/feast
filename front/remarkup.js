@@ -2,6 +2,7 @@
 import drawText from './drawText';
 import drawMarks from './drawMarks';
 import getMousePos, {getWordForPos} from './getMousePos';
+import calcSideCoords from './calcSideCoords';
 
 var evts = {
   move: 'mousemove',
@@ -21,22 +22,67 @@ export default class Remarkup {
     this.predraw(verses);
     this._listeners = {};
     this._handlers = {};
-    this.marks = marks;
+    this.setMarks(marks);
 
-    this.draw();
-
-    this.on('hovermark', mark => {
-      if (mark) {
-        this.canv.style.cursor = 'pointer';
-      } else {
-        this.canv.style.cursor = 'default';
-      }
+    this.canv.addEventListener('mousemove', e => {
+      this.canv.style.cursor = this.cursorAt(e);
     });
+  }
+
+  wordAt(e) {
+    var {x, y} = this.eventPos(e);
+    return getWordForPos(x, y, this.options.size, this.options.font, this.lines, this.pos);
+  }
+
+  eventPos(e) {
+    var rect = this.canv.getBoundingClientRect();
+    var x = e.clientX - rect.left;
+    var y = e.clientY - rect.top;
+    return {x, y};
+  }
+
+  getSideline(e) {
+    var {x, y} = this.eventPos(e);
+    for (var id in this.sideCoords) {
+      var {top, bottom, left} = this.sideCoords[id];
+      if (top <= y && y <= bottom && Math.abs(x - left) < this.options.font.space / 2) {
+        return id;
+      }
+    }
+    return null;
+  }
+
+  cursorAt(e) {
+    var target = this.wordAt(e);
+    if (!target || target.word === false) {
+      if (this.getSideline(e) != null) {
+        return 'pointer';
+      }
+      return 'default';
+      // TODO check for sideline
+    } else if (this.marksFor(target).length) {
+      return 'pointer';
+    }
+    return 'text';
   }
 
   setMarks(marks) {
     this.marks = marks;
+    this.sideCoords = calcSideCoords(marks, this.pos, this.options.font, this.options.size);
+
     this.draw();
+  }
+
+  marksFor(target) {
+    return this.marks.filter(mark =>
+      mark.type !== 'sideline' &&
+      (mark.start.verse < target.verse ||
+       (mark.start.verse === target.verse &&
+        mark.start.word <= target.word)) &&
+      (mark.end.verse > target.verse ||
+       (mark.end.verse === target.verse &&
+        mark.end.word >= target.word))
+    ).map(m => m.id);
   }
 
   predraw(verses) {
@@ -54,7 +100,7 @@ export default class Remarkup {
   draw() {
     this.ctx.clearRect(0, 0, this.canv.width, this.canv.height);
 
-    drawMarks(this.ctx, this.lines, this.pos, this.marks, this.options.font, this.options.size);
+    drawMarks(this.ctx, this.lines, this.pos, this.sideCoords, this.marks, this.options.font, this.options.size);
     this.ctx.globalAlpha = 1;
     this.ctx.drawImage(this.img, 0, 0);
   }
@@ -102,12 +148,18 @@ export default class Remarkup {
   _attach(evt) {
     if (evt.match(/^mark:/)) {
       this._handlers[evt] = e => {
-        var target = getMousePos(this.canv, e, this.options.size, this.options.font, this.lines, this.pos);
-        this._listeners[evt].forEach(fn => fn(target, e));
+        var target = this.wordAt(e);
+        var marks;
+        if (!target || target.word === false) {
+          marks = [this.getSideline(e)];
+        } else {
+          marks = this.marksFor(target);
+        }
+        this._listeners[evt].forEach(fn => fn(marks, target, e));
       };
     } else {
       this._handlers[evt] = e => {
-        var target = getMousePos(this.canv, e, this.options.size, this.options.font, this.lines, this.pos);
+        var target = this.wordAt(e);
         this._listeners[evt].forEach(fn => fn(target, e));
       };
     }

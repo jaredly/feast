@@ -3,8 +3,18 @@
 
 // React.render(<Provider store={store}><App/></Provider>, node);
 
-import React from 'react';
-import Remarkable from './Rem2';
+// import Remarkable from './Remarkable';
+import Remarkup from './Rem2';
+
+var WIDTH = 700;
+var HEIGHT = 1500;
+
+var canv = document.createElement('canvas');
+document.body.appendChild(canv)
+canv.width = WIDTH
+canv.height = HEIGHT;
+canv.style.backgroundColor = 'white';
+canv.style.margin = '40px';
 
 var dict = ['dolor', 'sit', 'amet', 'lorem', 'ipsum', 'awesome', 'cheeses', 'verily', 'I,'];
 
@@ -22,13 +32,76 @@ for (var i=0; i<20; i++) {
   verses.push(make_varse());
 }
 
+var fontSize = 25;
+
+/*
+var marks = [{
+  start: {verse: 0, word: 5},
+  end: {verse: 0, word: 8},
+  style: {
+    color: 'red',
+    underline: true,
+  },
+}, {
+  start: {verse: 3, word: 1},
+  end: {verse: 3, word: 8},
+  style: {
+    color: 'green',
+  },
+}, {
+  start: {verse: 0, word: 7},
+  end: {verse: 2, word: 4},
+  type: 'sideline',
+  style: {
+    color: 'blue',
+    underline: true,
+  },
+}];
+*/
+
+var sidelines = [{
+  start: {verse: 1, word: 10},
+  end: {verse: 5, word: 5},
+  type: 'sideline',
+  style: {color: 'blue'},
+}, {
+  start: {verse: 0, word: 5},
+  end: {verse: 0, word: 8},
+  style: {
+    color: 'red',
+    underline: true,
+  },
+}, {
+  start: {verse: 1, word: 1},
+  end: {verse: 1, word: 8},
+  style: {
+    color: 'green',
+  },
+}, {
+  start: {verse: 0, word: 2},
+  end: {verse: 2, word: 5},
+  type: 'sideline',
+  style: {color: 'orange'},
+}, {
+  start: {verse: 1, word: 2},
+  end: {verse: 3, word: 5},
+  type: 'sideline',
+  style: {color: 'green'},
+}, {
+  start: {verse: 3, word: 9},
+  end: {verse: 5, word: 5},
+  type: 'sideline',
+  style: {color: 'red'},
+}];
+
+var marks = sidelines;
+
 var size = {
-  width: 700,
-  height: 1000,
+  width: WIDTH,
+  height: HEIGHT,
   vmargin: 50,
   hmargin: 100,
 };
-var fontSize = 25;
 var font = {
   family: 'serif',
   space: fontSize / 3,
@@ -37,12 +110,31 @@ var font = {
   indent: fontSize,
 };
 
-var node = document.createElement('div');
-document.body.appendChild(node)
+var MID = 0;
+marks.forEach(mark => mark.id = MID++);
 
-React.render(<Remarkable font={font} verses={verses} size={size} />, node);
+var rem = new Remarkup(canv, verses, marks, {
+  size,
+  font,
+});
 
-/*
+// rem.drawDebug();
+
+var DEBUG = false;
+
+if (DEBUG) {
+
+  rem.on('move', target => {
+    if (!target) return;
+    rem.setMarks(marks.concat([{
+      start: target,
+      end: target,
+      style: {color: 'green'},
+    }]));
+  });
+
+} else {
+
   rem.on('mark:click', (target, e) => {
     if (pending) return;
   });
@@ -97,4 +189,3 @@ React.render(<Remarkable font={font} verses={verses} size={size} />, node);
   });
 
 }
-*/
