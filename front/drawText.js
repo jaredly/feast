@@ -1,5 +1,10 @@
+/**
+ * @flow
+ */
 
-export default function drawText(ctx, font, size, verses) {
+import type {Context, FontConfig, SizeConfig, Verses, Lines, Pos} from './types';
+
+export default function drawText(ctx: Context, font: FontConfig, size: SizeConfig, verses: Verses): {lines: Lines, pos: Pos} {
   var lines = [];
   var pos = [];
   var {width, height} = size;
