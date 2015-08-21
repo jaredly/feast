@@ -42,6 +42,24 @@ export type Mark = {
 export type Context = {
   fillText: (word: string, x: number, y: number) => void,
   measureText: (word: string) => {width: number},
+  globalAlpha: number,
+  fillStyle: string,
+  lineWidth: number,
+  strokeStyle: string,
+  beginPath: () => void,
+  stroke: () => void,
+  fill: () => void,
+  moveTo: (x: number, y: number) => void,
+  lineTo: (x: number, y: number) => void,
+};
+
+export type DOMEvent = {
+  clientX: number,
+  clientY: number,
+  preventDefault: () => void,
+  stopPropagation: () => void,
+  pageX: number,
+  pageY: number,
 };
 
 export type FontConfig = {
@@ -64,4 +82,5 @@ export type Verses = Array<{words: Array<string>}>;
 
 export type Lines = Array<{verse: number, word: number, top: number, left: number, right: number}>;
 
-export type Pos = Array<Array<{left: number, top: number, width: number, line: number}>>;
+export type Pos = Array<Array<WordPos>>;
+export type WordPos = {left: number, top: number, width: number, line: number};

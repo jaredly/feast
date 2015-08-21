@@ -1,4 +1,3 @@
-
 /**
  * Marks of the form:
  *
@@ -6,19 +5,21 @@
  * }
  *
  * Text in split up things.
+ * @flow
  */
 
 import React from 'react';
-import Remarkup from './remarkup';
+import {fromJS} from 'immutable';
 
 import drawText from './drawText';
 import drawMarks from './drawMarks';
-import getMousePos, {getWordForPos} from './getMousePos';
+import {getWordForPos} from './getMousePos';
 import calcSideCoords from './calcSideCoords';
 import drawEditHandles, {editHandleBoxes} from './drawEditHandles';
-import {fromJS} from 'immutable';
 
-var MARKS = [{
+import type {Mark, Lines, WordRef, WordPos, Pos, MarkID, DOMEvent, Verses, FontConfig, SizeConfig, Marks, SideCoords} from './types';
+
+var MARKS: Array<any> = [{
   start: {verse: 1, word: 10},
   end: {verse: 5, word: 5},
   type: 'sideline',
@@ -56,19 +57,55 @@ var MARKS = [{
 var MID = 0;
 MARKS.forEach(mark => mark.id = MID++);
 
+type Props = {
+  verses: Verses,
+  font: FontConfig,
+  size: SizeConfig,
+};
+
+type MarksMap = {
+  [key: string]: mixed,
+  toJS: () => Marks,
+};
+
+type MarkMap = {
+  [key: string]: mixed,
+  toJS: () => Mark,
+};
+
+type State = {
+  marks: MarksMap,
+  sideCoords: SideCoords,
+  pos: Pos,
+  lines: Lines,
+  editing: ?MarkID,
+  editHandle: ?('start' | 'end'),
+  pending: ?Mark,
+};
+
 export default class Remarkable extends React.Component {
-  constructor(props) {
+  props: Props;
+  state: State;
+
+  constructor(props: Props) {
     super(props);
     var marks = {};
     MARKS.forEach(mark => marks[mark.id] = mark);
-    this.state = {marks: fromJS(marks)};
-  }
+    marks = fromJS(marks);
 
-  componentWillMount() {
     this._img = document.createElement('img');
     var {lines, pos} = this.predraw(this.props.verses);
-    var sideCoords = this.calcMarks(this.state.marks, pos);
-    this.setState({lines, pos, sideCoords});
+    var sideCoords = this.calcMarks(marks, pos);
+
+    this.state = {
+      marks,
+      lines,
+      pos,
+      sideCoords,
+      editing: null,
+      editHandle: null,
+      pending: null,
+    };
   }
 
   componentDidMount() {
@@ -79,24 +116,18 @@ export default class Remarkable extends React.Component {
     this.draw();
   }
 
-  /*
-  setMarks(marks) {
-    var sideCoords = this.calcMarks(marks, this.state.pos);
-    this.setState({marks, sideCoords});
-  }
-  */
-
-  componentDidUpdate(prevProps, prevState) {
+  componentDidUpdate(prevProps: Props, prevState: State) {
     if (prevState !== this.state) {
       this.draw();
     }
   }
 
-  calcMarks(marks, pos) {
+  calcMarks(marks: MarksMap, pos: Pos) {
     return calcSideCoords(marks.toJS(), pos, this.props.font, this.props.size);
   }
 
-  predraw(verses) {
+  predraw(verses: Verses): {lines: Lines, pos: Pos} {
+    // $FlowFixMe why no createElement?
     var canv = document.createElement('canvas');
     canv.height = this.props.size.height;
     canv.width = this.props.size.width;
@@ -142,23 +173,23 @@ export default class Remarkable extends React.Component {
     }
   }
 
-  getEditing() {
+  getEditing(): MarkMap {
     return this.state.marks.get(this.state.editing);
   }
 
-  wordAt(e) {
+  wordAt(e: DOMEvent) {
     var {x, y} = this.eventPos(e);
     return getWordForPos(x, y, this.props.size, this.props.font, this.state.lines, this.state.pos);
   }
 
-  eventPos(e) {
+  eventPos(e: DOMEvent): {x: number, y: number} {
     var rect = this._canv.getBoundingClientRect();
     var x = e.clientX - rect.left;
     var y = e.clientY - rect.top;
     return {x, y};
   }
 
-  cursorAt(e) {
+  cursorAt(e: DOMEvent): string {
     if (this.state.editing != null) {
       var handle = this.checkEditHandle(e);
       if (handle) {
@@ -178,7 +209,7 @@ export default class Remarkable extends React.Component {
     return 'text';
   }
 
-  getSideline(e) {
+  getSideline(e: DOMEvent): ?MarkID {
     var {x, y} = this.eventPos(e);
     for (var id in this.state.sideCoords) {
       var {top, bottom, left} = this.state.sideCoords[id];
@@ -189,7 +220,7 @@ export default class Remarkable extends React.Component {
     return null;
   }
 
-  marksFor(target) {
+  marksFor(target: WordRef): Array<MarkID> {
     return this.state.marks.filter(mark =>
       mark.get('type') !== 'sideline' &&
       (mark.getIn(['start', 'verse']) < target.verse ||
@@ -201,7 +232,7 @@ export default class Remarkable extends React.Component {
     ).keySeq().toArray(); // TODO remove?
   }
 
-  checkEditHandle(e) {
+  checkEditHandle(e: DOMEvent): ?('start' | 'end') {
     var pos = this.eventPos(e);
     var mark = this.getEditing();
     if (!mark) {
@@ -220,7 +251,7 @@ export default class Remarkable extends React.Component {
     }
   }
 
-  onMouseDown(e) {
+  onMouseDown(e: DOMEvent) {
     if (this.state.editing != null) {
       // check edit handles
       var handle = this.checkEditHandle(e);
@@ -240,7 +271,7 @@ export default class Remarkable extends React.Component {
     }
   }
 
-  onMouseMove(e) {
+  onMouseMove(e: DOMEvent) {
     if (!this._press) {
       this._canv.style.cursor = this.cursorAt(e);
       return;
@@ -252,7 +283,7 @@ export default class Remarkable extends React.Component {
     }
   }
 
-  moveEditHandle(e) {
+  moveEditHandle(e: DOMEvent) {
     var target = this.wordAt(e);
     if (!target) {
       return;
@@ -275,7 +306,7 @@ export default class Remarkable extends React.Component {
     });
   }
 
-  movePending(e) {
+  movePending(e: DOMEvent) {
     if (!this.state.pending) {
       if (Math.abs(e.pageX - this._press.x) +
           Math.abs(e.pageY - this._press.y) < 10) {
@@ -300,10 +331,9 @@ export default class Remarkable extends React.Component {
     if (target.word === false) {
       target = {
         verse: target.verse,
-        word: isGreater(
-          this.state.pending.start,
-          this.state.pending.end
-        ) ? target.left : target.right,
+        // $FlowFixMe this.state.pending is not null
+        word: isGreater(this.state.pending.start, this.state.pending.end) ?
+          target.left : target.right,
       };
     }
     this.setState({pending: {
@@ -312,10 +342,10 @@ export default class Remarkable extends React.Component {
     }});
   }
 
-  onMouseUp(e) {
+  onMouseUp(e: DOMEvent) {
     this._press = false;
     if (this.state.pending) {
-      var id = MID++;
+      var id = MID++ + '';
       this.setState({
         marks: this.state.marks.set(id, fromJS({
           ...balance(this.state.pending),
@@ -337,11 +367,11 @@ export default class Remarkable extends React.Component {
   }
 
   listenWindow() {
-    window.addEventListener('mousemove', ::this.onMouseMove);
-    window.addEventListener('mouseup', ::this.onMouseUp);
+    window.addEventListener('mousemove', this.onMouseMove.bind(this));
+    window.addEventListener('mouseup', this.onMouseUp.bind(this));
   }
 
-  marksAt(e) {
+  marksAt(e: DOMEvent): Array<MarkID> {
     var target = this.wordAt(e);
     if (!target || target.word === false) {
       var sideline = this.getSideline(e);
@@ -350,7 +380,7 @@ export default class Remarkable extends React.Component {
     return this.marksFor(target);
   }
 
-  onClick(e) {
+  onClick(e: DOMEvent) {
     if (this._moved) {
       this._moved = false;
       return;
@@ -370,15 +400,15 @@ export default class Remarkable extends React.Component {
     });
   }
 
-  render() {
+  render(): ReactElement {
     var {width, height} = this.props.size;
     return (
       <canvas
         style={styles.canv}
         width={width}
         height={height}
-        onMouseDown={::this.onMouseDown}
-        onClick={::this.onClick}
+        onMouseDown={this.onMouseDown.bind(this)}
+        onClick={this.onClick.bind(this)}
         ref={c => this._node = c}
       />
     );

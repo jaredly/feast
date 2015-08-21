@@ -1,7 +1,12 @@
+/**
+ * @flow
+ */
 
 import roundRect from './roundRect';
 
-export default function highlight(ctx, mark, lines, pos, font) {
+import type {Context, Mark, Lines, Pos, FontConfig} from './types';
+
+export default function highlight(ctx: Context, mark: Mark, lines: Lines, pos: Pos, font: FontConfig) {
   var wordMarginV = font.space;
   var wordMarginH = font.space;
 
@@ -70,9 +75,9 @@ export default function highlight(ctx, mark, lines, pos, font) {
   }
 }
 
-function line(ctx, top, left, right) {
+function line(ctx: Context, top: number, left: number, right: number) {
   ctx.beginPath();
-  top = parseInt(top);
+  top = Math.floor(top);
   ctx.moveTo(left, top);
   ctx.lineTo(right, top);
   ctx.stroke();

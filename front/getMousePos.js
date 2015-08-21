@@ -1,5 +1,10 @@
+/**
+ * @flow
+ */
 
-export function getWordForPos(x, y, size, font, lines, pos) {
+import type {SizeConfig, FontConfig, Lines, Pos} from './types';
+
+export function getWordForPos(x: number, y: number, size: SizeConfig, font: FontConfig, lines: Lines, pos: Pos) {
   var margin = 0; // size.margin;
   if (x < margin || y < margin || x > size.width - margin || y > size.height - margin) {
     return; // out of bounds

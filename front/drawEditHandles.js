@@ -1,7 +1,12 @@
+/**
+ * @flow
+ */
 
 import roundRect from './roundRect';
 
-export default function drawEditHandles(ctx, mark, lines, pos, font) {
+import type {Context, Mark, WordPos, Lines, Pos, FontConfig} from './types';
+
+export default function drawEditHandles(ctx: Context, mark: Mark, lines: Lines, pos: Pos, font: FontConfig) {
   ctx.globalAlpha = 0.6;
   ctx.fillStyle = 'white';//mark.style.color;
   ctx.strokeStyle = mark.style.color;
@@ -42,7 +47,9 @@ export default function drawEditHandles(ctx, mark, lines, pos, font) {
             5, false, true);
 }
 
-export function editHandleBoxes(startPos, endPos, font) {
+type Box = {x: number, y: number, width: number, height: number};
+
+export function editHandleBoxes(startPos: WordPos, endPos: WordPos, font: FontConfig): {start: Box, end: Box} {
   var wordMarginV = font.space;
   var wordMarginH = font.space;
   var width = font.space * 2;
