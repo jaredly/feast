@@ -188,7 +188,7 @@ export default class Remarkable extends React.Component {
   }
 
   cursorAt(e) {
-    if (this.state.editing) {
+    if (this.state.editing != null) {
       var handle = this.checkEditHandle(e);
       if (handle) {
         return 'pointer';
@@ -249,7 +249,7 @@ export default class Remarkable extends React.Component {
   }
 
   onMouseDown(e) {
-    if (this.state.editing) {
+    if (this.state.editing != null) {
       // check edit handles
       var handle = this.checkEditHandle(e);
       if (handle) {
@@ -296,7 +296,7 @@ export default class Remarkable extends React.Component {
       };
     }
     mark[this.state.editHandle] = target;
-    this.setState({marks: this.state.marks});
+    this.setState({marks: this.state.marks, sideCoords: this.calcMarks(this.state.marks, this.state.pos)});
   }
 
   movePending(e) {
@@ -346,10 +346,11 @@ export default class Remarkable extends React.Component {
           id,
         }]),
         pending: null,
+        editHandle: null,
         editing: id,
       });
     }
-    if (this.state.editing) {
+    if (this.state.editing != null) {
       for (var i=0; i<this.state.marks.length; i++) {
         if (this.state.marks[i].id === this.state.editing) {
           this.state.marks.splice(i, 1, balance(this.state.marks[i]));

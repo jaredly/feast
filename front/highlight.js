@@ -13,12 +13,8 @@ export default function highlight(ctx, mark, lines, pos, font) {
   if (mark.style.underline) {
     ctx.globalAlpha = 1;
   } else {
-    if (mark.highlighted) {
-      if (mark.type === 'sideline') {
-        ctx.globalAlpha = 0.1;
-      } else {
-        ctx.globalAlpha = 0.8;
-      }
+    if (mark.type === 'sideline') {
+      ctx.globalAlpha = 0.1;
     } else {
       ctx.globalAlpha = 0.4;
     }

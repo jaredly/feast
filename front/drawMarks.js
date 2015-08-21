@@ -6,7 +6,7 @@ export default function drawMarks(ctx, lines, pos, sideCoords, marks, font, size
   marks.forEach(mark => {
     if (mark.type === 'sideline') {
       sideline(ctx, mark, sideCoords[mark.id]);
-      if (mark.highlighted) {
+      if (mark.id === editing) {
         highlight(ctx, mark, lines, pos, font);
       }
     } else {

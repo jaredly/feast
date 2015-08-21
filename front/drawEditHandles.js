@@ -2,7 +2,7 @@
 import roundRect from './roundRect';
 
 export default function drawEditHandles(ctx, mark, lines, pos, font) {
-  ctx.globalAlpha = 1;
+  ctx.globalAlpha = 0.6;
   ctx.fillStyle = mark.style.color;
   ctx.strokeStyle = mark.style.color;
   ctx.lineWidth = 2;
@@ -30,7 +30,7 @@ export default function drawEditHandles(ctx, mark, lines, pos, font) {
 export function editHandleBoxes(startPos, endPos, font) {
   var wordMarginV = font.space;
   var wordMarginH = font.space;
-  var width = font.size;
+  var width = font.space * 2;
   return {
     start: {
       x: startPos.left - width/2,
