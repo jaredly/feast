@@ -15,7 +15,7 @@ import drawText from './drawText';
 import drawMarks from './drawMarks';
 import getMousePos, {getWordForPos} from './getMousePos';
 import calcSideCoords from './calcSideCoords';
-import drawEditHandles from './drawEditHandles';
+import drawEditHandles, {editHandleBoxes} from './drawEditHandles';
 
 /*
 var marks = [{
@@ -137,6 +137,10 @@ export default class Remarkable extends React.Component {
     if (this.state.pending) {
       marks = marks.concat([balance(this.state.pending)]);
     }
+    if (this.state.editing) {
+      marks = marks.map(mark => mark.id === this.state.editing ?
+                        balance(mark) : mark);
+    }
     drawMarks(
       this._ctx,
       this.state.lines,
@@ -150,15 +154,25 @@ export default class Remarkable extends React.Component {
     this._ctx.globalAlpha = 1;
     this._ctx.drawImage(this._img, 0, 0);
     if (this.state.editing != null) {
-      var editMark = null;
-      marks.some(mark => {
-        if (mark.id === this.state.editing) {
-          editMark = mark;
-          return true;
-        }
-      })
-      drawEditHandles(this._ctx, editMark, this.state.lines, this.state.pos, this.props.font);
+      var editMark = this.getEditing();
+      if (editMark != null) {
+        drawEditHandles(this._ctx, balance(editMark), this.state.lines, this.state.pos, this.props.font);
+      }
     }
+    if (this.state.pending) {
+      drawEditHandles(this._ctx, balance(this.state.pending), this.state.lines, this.state.pos, this.props.font);
+    }
+  }
+
+  getEditing() {
+    var editMark = null;
+    this.state.marks.some(mark => {
+      if (mark.id === this.state.editing) {
+        editMark = mark;
+        return true;
+      }
+    })
+    return editMark;
   }
 
   wordAt(e) {
@@ -174,6 +188,12 @@ export default class Remarkable extends React.Component {
   }
 
   cursorAt(e) {
+    if (this.state.editing) {
+      var handle = this.checkEditHandle(e);
+      if (handle) {
+        return 'pointer';
+      }
+    }
     var target = this.wordAt(e);
     if (!target || target.word === false) {
       if (this.getSideline(e) != null) {
@@ -210,16 +230,82 @@ export default class Remarkable extends React.Component {
     ).map(m => m.id);
   }
 
+  checkEditHandle(e) {
+    var pos = this.eventPos(e);
+    var mark = this.getEditing();
+    if (!mark) {
+      return;
+    }
+    var startPos = this.state.pos[mark.start.verse][mark.start.word];
+    var endPos = this.state.pos[mark.end.verse][mark.end.word];
+    var {start, end} = editHandleBoxes(startPos, endPos, this.props.font);
+
+    if (pointInBox(pos, start)) {
+      return 'start';
+    }
+    if (pointInBox(pos,end)) {
+      return 'end';
+    }
+  }
+
+  onMouseDown(e) {
+    if (this.state.editing) {
+      // check edit handles
+      var handle = this.checkEditHandle(e);
+      if (handle) {
+        this._moved = true;
+        this._press = handle;
+        this.setState({
+          editHandle: handle,
+        });
+        return;
+      }
+    }
+    var target = this.wordAt(e);
+    if (target && target.word !== false) {
+      this._press = {x: e.pageX, y: e.pageY, target};
+      this._canv.style.cursor = 'pointer';
+    }
+  }
+
   onMouseMove(e) {
     if (!this._press) {
       this._canv.style.cursor = this.cursorAt(e);
       return;
     }
-    if (Math.abs(e.pageX - this._press.x) +
-        Math.abs(e.pageY - this._press.y) < 10) {
+    if (this.state.editHandle) {
+      this.moveEditHandle(e);
+    } else {
+      this.movePending(e);
+    }
+  }
+
+  moveEditHandle(e) {
+    var target = this.wordAt(e);
+    if (!target) {
       return;
     }
+    var mark = this.getEditing();
+    if (target.word === false) {
+      target = {
+        verse: target.verse,
+        word: isGreater(
+          mark.start,
+          mark.end
+        ) ? target.left : target.right,
+      };
+    }
+    mark[this.state.editHandle] = target;
+    this.setState({marks: this.state.marks});
+  }
+
+  movePending(e) {
     if (!this.state.pending) {
+      if (Math.abs(e.pageX - this._press.x) +
+          Math.abs(e.pageY - this._press.y) < 10) {
+        return;
+      }
+      this._moved = true;
       this.setState({
         editing: null,
         pending: {
@@ -229,6 +315,7 @@ export default class Remarkable extends React.Component {
           id: 'pending',
         }
       });
+      return;
     }
     var target = this.wordAt(e);
     if (!target) {
@@ -249,14 +336,6 @@ export default class Remarkable extends React.Component {
     }});
   }
 
-  onMouseDown(e) {
-    var target = this.wordAt(e);
-    if (target && target.word !== false) {
-      this._press = {x: e.pageX, y: e.pageY, target};
-      this._canv.style.cursor = 'pointer';
-    }
-  }
-
   onMouseUp(e) {
     this._press = false;
     if (this.state.pending) {
@@ -268,6 +347,18 @@ export default class Remarkable extends React.Component {
         }]),
         pending: null,
         editing: id,
+      });
+    }
+    if (this.state.editing) {
+      for (var i=0; i<this.state.marks.length; i++) {
+        if (this.state.marks[i].id === this.state.editing) {
+          this.state.marks.splice(i, 1, balance(this.state.marks[i]));
+        }
+      }
+      // todo sidelines recalc
+      this.setState({
+        marks: this.state.marks,
+        editHandle: null,
       });
     }
   }
@@ -287,6 +378,11 @@ export default class Remarkable extends React.Component {
   }
 
   onClick(e) {
+    if (this._moved) {
+      this._moved = false;
+      return;
+    }
+    this._moved = false;
     var marks = this.marksAt(e);
     if (!marks.length) {
       if (this.state.editing != null) {
@@ -333,6 +429,13 @@ var styles = {
     margin: '2px 0',
   },
 };
+
+function pointInBox(pos, box) {
+  return (
+    box.x <= pos.x && pos.x <= box.x + box.width &&
+    box.y <= pos.y && pos.y <= box.y + box.height
+  );
+}
 
 function isGreater(pos1, pos2) {
   return (pos1.verse > pos2.verse) || (

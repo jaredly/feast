@@ -2,31 +2,47 @@
 import roundRect from './roundRect';
 
 export default function drawEditHandles(ctx, mark, lines, pos, font) {
-  var wordMarginV = font.space;
-  var wordMarginH = font.space;
   ctx.globalAlpha = 1;
-
-  var width = font.size;
-
-  var startPos = pos[mark.start.verse][mark.start.word];
-  var endPos = pos[mark.end.verse][mark.end.word];
   ctx.fillStyle = mark.style.color;
   ctx.strokeStyle = mark.style.color;
   ctx.lineWidth = 2;
 
-  roundRect(ctx,
-    startPos.left - width/2,
-    startPos.top - font.size,
-    width,
-    font.size + wordMarginV,
-    5
-  );
+  var startPos = pos[mark.start.verse][mark.start.word];
+  var endPos = pos[mark.end.verse][mark.end.word];
+
+  var {start, end} = editHandleBoxes(startPos, endPos, font);
 
   roundRect(ctx,
-    endPos.left + endPos.width - width/2,
-    endPos.top - font.size,
-    width,
-    font.size + wordMarginV,
-    5
-  );
+            start.x,
+            start.y,
+            start.width,
+            start.height,
+            5);
+
+  roundRect(ctx,
+            end.x,
+            end.y,
+            end.width,
+            end.height,
+            5);
+}
+
+export function editHandleBoxes(startPos, endPos, font) {
+  var wordMarginV = font.space;
+  var wordMarginH = font.space;
+  var width = font.size;
+  return {
+    start: {
+      x: startPos.left - width/2,
+      y: startPos.top - font.size,
+      width,
+      height: font.size + wordMarginV,
+    },
+    end: {
+      x: endPos.left + endPos.width - width/2,
+      y: endPos.top - font.size,
+      width,
+      height: font.size + wordMarginV,
+    }
+  }
 }
