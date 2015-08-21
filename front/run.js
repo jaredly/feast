@@ -1,8 +1,4 @@
 
-// import App from './App';
-
-// React.render(<Provider store={store}><App/></Provider>, node);
-
 import {Map} from 'immutable';
 import React from 'react';
 import Remarkable from './Rem2';
@@ -42,60 +38,3 @@ var node = document.createElement('div');
 document.body.appendChild(node)
 
 React.render(<Remarkable font={font} verses={verses} size={size} />, node);
-
-/*
-  rem.on('mark:click', (target, e) => {
-    if (pending) return;
-  });
-
-  var pending = null;
-  rem.on('down', (target, e) => {
-    if (!target) return;
-    if (target.word === false) {
-      target = {verse: target.verse, word: target.left};
-    }
-    var initialTarget = target;
-    var ix = e.pageX;
-    var iy = e.pageY;
-    var sub = rem.on('move', (target, e) => {
-      if (!pending) {
-        if (Math.abs(e.pageX - ix) + Math.abs(e.pageY - iy) < 10) {
-          return;
-        }
-        pending = {
-          start: initialTarget,
-          end: initialTarget,
-          id: 'PEND',
-          //type: 'sideline',
-          style: {
-            // underline: true,
-            color: 'blue'
-          },
-        };
-      }
-      if (!target) {
-        rem.setMarks(marks.concat([balance(pending)]));
-        return;
-      }
-      if (target.word === false) {
-        target = {
-          verse: target.verse,
-          word: isGreater(pending.start, pending.end) ? target.left : target.right, // pickSide(pending.start, pending.end)
-        };
-      }
-      pending.end = target;
-      rem.setMarks(marks.concat([balance(pending)]));
-    });
-    var sub2 = rem.on('up', target => {
-      sub(); sub2();
-      if (pending) {
-        marks.push(balance(pending, MID++));
-        pending = null;
-        rem.setMarks(marks);
-      }
-    });
-    // rem.setMarks(marks.concat([pending]));
-  });
-
-}
-*/

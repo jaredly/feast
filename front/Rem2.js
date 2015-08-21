@@ -55,7 +55,7 @@ var MARKS: Array<any> = [{
 }];
 
 var MID = 0;
-MARKS.forEach(mark => mark.id = MID++);
+MARKS.forEach(mark => mark.id = MID++ + '');
 
 type Props = {
   verses: Verses,
