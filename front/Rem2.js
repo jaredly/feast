@@ -183,7 +183,7 @@ export default class Remarkable extends React.Component {
     for (var id in this.state.sideCoords) {
       var {top, bottom, left} = this.state.sideCoords[id];
       if (top <= y && y <= bottom && Math.abs(x - left) < this.props.font.space / 2) {
-        return +id;
+        return id;
       }
     }
     return null;

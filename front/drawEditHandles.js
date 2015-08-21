@@ -33,15 +33,15 @@ export function editHandleBoxes(startPos, endPos, font) {
   var width = font.space * 2;
   return {
     start: {
-      x: startPos.left - width/2,
+      x: startPos.left - wordMarginH,
       y: startPos.top - font.size,
-      width,
+      width: startPos.width + wordMarginH * 2,
       height: font.size + wordMarginV,
     },
     end: {
-      x: endPos.left + endPos.width - width/2,
+      x: endPos.left - wordMarginH,
       y: endPos.top - font.size,
-      width,
+      width: endPos.width + wordMarginH * 2,
       height: font.size + wordMarginV,
     }
   }
