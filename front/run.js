@@ -2,6 +2,13 @@
 import {Map} from 'immutable';
 import React from 'react';
 import Remarkable from './Rem2';
+import ReduxRem from './ReduxRem';
+import Wrapper from './Wrap';
+
+import { createStore } from 'redux';
+import { Provider } from 'react-redux';
+
+import reducers from './reducers';
 
 var dict = ['dolor', 'sit', 'amet', 'lorem', 'ipsum', 'awesome', 'cheeses', 'verily', 'I,'];
 
@@ -34,7 +41,13 @@ var font = {
   indent: fontSize,
 };
 
+
 var node = document.createElement('div');
 document.body.appendChild(node)
 
-React.render(<Remarkable font={font} verses={verses} size={size} />, node);
+var store = createStore(reducers(verses, font, size));
+
+React.render(<Provider store={store}>
+  {() => <ReduxRem font={font} verses={verses} size={size} />}
+</Provider>, node);
+// React.render(<Wrapper font={font} verses={verses} size={size} />, node);
