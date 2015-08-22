@@ -11,11 +11,11 @@
 import React from 'react';
 import {fromJS} from 'immutable';
 
-import drawText from './drawText';
 import drawMarks from './drawMarks';
 import {getWordForPos} from './getMousePos';
 import calcSideCoords from './calcSideCoords';
 import drawEditHandles, {editHandleBoxes} from './drawEditHandles';
+import predraw from './predraw';
 
 import type {Context, Mark, Lines, WordRef, WordPos, Pos, MarkID, DOMEvent, Verses, FontConfig, SizeConfig, Marks, SideCoords} from './types';
 
@@ -87,34 +87,19 @@ export default class Wrappable extends React.Component {
     MARKS.forEach(mark => marks[mark.id] = mark);
     marks = fromJS(marks);
 
-    this._img = document.createElement('img');
-    var {lines, pos} = this.predraw(this.props.verses);
+    var {lines, pos, img} = predraw(this.props.verses, this.props.size, this.props.font);
     var sideCoords = this.calcMarks(marks, pos);
 
     this.state = {
       marks,
       lines,
       pos,
+      baseImg: img,
       sideCoords,
       editing: null,
       editHandle: null,
       pending: null,
     };
-  }
-
-  predraw(verses: Verses): {lines: Lines, pos: Pos} {
-    // $FlowFixMe why no createElement?
-    var canv = document.createElement('canvas');
-    canv.height = this.props.size.height;
-    canv.width = this.props.size.width;
-    var ctx = canv.getContext('2d');
-    ctx.clearRect(0, 0, this.props.size.width, this.props.size.height);
-    ctx.fillStyle = 'black';
-    ctx.globalAlpha = 1;
-    ctx.font = this.props.font.size + 'px ' + this.props.font.family;
-    var {lines, pos} = drawText(ctx, this.props.font, this.props.size, this.props.verses);
-    this._img.src = canv.toDataURL();
-    return {lines, pos};
   }
 
   calcMarks(marks: MarksMap, pos: Pos) {
@@ -129,6 +114,7 @@ export default class Wrappable extends React.Component {
   }
 
   setPendingEnd(end: WordRef) {
+    invariant(this.state.pending, 'Cannot set pending end if no pending mark');
     if (this.state.pending.end.verse === end.verse &&
         this.state.pending.end.word === end.word) {
       return;
@@ -208,7 +194,6 @@ export default class Wrappable extends React.Component {
       <Remarkable
         {...this.props}
         {...this.state}
-        baseImg={this._img}
         setEditHandle={this.setEditHandle.bind(this)}
         setPendingEnd={this.setPendingEnd.bind(this)}
         setEditPos={this.setEditPos.bind(this)}
