@@ -51,6 +51,8 @@ export type Context = {
   fill: () => void,
   moveTo: (x: number, y: number) => void,
   lineTo: (x: number, y: number) => void,
+  clearRect: (x: number, y: number, width: number, height: number) => void,
+  drawImage: (img: any, x: number, y: number) => void,
 };
 
 export type DOMEvent = {
