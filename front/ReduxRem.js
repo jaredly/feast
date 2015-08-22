@@ -13,16 +13,6 @@ class ReduxRem {
       <Remarkable
         {...props}
         {...actions(dispatch)}
-        /*
-        setEditHandle={this.setEditHandle.bind(this)}
-        setPendingEnd={this.setPendingEnd.bind(this)}
-        setEditPos={this.setEditPos.bind(this)}
-        stopEditing={this.stopEditing.bind(this)}
-        finishCreating={this.finishCreating.bind(this)}
-        startEditing={this.startEditing.bind(this)}
-        startCreating={this.startCreating.bind(this)}
-        finishEditMove={this.finishEditMove.bind(this)}
-        */
       />
     );
   }

@@ -4,6 +4,9 @@ var actions = {
   stopEditing: false,
   startEditing: 'id',
   setEditPos: 'target',
+  changeMark: ['arg', 'val'],
+  setMarkStyle: 'style',
+  setMarkColor: 'color',
   setEditHandle: 'handle',
   finishEditMove: false,
   finishCreating: false,
@@ -13,11 +16,22 @@ var actions = {
 export default dispatch => {
   var fns = {};
   Object.keys(actions).forEach(name => {
-    if (actions[name]) {
+    if (typeof actions[name] === 'string') {
       fns[name] = function (arg) {
         dispatch({
           type: name,
           [actions[name]]: arg,
+        });
+      };
+    } else if (Array.isArray(actions[name])) {
+      fns[name] = function () {
+        var args = {};
+        actions[name].forEach((arg, i) => {
+          args[arg] = arguments[i];
+        });
+        dispatch({
+          ...args,
+          type: name,
         });
       };
     } else {

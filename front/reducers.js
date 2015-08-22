@@ -148,6 +148,38 @@ var actions = {
     return {editHandle: handle};
   },
 
+  changeMark(state, {arg, val}) {
+    return {
+      marks: state.marks.setIn([state.editing].concat(arg), val),
+    };
+  },
+
+  setMarkStyle(state, {style}, fullState) {
+    var mark = state.marks.get(state.editing);
+    switch (style) {
+      case 'sideline':
+        mark = mark.set('type', 'sideline').setIn(['style', 'underline'], false);
+        break;
+      case 'highlight':
+        mark = mark.set('type', 'highlight').setIn(['style', 'underline'], false);
+        break;
+      case 'underline':
+        mark = mark.set('type', 'highlight').setIn(['style', 'underline'], true);
+        break;
+    }
+    var marks = state.marks.set(state.editing, mark);
+    return {
+      marks,
+      sideCoords: calcSideCoords(marks.toJS(), state.pos, fullState.font, fullState.size),
+    };
+  },
+
+  setMarkColor(state, {color}) {
+    return {
+      marks: state.marks.setIn([state.editing, 'style', 'color'], color),
+    };
+  },
+
   finishEditMove(state) {
     var editing = state.marks.get(state.editing);
     var marks = state.marks.set(state.editing, fromJS(balance(editing.toJS())))

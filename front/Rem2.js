@@ -14,6 +14,7 @@ import drawMarks from './drawMarks';
 import {getWordForPos} from './getMousePos';
 import calcSideCoords from './calcSideCoords';
 import drawEditHandles, {editHandleBoxes} from './drawEditHandles';
+import Editorial from './Editorial';
 
 import type {Context, Mark, Lines, WordRef, WordPos, Pos, MarkID, DOMEvent, FontConfig, SizeConfig, Marks, SideCoords} from './types';
 
@@ -301,14 +302,17 @@ export default class Remarkable {
   render(): ReactElement {
     var {width, height} = this.props.size;
     return (
-      <canvas
-        style={styles.canv}
-        width={width}
-        height={height}
-        onMouseDown={this.onMouseDown.bind(this)}
-        onClick={this.onClick.bind(this)}
-        ref={c => this._node = c}
-      />
+      <div>
+        {this.props.editing != null && <Editorial mark={this.props.marks.get(this.props.editing)} setMarkStyle={this.props.setMarkStyle} setMarkColor={this.props.setMarkColor} />}
+        <canvas
+          style={styles.canv}
+          width={width}
+          height={height}
+          onMouseDown={this.onMouseDown.bind(this)}
+          onClick={this.onClick.bind(this)}
+          ref={c => this._node = c}
+        />
+      </div>
     );
   }
 };
