@@ -154,6 +154,16 @@ var actions = {
     };
   },
 
+  removeMark(state, args, fullState) {
+    var marks = state.marks.delete(state.editing);
+    return {
+      marks,
+      sideCoords: calcSideCoords(marks.toJS(), state.pos, fullState.font, fullState.size),
+      editing: null,
+      editHandle: null,
+    };
+  },
+
   setMarkStyle(state, {style}, fullState) {
     var mark = state.marks.get(state.editing);
     switch (style) {

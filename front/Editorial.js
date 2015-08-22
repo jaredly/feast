@@ -33,6 +33,9 @@ export default class Editorial {
         <ul style={styles.types}>
           {types}
         </ul>
+        <div style={styles.button} onClick={this.props.removeMark}>
+          delete
+        </div>
       </div>
     );
   }
@@ -79,6 +82,10 @@ var styles = {
   },
   currentType: {
     backgroundColor: '#555',
+  },
+  button: {
+    padding: '5px 10px',
+    cursor: 'pointer',
   },
 };
 

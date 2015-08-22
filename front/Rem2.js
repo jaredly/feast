@@ -303,7 +303,12 @@ export default class Remarkable {
     var {width, height} = this.props.size;
     return (
       <div>
-        {this.props.editing != null && <Editorial mark={this.props.marks.get(this.props.editing)} setMarkStyle={this.props.setMarkStyle} setMarkColor={this.props.setMarkColor} />}
+        {this.props.editing != null && <Editorial
+          mark={this.props.marks.get(this.props.editing)}
+          setMarkStyle={this.props.setMarkStyle}
+          setMarkColor={this.props.setMarkColor}
+          removeMark={this.props.removeMark}
+        />}
         <canvas
           style={styles.canv}
           width={width}

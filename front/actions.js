@@ -10,6 +10,7 @@ var actions = {
   setEditHandle: 'handle',
   finishEditMove: false,
   finishCreating: false,
+  removeMark: false,
   startCreating: 'target',
 };
 
