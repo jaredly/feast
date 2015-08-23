@@ -13,6 +13,8 @@ function invariant(val, message) {
   if (!val) throw new Error(message);
 }
 
+var MID = 1000;
+
 export default class Viewer extends React.Component {
   constructor(props) {
     super(props);
@@ -72,7 +74,10 @@ export default class Viewer extends React.Component {
   }
 
   setEditHandle(handle) {
-    this.setState({editHandle: handle});
+    this.setState({
+      editHandle: handle,
+      editHandlePos: this.props.marks.getIn([this.state.editing, handle]).toJS(),
+    });
   }
 
   finishEditMove() {
@@ -94,7 +99,7 @@ export default class Viewer extends React.Component {
     var id = MID++ + '';
     invariant(this.state.pending);
     this.props.addMark(fromJS({
-      ...balance(state.pending),
+      ...balance(this.state.pending),
       id,
     }));
     this.setState({
@@ -129,6 +134,10 @@ export default class Viewer extends React.Component {
     this.props.setMarkColor(this.state.editing, color);
   }
 
+  setMarkStyle(style) {
+    this.props.setMarkStyle(this.state.editing, style);
+  }
+
   render() {
     var actions = {};
     Object.getOwnPropertyNames(Viewer.prototype).forEach(name => {
@@ -136,13 +145,46 @@ export default class Viewer extends React.Component {
         actions[name] = this[name].bind(this);
       }
     });
+    var marks = this.props.marks;
+    if (this.state.editHandle) {
+      marks = marks.set(this.state.editing, fromJS(balance(marks.get(this.state.editing).set(this.state.editHandle, this.state.editHandlePos).toJS())));
+    }
     return (
       <Remarkable
         {...this.props}
         {...actions}
+        sideCoords={memoSideCoords(this.props.marks, this.state.pos, this.props.font, this.props.size)}
         {...this.state}
+        marks={marks}
       />
     );
   }
+}
+
+var _coords = new Map();
+function memoSideCoords(marks, pos, font, size) {
+  if (!_coords.has(marks)) {
+    _coords.set(marks, calcSideCoords(marks.toJS(), pos, font, size));
+  }
+  return _coords.get(marks);
+}
+
+
+function isGreater(pos1, pos2) {
+  return (pos1.verse > pos2.verse) || (
+    pos1.verse === pos2.verse &&
+    pos1.word > pos2.word
+  );
+}
+
+function balance(mark) {
+  if (isGreater(mark.start, mark.end)) {
+    return {
+      ...mark,
+      start: mark.end,
+      end: mark.start,
+    };
+  }
+  return mark;
 }
 

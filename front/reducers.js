@@ -132,6 +132,12 @@ var actions = {
       marks: state.marks.setIn([id, 'style', 'color'], color),
     };
   },
+
+  addMark(state, {mark}) {
+    return {
+      marks: state.marks.set(mark.get('id'), mark),
+    };
+  },
 };
 
 export default function (verses: Verses, font: FontConfig, size: SizeConfig): (state: ?State, action: Object) => State {

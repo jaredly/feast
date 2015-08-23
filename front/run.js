@@ -22,7 +22,7 @@ function make_varse() {
 }
 
 var verses = [];
-for (var i=0; i<20; i++) {
+for (var i=0; i<6; i++) {
   verses.push(make_varse());
 }
 

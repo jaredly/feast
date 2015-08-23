@@ -11,7 +11,7 @@ export default function drawMarks(ctx: Context, lines: Lines, pos: Pos, sideCoor
   for (var id in marks) {
     var mark = marks[id];
     if (mark.type === 'sideline') {
-      // sideline(ctx, mark, font, sideCoords[mark.id], mark.id === editing);
+      sideline(ctx, mark, font, sideCoords[mark.id], mark.id === editing);
       if (mark.id === editing) {
         highlight(ctx, mark, lines, pos, font);
       }

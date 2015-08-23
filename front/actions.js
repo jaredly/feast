@@ -14,6 +14,7 @@ var actions = {
   removeMark: false,
   startCreating: 'target',
   */
+  addMark: 'mark',
   removeMark: 'id',
   setMarkStyle: ['id', 'style'],
   setMarkColor: ['id', 'color'],
