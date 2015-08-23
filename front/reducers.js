@@ -92,23 +92,28 @@ function getInitialState(verses, font, size): State {
   MARKS.forEach(mark => marks[mark.id] = mark);
   marks = fromJS(marks);
 
+  var notes = {
+    [gen()]: {
+      mark: MARKS[0].id,
+      text: 'Hello friends this is great',
+    },
+    [gen()]: {
+      mark: MARKS[0].id,
+      text: 'Another note on the same topic',
+    },
+    [gen()]: {
+      mark: MARKS[1].id,
+      text: 'This was a cool something that will now go on and on and never stop until it does at some later point unless it decites to continue blathering on about whatever it is.',
+    },
+  };
+  for (var id in notes) {
+    notes[id].id = id;
+  }
+
   return {
     verses,
     marks,
-    notes: fromJS({
-      [gen()]: {
-        mark: MARKS[0].id,
-        text: 'Hello friends this is great',
-      },
-      [gen()]: {
-        mark: MARKS[0].id,
-        text: 'Another note on the same topic',
-      },
-      [gen()]: {
-        mark: MARKS[1].id,
-        text: 'This was a cool something that will now go on and on and never stop until it does at some later point unless it decites to continue blathering on about whatever it is.',
-      },
-    }),
+    notes: fromJS(notes),
   };
 }
 
@@ -136,6 +141,19 @@ var actions = {
     var marks = state.marks.set(id, mark);
     return {
       marks,
+    };
+  },
+
+  changeNote(state, {id, text}) {
+    return {
+      notes: state.notes.setIn([id, 'text'], text),
+    };
+  },
+
+  createNote(state, {mark, text}) {
+    var id = gen();
+    return {
+      notes: state.notes.set(id, fromJS({id, mark, text})),
     };
   },
 

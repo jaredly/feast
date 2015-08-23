@@ -70,7 +70,6 @@ export default function drawNotes(ctx, notes: any, marks: any, pos: Pos, sideCoo
     } else {
       rpos = top;
     }
-    console.log('pos', lpos, rpos);
   });
 }
 
@@ -86,8 +85,9 @@ function drawTextChunk(ctx, left, top, width, text) {
   ctx.font = font.size + 'px ' + font.family;
   ctx.fillStyle = 'black';
 
-  var words = text.split(/ /g);
-  if (words.length > 10) {
+  var lines = text.split('\n')
+  var words = lines[0].split(/ /g);
+  if (lines.length > 1 || words.length > 10) {
     words = words.slice(0, 10).concat(['...']);
   }
 

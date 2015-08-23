@@ -316,14 +316,21 @@ export default class Remarkable {
         />
         {this.props.editing != null && <Editorial
           mark={this.props.marks.get(this.props.editing)}
+          notes={getNotesFor(this.props.editing, this.props.notes)}
           setMarkStyle={this.props.setMarkStyle}
           setMarkColor={this.props.setMarkColor}
+          changeNote={this.props.changeNote}
+          createNote={() => this.props.createNote(this.props.editing, '')}
           removeMark={this.props.removeMark}
         />}
       </div>
     );
   }
 };
+
+function getNotesFor(id, notes) {
+  return notes.filter(val => val.get('mark') === id);
+}
 
 var styles = {
   canv: {

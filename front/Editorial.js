@@ -1,5 +1,6 @@
 
 import React from 'react';
+import NoteEditor from './NoteEditor';
 
 var COLORS = ['red', 'green', 'blue', 'purple'];
 var TYPES = ['underline', 'highlight', 'sideline'];
@@ -27,15 +28,22 @@ export default class Editorial {
     ));
     return (
       <div style={styles.container}>
-        <ul style={styles.colors}>
-          {colors}
-        </ul>
-        <ul style={styles.types}>
-          {types}
-        </ul>
-        <div style={styles.button} onClick={this.props.removeMark}>
-          delete
+        <div style={styles.bar}>
+          <ul style={styles.colors}>
+            {colors}
+          </ul>
+          <ul style={styles.types}>
+            {types}
+          </ul>
+          <div style={styles.button} onClick={this.props.removeMark}>
+            delete
+          </div>
+          <div style={styles.button} onClick={this.props.createNote}>
+            +note
+          </div>
         </div>
+        {!!this.props.notes.size &&
+          this.props.notes.map(note => <NoteEditor note={note} onChange={text => this.props.changeNote(note.get('id'), text)} />).toArray()}
       </div>
     );
   }
@@ -46,9 +54,6 @@ var styles = {
     position: 'fixed',
     backgroundColor: 'black',
     color: 'white',
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'center',
     padding: 10,
     fontSize: 20,
     fontFamily: 'sans-serif',
@@ -56,6 +61,13 @@ var styles = {
     left: 0,
     right: 0,
   },
+
+  bar: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+
   colors: {
     listStyle: 'none',
     margin: '0 5px',

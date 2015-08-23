@@ -15,6 +15,8 @@ var actions = {
   startCreating: 'target',
   */
   addMark: 'mark',
+  changeNote: ['id', 'text'],
+  createNote: ['mark', 'text'],
   removeMark: 'id',
   setMarkStyle: ['id', 'style'],
   setMarkColor: ['id', 'color'],
