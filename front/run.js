@@ -27,10 +27,9 @@ for (var i=0; i<20; i++) {
 }
 
 var size = {
-  width: 700,
-  height: 1000,
+  width: 1000,
   vmargin: 50,
-  hmargin: 100,
+  hmargin: 300,
 };
 var fontSize = 25;
 var font = {
@@ -48,6 +47,6 @@ document.body.appendChild(node)
 var store = createStore(reducers(verses, font, size));
 
 React.render(<Provider store={store}>
-  {() => <ReduxRem font={font} verses={verses} size={size} />}
+  {() => <ReduxRem />}
 </Provider>, node);
 // React.render(<Wrapper font={font} verses={verses} size={size} />, node);

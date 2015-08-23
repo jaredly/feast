@@ -85,12 +85,15 @@ function getInitialState(verses, font, size): State {
   MARKS.forEach(mark => marks[mark.id] = mark);
   marks = fromJS(marks);
 
-  var {lines, pos, img} = predraw(verses, size, font);
+  var {lines, pos, img, height} = predraw(verses, size, font);
   var sideCoords = calcSideCoords(marks.toJS(), pos, font, size);
 
   return {
     font,
-    size,
+    size: {
+      ...size,
+      height,
+    },
     verses,
     viewer: {
       marks,

@@ -19,7 +19,12 @@ class ReduxRem {
 }
 
 function select(state) {
-  return state.viewer;
+  return {
+    ...state.viewer,
+    font: state.font,
+    verses: state.verses,
+    size: state.size,
+  };
 }
 
 export default connect(select)(ReduxRem);
