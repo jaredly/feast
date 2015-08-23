@@ -23,7 +23,7 @@ export default class Viewer extends React.Component {
     this.state = {
       lines,
       pos,
-      height: height,
+      height,
       baseImg: img,
       // sideCoords,
       editing: null,

@@ -300,7 +300,8 @@ export default class Remarkable {
   }
 
   render(): ReactElement {
-    var {width, height} = this.props.size;
+    var {width} = this.props.size;
+    var height = this.props.height;
     return (
       <div>
         {this.props.editing != null && <Editorial
