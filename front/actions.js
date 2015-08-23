@@ -1,19 +1,5 @@
 
 var actions = {
-  /*
-  setPendingEnd: 'end',
-  stopEditing: false,
-  startEditing: 'id',
-  setEditPos: 'target',
-  changeMark: ['arg', 'val'],
-  setMarkStyle: 'style',
-  setMarkColor: 'color',
-  setEditHandle: 'handle',
-  finishEditMove: false,
-  finishCreating: false,
-  removeMark: false,
-  startCreating: 'target',
-  */
   addMark: 'mark',
   changeNote: ['id', 'text'],
   createNote: ['mark', 'text'],

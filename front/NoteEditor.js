@@ -53,6 +53,7 @@ var styles = {
     top: 10,
     cursor: 'pointer',
   },
+
   text: {
     width: '100%',
     border: 0,
