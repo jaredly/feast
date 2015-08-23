@@ -6,9 +6,9 @@ export default function drawNotes(ctx, notes: any, marks: any, pos: Pos, sideCoo
   var markIds = [];
   for (var mid in marks) {markIds.push(mid)};
   markIds.sort((a, b) =>
-               marks[b].verse === marks[a].verse ?
-                 marks[b].word - marks[a].word :
-                 marks[b].verse - marks[a].verse);
+               marks[a].start.verse === marks[b].start.verse ?
+                 marks[a].start.word - marks[b].start.word :
+                 marks[a].start.verse - marks[b].start.verse);
   for (var nid in notes) {
     if (!ids[notes[nid].mark]) {
       ids[notes[nid].mark] = [nid];
@@ -34,27 +34,36 @@ export default function drawNotes(ctx, notes: any, marks: any, pos: Pos, sideCoo
     var isLeft = mark.type === 'sideline';
     var top;
 
-    if (isLeft) {
-      top = lpos;
-    } else {
-      top = rpos;
-    }
-
-    var wordTop = Math.floor(pos[mark.start.verse][mark.start.word].top - font.size / 2);
-    if (wordTop > top) {
-      top = wordTop;
-    }
-    top = Math.floor(top);
-
     ctx.strokeStyle = mark.style.color;
     ctx.beginPath();
+
     if (isLeft) {
-      ctx.moveTo(sideCoords[mid].left, sideCoords[mid].top);
+      var wordTop = Math.floor(pos[mark.start.verse][mark.start.word].top - font.size + font.space);
+      top = lpos;
+      if (wordTop > top) {
+        top = wordTop;
+      }
+      var wordBottom = Math.floor(pos[mark.end.verse][mark.end.word].top);
+      if (top < wordBottom ) {
+        wordBottom = top;
+      }
+      top = Math.floor(top);
+      ctx.moveTo(sideCoords[mid].left, wordBottom);
       ctx.lineTo(right - font.space * 5, top);
     } else {
-      ctx.moveTo(left, wordTop);
+      var wordTop = Math.floor(pos[mark.start.verse][mark.start.word].top - font.size / 2);
+      top = Math.floor(rpos);
+      if (wordTop > top) {
+        top = wordTop;
+      }
+      var wordBottom = Math.floor(pos[mark.end.verse][mark.end.word].top);
+      if (top < wordBottom ) {
+        wordBottom = top;
+      }
+      ctx.moveTo(left, wordBottom);
       ctx.lineTo(left + font.space * 3, top);
     }
+
     ctx.stroke();
 
     nids.forEach(nid => {
@@ -64,6 +73,7 @@ export default function drawNotes(ctx, notes: any, marks: any, pos: Pos, sideCoo
         top = drawTextChunk(ctx, left + font.space * 4, top, size.hmargin / 2, notes[nid].text) + font.lineHeight * .7;
       }
     });
+    top += font.lineHeight * .3;
 
     if (isLeft) {
       lpos = top;
