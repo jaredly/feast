@@ -319,8 +319,9 @@ export default class Remarkable {
           notes={getNotesFor(this.props.editing, this.props.notes)}
           setMarkStyle={this.props.setMarkStyle}
           setMarkColor={this.props.setMarkColor}
-          changeNote={this.props.changeNote}
           createNote={() => this.props.createNote(this.props.editing, '')}
+          changeNote={this.props.changeNote}
+          removeNote={this.props.removeNote}
           removeMark={this.props.removeMark}
         />}
       </div>

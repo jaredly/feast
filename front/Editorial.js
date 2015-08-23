@@ -43,7 +43,13 @@ export default class Editorial {
           </div>
         </div>
         {!!this.props.notes.size &&
-          this.props.notes.map(note => <NoteEditor note={note} onChange={text => this.props.changeNote(note.get('id'), text)} />).toArray()}
+          this.props.notes.map(note => (
+            <NoteEditor
+              note={note}
+              onChange={text => this.props.changeNote(note.get('id'), text)}
+              onRemove={() => this.props.removeNote(note.get('id'))}
+            />
+          )).toArray()}
       </div>
     );
   }

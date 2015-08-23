@@ -34,12 +34,25 @@ export default class NoteEditor extends React.Component {
           onChange={this.onChange.bind(this)}
           onBlur={this.onBlur.bind(this)}
         />
+        <div onClick={this.props.onRemove} style={styles.delete}>
+          &times;
+        </div>
       </div>
     );
   }
 }
 
 var styles = {
+  editor: {
+    position: 'relative',
+  },
+
+  delete: {
+    position: 'absolute',
+    right: 5,
+    top: 10,
+    cursor: 'pointer',
+  },
   text: {
     width: '100%',
     border: 0,

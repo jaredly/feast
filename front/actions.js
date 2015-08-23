@@ -17,6 +17,7 @@ var actions = {
   addMark: 'mark',
   changeNote: ['id', 'text'],
   createNote: ['mark', 'text'],
+  removeNote: 'id',
   removeMark: 'id',
   setMarkStyle: ['id', 'style'],
   setMarkColor: ['id', 'color'],

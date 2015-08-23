@@ -157,6 +157,12 @@ var actions = {
     };
   },
 
+  removeNote(state, {id}) {
+    return {
+      notes: state.notes.delete(id),
+    };
+  },
+
   setMarkPos(state, {id, handle, pos}) {
     var mark = state.marks.get(id);
     return {
