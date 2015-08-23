@@ -1,5 +1,6 @@
 
 var actions = {
+  /*
   setPendingEnd: 'end',
   stopEditing: false,
   startEditing: 'id',
@@ -12,6 +13,11 @@ var actions = {
   finishCreating: false,
   removeMark: false,
   startCreating: 'target',
+  */
+  removeMark: 'id',
+  setMarkStyle: ['id', 'style'],
+  setMarkColor: ['id', 'color'],
+  setMarkPos: ['id', 'handle', 'pos'],
 };
 
 export default dispatch => {

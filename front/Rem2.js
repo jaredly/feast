@@ -268,7 +268,7 @@ export default class Remarkable {
     if (this.props.pending) {
       this.props.finishCreating();
     }
-    if (this.props.editing != null) {
+    if (this.props.editing != null && this.props.editHandle != null) {
       this.props.finishEditMove();
     }
   }

@@ -61,6 +61,9 @@ var MARKS: Array<any> = [{
   style: {color: 'red'},
 }];
 
+var WORDS = {
+};
+
 var MID = 0;
 MARKS.forEach(mark => mark.id = MID++ + '');
 
@@ -85,90 +88,22 @@ function getInitialState(verses, font, size): State {
   MARKS.forEach(mark => marks[mark.id] = mark);
   marks = fromJS(marks);
 
-  var {lines, pos, img, height} = predraw(verses, size, font);
-  var sideCoords = calcSideCoords(marks.toJS(), pos, font, size);
-
   return {
-    font,
-    size: {
-      ...size,
-      height,
-    },
     verses,
-    viewer: {
-      marks,
-      lines,
-      pos,
-      baseImg: img,
-      sideCoords,
-      editing: null,
-      editHandle: null,
-      pending: null,
-    },
+    marks,
   };
 }
 
 var actions = {
-  setPendingEnd(state, {end}) {
-    invariant(state.pending, 'Cannot set pending end if no pending mark');
-    if (state.pending.end.verse === end.verse &&
-        state.pending.end.word === end.word) {
-      return;
-    }
-    return {
-      pending: {
-        ...state.pending,
-        end,
-      }
-    };
-  },
-
-  stopEditing(state) {
-    return {editing: null};
-  },
-
-  startEditing(state, {id}) {
-    return {
-      editing: id,
-    };
-  },
-
-  setEditPos(state, {target}, fullState) {
-    var current = state.marks.getIn([state.editing, state.editHandle]);
-    if (target.verse === current.get('verse') &&
-        target.word === current.get('word')) {
-      return;
-    }
-    var marks = state.marks.setIn([state.editing, state.editHandle], fromJS(target));
-
-    return {
-      marks,
-      sideCoords: calcSideCoords(marks.toJS(), state.pos, fullState.font, fullState.size),
-    }
-  },
-
-  setEditHandle(state, {handle}) {
-    return {editHandle: handle};
-  },
-
-  changeMark(state, {arg, val}) {
-    return {
-      marks: state.marks.setIn([state.editing].concat(arg), val),
-    };
-  },
-
-  removeMark(state, args, fullState) {
+  removeMark(state, {id}) {
     var marks = state.marks.delete(state.editing);
     return {
-      marks,
-      sideCoords: calcSideCoords(marks.toJS(), state.pos, fullState.font, fullState.size),
-      editing: null,
-      editHandle: null,
+      marks: state.marks.delete(id),
     };
   },
 
-  setMarkStyle(state, {style}, fullState) {
-    var mark = state.marks.get(state.editing);
+  setMarkStyle(state, {id, style}) {
+    var mark = state.marks.get(id);
     switch (style) {
       case 'sideline':
         mark = mark.set('type', 'sideline').setIn(['style', 'underline'], false);
@@ -180,52 +115,21 @@ var actions = {
         mark = mark.set('type', 'highlight').setIn(['style', 'underline'], true);
         break;
     }
-    var marks = state.marks.set(state.editing, mark);
+    var marks = state.marks.set(id, mark);
     return {
       marks,
-      sideCoords: calcSideCoords(marks.toJS(), state.pos, fullState.font, fullState.size),
     };
   },
 
-  setMarkColor(state, {color}) {
+  setMarkPos(state, {id, handle, pos}) {
     return {
-      marks: state.marks.setIn([state.editing, 'style', 'color'], color),
+      marks: state.marks.setIn([id, handle], pos),
     };
   },
 
-  finishEditMove(state) {
-    var editing = state.marks.get(state.editing);
-    var marks = state.marks.set(state.editing, fromJS(balance(editing.toJS())))
-    // todo sidelines recalc?
+  setMarkColor(state, {id, color}) {
     return {
-      marks: marks,
-      editHandle: null,
-    };
-  },
-
-  finishCreating(state) {
-    var id = MID++ + '';
-    invariant(state.pending);
-    return {
-      marks: state.marks.set(id, fromJS({
-        ...balance(state.pending),
-        id,
-      })),
-      pending: null,
-      editHandle: null,
-      editing: id,
-    }
-  },
-
-  startCreating(state, {target}) {
-    return {
-      editing: null,
-      pending: {
-        start: target,
-        end: target,
-        style: {color: 'blue'},
-        id: 'pending',
-      }
+      marks: state.marks.setIn([id, 'style', 'color'], color),
     };
   },
 };
@@ -237,14 +141,12 @@ export default function (verses: Verses, font: FontConfig, size: SizeConfig): (s
       return state;
     }
     // invariant(actions[action.type], 'Unknown action type: ' + action.type);
-    var newViewer = actions[action.type](state.viewer, action, state);
-    if (!newViewer) return state;
+    console.log(action);
+    var newState = actions[action.type](state, action);
+    if (!newState) return state;
     return {
       ...state,
-      viewer: {
-        ...state.viewer,
-        ...newViewer,
-      },
+      ...newState,
     };
   };
 }

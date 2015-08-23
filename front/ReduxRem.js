@@ -3,6 +3,7 @@ import React from 'react';
 import {connect} from 'react-redux';
 import actions from './actions';
 
+import Viewer from './Viewer';
 import Remarkable from './Rem2';
 
 class ReduxRem {
@@ -10,7 +11,7 @@ class ReduxRem {
     var {dispatch, ...props} = this.props;
     return (
       // $FlowFixMe not a ReactComponent
-      <Remarkable
+      <Viewer
         {...props}
         {...actions(dispatch)}
       />
@@ -19,12 +20,7 @@ class ReduxRem {
 }
 
 function select(state) {
-  return {
-    ...state.viewer,
-    font: state.font,
-    verses: state.verses,
-    size: state.size,
-  };
+  return state;
 }
 
 export default connect(select)(ReduxRem);

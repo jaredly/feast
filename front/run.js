@@ -47,6 +47,6 @@ document.body.appendChild(node)
 var store = createStore(reducers(verses, font, size));
 
 React.render(<Provider store={store}>
-  {() => <ReduxRem />}
+  {() => <ReduxRem size={size} font={font} />}
 </Provider>, node);
 // React.render(<Wrapper font={font} verses={verses} size={size} />, node);
