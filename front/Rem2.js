@@ -15,6 +15,7 @@ import {getWordForPos} from './getMousePos';
 import calcSideCoords from './calcSideCoords';
 import drawEditHandles, {editHandleBoxes} from './drawEditHandles';
 import Editorial from './Editorial';
+import drawNotes from './drawNotes';
 
 import type {Context, Mark, Lines, WordRef, WordPos, Pos, MarkID, DOMEvent, FontConfig, SizeConfig, Marks, SideCoords} from './types';
 
@@ -24,7 +25,7 @@ type Props = {
 
   // state
   marks: MarksMap,
-  sideCoords: SideCoords,
+  // sideCoords: SideCoords,
   pos: Pos,
   lines: Lines,
   editing: ?MarkID,
@@ -110,6 +111,7 @@ export default class Remarkable {
     if (this.props.pending) {
       drawEditHandles(this._ctx, balance(this.props.pending), this.props.lines, this.props.pos, this.props.font);
     }
+    drawNotes(this._ctx, this.props.notes.toJS(), marks.toJS(), this.props.pos, this.props.sideCoords, this.props.size, this.props.font);
   }
 
   getEditing(): MarkMap {
@@ -304,12 +306,6 @@ export default class Remarkable {
     var height = this.props.height;
     return (
       <div>
-        {this.props.editing != null && <Editorial
-          mark={this.props.marks.get(this.props.editing)}
-          setMarkStyle={this.props.setMarkStyle}
-          setMarkColor={this.props.setMarkColor}
-          removeMark={this.props.removeMark}
-        />}
         <canvas
           style={styles.canv}
           width={width}
@@ -318,6 +314,12 @@ export default class Remarkable {
           onClick={this.onClick.bind(this)}
           ref={c => this._node = c}
         />
+        {this.props.editing != null && <Editorial
+          mark={this.props.marks.get(this.props.editing)}
+          setMarkStyle={this.props.setMarkStyle}
+          setMarkColor={this.props.setMarkColor}
+          removeMark={this.props.removeMark}
+        />}
       </div>
     );
   }

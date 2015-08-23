@@ -83,6 +83,10 @@ type State = {
   },
 };
 
+function gen() {
+  return Math.random().toString(16).slice(2);
+}
+
 function getInitialState(verses, font, size): State {
   var marks = {};
   MARKS.forEach(mark => marks[mark.id] = mark);
@@ -91,6 +95,20 @@ function getInitialState(verses, font, size): State {
   return {
     verses,
     marks,
+    notes: fromJS({
+      [gen()]: {
+        mark: MARKS[0].id,
+        text: 'Hello friends this is great',
+      },
+      [gen()]: {
+        mark: MARKS[0].id,
+        text: 'Another note on the same topic',
+      },
+      [gen()]: {
+        mark: MARKS[1].id,
+        text: 'This was a cool something that will now go on and on and never stop until it does at some later point unless it decites to continue blathering on about whatever it is.',
+      },
+    }),
   };
 }
 
@@ -122,8 +140,9 @@ var actions = {
   },
 
   setMarkPos(state, {id, handle, pos}) {
+    var mark = state.marks.get(id);
     return {
-      marks: state.marks.setIn([id, handle], pos),
+      marks: state.marks.set(id, fromJS(balance(mark.set(handle, pos).toJS()))),
     };
   },
 

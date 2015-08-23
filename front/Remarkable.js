@@ -118,7 +118,7 @@ export default class Remarkable extends React.Component {
         if (target.word === false) {
           target = {
             verse: target.verse,
-            word: isGreater(pending.start, pending.end) ? target.left : target.right, // pickSide(pending.start, pending.end)
+            word: isGreater(pending.start, pending.end) ? target.left : target.right,
           };
         }
         pending.end = target;
