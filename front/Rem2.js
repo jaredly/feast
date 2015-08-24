@@ -93,6 +93,7 @@ export default class Remarkable {
     if (this.props.editing) {
       marks = marks.set(this.props.editing, balanceIm(marks.get(this.props.editing)));
     }
+
     drawMarks(
       this._ctx,
       this.props.lines,

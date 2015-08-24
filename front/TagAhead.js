@@ -22,7 +22,7 @@ export default class TagStates extends React.Component {
   onChange(text) {
     var needle = text.toLowerCase();
     var results = this.props.tags
-      .filter((tag, tid) => !this.props.used.has(tid) && tag.get('name').toLowerCase().indexOf(needle) !== -1).toList()
+      .filter((tag, tid) => tag.get('name').toLowerCase().indexOf(needle) !== -1).toList()
     this.setState({
       text,
       selected: results.size ? 0 : 'new',
