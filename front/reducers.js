@@ -6,7 +6,7 @@ function invariant(val, message) {
   if (!val) throw new Error(message);
 }
 
-import {fromJS} from 'immutable';
+import {fromJS, Set, Map} from 'immutable';
 import calcSideCoords from './calcSideCoords';
 import predraw from './predraw';
 
@@ -84,7 +84,9 @@ function gen() {
 
 function getInitialState(verses, font, size): State {
   var marks = {};
-  MARKS.forEach(mark => marks[mark.id] = mark);
+  MARKS.forEach(mark => {
+    marks[mark.id] = mark
+  });
 
   var notes = {
     [gen()]: {
@@ -128,12 +130,21 @@ function getInitialState(verses, font, size): State {
   MARKS[1].tags = [awesomeTag, questionTag];
   MARKS[2].tags = [questionTag];
 
+  MARKS.forEach(mark => {
+    mark.tags = Set(mark.tags);
+  });
+
   return {
     verses,
     marks: fromJS(marks),
     tags: fromJS(tags),
     notes: fromJS(notes),
   };
+}
+
+var COLORS = ['red', 'green', 'blue', 'orange', 'purple', 'brown'];
+function randColor() {
+  return COLORS[Math.floor(Math.random() * COLORS.length)];
 }
 
 var actions = {
@@ -192,6 +203,22 @@ var actions = {
   setMarkColor(state, {id, color}) {
     return {
       marks: state.marks.setIn([id, 'style', 'color'], color),
+    };
+  },
+
+  createAndAddTag(state, {mid, text}) {
+    var tid = gen();
+    console.log('new tag', mid, text, tid);
+    var namespace, name;
+    if (text.indexOf(':') !== -1) {
+      [namespace, name] = text.split(':');
+    } else {
+      name = text;
+      namespace = '';
+    }
+    return {
+      marks: state.marks.updateIn([mid, 'tags'], tags => tags.add(tid)),
+      tags: state.tags.set(tid, Map({id: tid, name, namespace, color: randColor()})),
     };
   },
 

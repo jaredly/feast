@@ -24,6 +24,12 @@ export default class NoteEditor extends React.Component {
       if (!this._bounce.cancel()) {
         this.props.onChange(this.state.text);
       }
+      return this.props.onNewNote();
+    }
+    if (e.key === 'Escape') {
+      if (!this._bounce.cancel()) {
+        this.props.onChange(this.state.text);
+      }
       return this.props.onClose();
     }
   }
@@ -34,6 +40,12 @@ export default class NoteEditor extends React.Component {
     }
   }
 
+  componentDidMount() {
+    var node = React.findDOMNode(this._textarea);
+    node.focus();
+    node.selectionStart = node.selectionEnd = node.value.length;
+  }
+
   render() {
     return (
       <div style={styles.editor}>
@@ -42,6 +54,7 @@ export default class NoteEditor extends React.Component {
           value={this.state.text}
           onChange={this.onChange.bind(this)}
           onKeyDown={this.onKeyDown.bind(this)}
+          ref={t => this._textarea = t}
           onBlur={this.onBlur.bind(this)}
         />
         <div onClick={this.props.onRemove} style={styles.delete}>

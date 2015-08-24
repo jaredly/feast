@@ -1,6 +1,7 @@
 
 import React from 'react';
 import NoteEditor from './NoteEditor';
+import TagAhead from './TagAhead';
 
 var COLORS = ['red', 'green', 'blue', 'purple'];
 var TYPES = ['underline', 'highlight', 'sideline'];
@@ -39,7 +40,7 @@ export default class Editorial {
             backgroundColor: color,
             borderColor: color,
           }}>{tag.get('name')}</div>
-          <div style={styles.removeTag} onClick={tid => this.props.removeTag(tid)}>&times;</div>
+          <div style={styles.removeTag} onClick={() => this.props.removeTag(tid)}>&times;</div>
           <div style={{...styles.tagArrow, borderLeftColor: color}}>
           </div>
         </li>
@@ -61,6 +62,12 @@ export default class Editorial {
           <div style={styles.button} onClick={this.props.createNote}>
             +note
           </div>
+          <TagAhead
+            tags={this.props.tags}
+            used={this.props.mark.get('tags')}
+            onSelect={this.props.addTag}
+            onCreate={this.props.newTag}
+          />
         </div>
         <ul style={styles.tags}>
           {tags}
@@ -69,6 +76,7 @@ export default class Editorial {
           this.props.notes.map(note => (
             <NoteEditor
               note={note}
+              onNewNote={this.props.createNote}
               onChange={text => this.props.changeNote(note.get('id'), text)}
               onRemove={() => this.props.removeNote(note.get('id'))}
               onClose={() => this.props.cancelEdit()}

@@ -2,7 +2,7 @@
 import React from 'react';
 import Remarkable from './Rem2';
 
-import {fromJS} from 'immutable';
+import {fromJS, Set} from 'immutable';
 import calcSideCoords from './calcSideCoords';
 import predraw from './predraw';
 
@@ -108,7 +108,7 @@ export default class Viewer extends React.Component {
         start: target,
         end: target,
         style: {color: 'blue'},
-        tags: [],
+        tags: Set(),
         id: 'pending',
       })
     });
@@ -136,6 +136,14 @@ export default class Viewer extends React.Component {
 
   removeTag(tid) {
     this.props.removeTag(this.state.editing, tid);
+  }
+
+  addTag(tid) {
+    this.props.addTag(this.state.editing, tid);
+  }
+
+  newTag(text) {
+    this.props.createAndAddTag(this.state.editing, text);
   }
 
   render() {
