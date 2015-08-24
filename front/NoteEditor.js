@@ -19,6 +19,15 @@ export default class NoteEditor extends React.Component {
     }
   }
 
+  onKeyDown(e) {
+    if (e.key === 'Enter' && e.ctrlKey) {
+      if (!this._bounce.cancel()) {
+        this.props.onChange(this.state.text);
+      }
+      return this.props.onClose();
+    }
+  }
+
   componentWillUnmount() {
     if (!this._bounce.cancel()) {
       this.props.onChange(this.state.text);
@@ -32,6 +41,7 @@ export default class NoteEditor extends React.Component {
           style={styles.text}
           value={this.state.text}
           onChange={this.onChange.bind(this)}
+          onKeyDown={this.onKeyDown.bind(this)}
           onBlur={this.onBlur.bind(this)}
         />
         <div onClick={this.props.onRemove} style={styles.delete}>

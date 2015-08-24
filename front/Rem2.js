@@ -305,7 +305,7 @@ export default class Remarkable {
     if (!target || target.word === false) {
       var sideline = this.getSideline(e);
       if (sideline != null) {
-        return sideline;
+        return [sideline];
       }
       var notemark = this.getNote(e);
       return notemark == null ? [] : [notemark];
@@ -352,6 +352,7 @@ export default class Remarkable {
           changeNote={this.props.changeNote}
           removeNote={this.props.removeNote}
           removeMark={this.props.removeMark}
+          cancelEdit={this.props.cancelEdit}
         />}
       </div>
     );

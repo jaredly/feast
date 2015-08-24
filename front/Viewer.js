@@ -135,6 +135,10 @@ export default class Viewer extends React.Component {
     this.props.setMarkStyle(this.state.editing, style);
   }
 
+  cancelEdit() {
+    this.setState({editing: null, editHandle: null});
+  }
+
   render() {
     var actions = {};
     Object.getOwnPropertyNames(Viewer.prototype).forEach(name => {

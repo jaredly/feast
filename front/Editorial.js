@@ -10,7 +10,6 @@ export default class Editorial {
     var currentColor = this.props.mark.getIn(['style', 'color']);
     var colors = COLORS.map(color => (
       <li style={{...styles.color, backgroundColor: color, ...(color === currentColor && styles.currentColor)}} onClick={() => this.props.setMarkColor(color)}>
-        {color}
       </li>
     ));
     var currentType;
@@ -48,6 +47,7 @@ export default class Editorial {
               note={note}
               onChange={text => this.props.changeNote(note.get('id'), text)}
               onRemove={() => this.props.removeNote(note.get('id'))}
+              onClose={() => this.props.cancelEdit()}
             />
           )).toArray()}
       </div>
@@ -86,8 +86,10 @@ var styles = {
   },
   color: {
     display: 'inline-block',
-    padding: '5px 10px',
+    border: '5px solid white',
     cursor: 'pointer',
+    height: '1em',
+    width: '1em',
     opacity: .4,
   },
   currentColor: {

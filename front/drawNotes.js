@@ -170,7 +170,6 @@ function drawTextChunk(ctx, left, top, width, text, font) {
   return top;
 }
 
-
 var widthCache = {};
 function measure(text, ctx) {
   if (!widthCache[text]) {
