@@ -63,7 +63,6 @@ export default class Viewer extends React.Component {
         target.word === current.get('word')) {
       return;
     }
-    // var marks = this.props.marks.setIn([this.state.editing, this.state.editHandle], fromJS(target));
 
     this.setState({
       editHandlePos: target,
@@ -82,7 +81,6 @@ export default class Viewer extends React.Component {
       return;
     }
     var editing = this.props.marks.get(this.state.editing).set(this.state.editHandle, fromJS(this.state.editHandlePos));
-    // var marks = this.props.marks.set(this.state.editing, fromJS(balance(editing.toJS())))
     this.props.setMarkPos(this.state.editing, this.state.editHandle, fromJS(this.state.editHandlePos));
     // todo sidelines recalc?
     // this.props.setMarks(marks);
@@ -139,6 +137,10 @@ export default class Viewer extends React.Component {
     this.setState({editing: null, editHandle: null});
   }
 
+  removeTag(tid) {
+    this.props.removeTag(this.state.editing, tid);
+  }
+
   render() {
     var actions = {};
     Object.getOwnPropertyNames(Viewer.prototype).forEach(name => {
@@ -148,7 +150,7 @@ export default class Viewer extends React.Component {
     });
     var marks = this.props.marks;
     if (this.state.editHandle) {
-      marks = marks.set(this.state.editing, fromJS(balance(marks.get(this.state.editing).set(this.state.editHandle, this.state.editHandlePos).toJS())));
+      marks = marks.set(this.state.editing, balanceIm(marks.get(this.state.editing).set(this.state.editHandle, this.state.editHandlePos)));
     }
     return (
       <Remarkable
@@ -184,6 +186,21 @@ function balance(mark) {
       start: mark.end,
       end: mark.start,
     };
+  }
+  return mark;
+}
+
+function isGreaterIm(pos1, pos2) {
+  return (pos1.get('verse') > pos2.get('verse')) || (
+    pos1.get('verse') === pos2.get('verse') &&
+    pos1.get('word') > pos2.get('word')
+  );
+}
+
+function balanceIm(mark) {
+  if (isGreater(mark.get('start'), mark.get('end'))) {
+    return mark.set('start', mark.get('end'))
+               .set('end', mark.get('start'));
   }
   return mark;
 }

@@ -12,6 +12,7 @@ export default class Editorial {
       <li style={{...styles.color, backgroundColor: color, ...(color === currentColor && styles.currentColor)}} onClick={() => this.props.setMarkColor(color)}>
       </li>
     ));
+
     var currentType;
     if (this.props.mark.get('type') === 'sideline') {
       currentType = 'sideline';
@@ -20,11 +21,31 @@ export default class Editorial {
     } else {
       currentType = 'highlight';
     }
+
     var types = TYPES.map(type => (
       <li style={{...styles.type, ...(type === currentType && styles.currentType)}} onClick={() => this.props.setMarkStyle(type)}>
         {type}
       </li>
     ));
+
+    var tags = this.props.mark.get('tags').map(tid => {
+      var tag = this.props.tags.get(tid);
+      var color = tag.get('color');
+      // TODO click a tag to search it?
+      return (
+        <li style={styles.tag}>
+          <div style={{
+            ...styles.tagName,
+            backgroundColor: color,
+            borderColor: color,
+          }}>{tag.get('name')}</div>
+          <div style={styles.removeTag} onClick={tid => this.props.removeTag(tid)}>&times;</div>
+          <div style={{...styles.tagArrow, borderLeftColor: color}}>
+          </div>
+        </li>
+      );
+    });
+
     return (
       <div style={styles.container}>
         <div style={styles.bar}>
@@ -41,6 +62,9 @@ export default class Editorial {
             +note
           </div>
         </div>
+        <ul style={styles.tags}>
+          {tags}
+        </ul>
         {!!this.props.notes.size &&
           this.props.notes.map(note => (
             <NoteEditor
@@ -66,6 +90,40 @@ var styles = {
     bottom: 0,
     left: 0,
     right: 0,
+  },
+
+  tags: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    listStyle: 'none',
+    display: 'flex',
+    margin: 0,
+    padding: 0,
+    marginTop: 10,
+  },
+
+  tag: {
+    display: 'flex',
+    marginRight: 10,
+    position: 'relative',
+  },
+
+  removeTag: {
+    position: 'absolute',
+    cursor: 'pointer',
+    top: '.15em',
+    right: '.4em',
+  },
+
+  tagName: {
+    padding: '.1em 10px',
+  },
+
+  tagArrow: {
+    borderStyle: 'solid',
+    borderWidth: '.7em 0 .7em .7em',
+    borderTopColor: 'transparent',
+    borderBottomColor: 'transparent',
   },
 
   bar: {

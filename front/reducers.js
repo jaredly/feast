@@ -195,6 +195,18 @@ var actions = {
     };
   },
 
+  addTag(state, {mid, tid}) {
+    return {
+      marks: state.marks.updateIn([mid, 'tags'], tags => tags.add(tid)),
+    };
+  },
+
+  removeTag(state, {mid, tid}) {
+    return {
+      marks: state.marks.updateIn([mid, 'tags'], tags => tags.delete(tid)),
+    };
+  },
+
   addMark(state, {mark}) {
     return {
       marks: state.marks.set(mark.get('id'), mark),

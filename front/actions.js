@@ -5,6 +5,7 @@ var actions = {
   createNote: ['mark', 'text'],
   removeNote: 'id',
   removeMark: 'id',
+  removeTag: ['mid', 'tid'],
   setMarkStyle: ['id', 'style'],
   setMarkColor: ['id', 'color'],
   setMarkPos: ['id', 'handle', 'pos'],
