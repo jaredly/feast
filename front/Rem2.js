@@ -112,7 +112,7 @@ export default class Remarkable {
     if (this.props.pending) {
       drawEditHandles(this._ctx, balance(this.props.pending), this.props.lines, this.props.pos, this.props.font);
     }
-    this._noteCoords = drawNotes(this._ctx, this.props.notes.toJS(), marks.toJS(), this.props.pos, this.props.sideCoords, this.props.size, this.props.font);
+    this._noteCoords = drawNotes(this._ctx, this.props.notes.toJS(), marks.toJS(), this.props.pos, this.props.sideCoords, this.props.size, this.props.editing);
   }
 
   getEditing(): MarkMap {

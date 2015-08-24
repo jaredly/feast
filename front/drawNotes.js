@@ -1,7 +1,7 @@
 
 import type {Context, Lines, Pos, SideCoords, Marks, FontConfig, SizeConfig, MarkID} from './types';
 
-export default function drawNotes(ctx, notes: any, marks: any, pos: Pos, sideCoords, size: SizeConfig, font: FontConfig) {
+export default function drawNotes(ctx, notes: any, marks: any, pos: Pos, sideCoords, size: SizeConfig, editing: ?MarkID) {
   var noteBoxes = {};
   var ids = {};
   var markIds = [];
@@ -24,10 +24,6 @@ export default function drawNotes(ctx, notes: any, marks: any, pos: Pos, sideCoo
   ctx.globalAlpha = 1;
   ctx.lineWidth = 2;
 
-  var left = size.width - size.hmargin + font.space;
-  var farLeft = size.hmargin / 2 - font.space * 5;
-  var right = size.hmargin - font.space;
-
   var fontSize = 15;
   var font = {
     family: 'serif',
@@ -36,6 +32,10 @@ export default function drawNotes(ctx, notes: any, marks: any, pos: Pos, sideCoo
     size: fontSize,
     indent: fontSize,
   };
+
+  var left = size.width - size.hmargin + font.space;
+  var farLeft = size.hmargin / 2 - font.space * 15;
+  var right = size.hmargin - font.space;
 
   markIds.forEach(mid => {
     var nids = ids[mid];
@@ -59,7 +59,7 @@ export default function drawNotes(ctx, notes: any, marks: any, pos: Pos, sideCoo
       }
       top = Math.floor(top);
       ctx.moveTo(sideCoords[mid].left, wordBottom);
-      ctx.lineTo(right - font.space * 5, top);
+      ctx.lineTo(right - font.space * 14, top);
     } else {
       var wordTop = Math.floor(pos[mark.start.verse][mark.start.word].top - font.size / 2);
       top = Math.floor(rpos);
@@ -78,7 +78,7 @@ export default function drawNotes(ctx, notes: any, marks: any, pos: Pos, sideCoo
 
     var box = {
       top: top - font.size,
-      left: isLeft ? farLeft : left,
+      left: isLeft ? farLeft - font.space : left + font.space * 3,
       bottom: 0,
       right: 0,
     };
@@ -91,9 +91,13 @@ export default function drawNotes(ctx, notes: any, marks: any, pos: Pos, sideCoo
       }
     });
 
-    box.bottom = top - font.lineHeight * .7;
-    box.right = box.left + size.hmargin / 2;
+    box.bottom = top - font.lineHeight * 1.5 + font.space;
+    box.right = box.left + size.hmargin / 2 + font.space;
     noteBoxes[mid] = box;
+
+    if (editing === mid) {
+      ctx.strokeRect(box.left, box.top, box.right - box.left, box.bottom - box.top);
+    }
 
     top += font.lineHeight * .3;
     if (isLeft) {
