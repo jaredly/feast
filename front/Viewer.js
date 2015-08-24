@@ -153,7 +153,7 @@ export default class Viewer extends React.Component {
       <Remarkable
         {...this.props}
         {...actions}
-        sideCoords={memoSideCoords(this.props.marks, this.state.pos, this.props.font, this.props.size)}
+        sideCoords={memoSideCoords(marks, this.state.pos, this.props.font, this.props.size)}
         {...this.state}
         marks={marks}
       />

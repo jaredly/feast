@@ -71,16 +71,6 @@ type State = {
   font: FontConfig,
   size: SizeConfig,
   verses: Verses,
-
-  viewer: {
-    marks: MarksMap,
-    sideCoords: SideCoords,
-    pos: Pos,
-    lines: Lines,
-    editing: ?MarkID,
-    editHandle: ?('start' | 'end'),
-    pending: ?Mark,
-  },
 };
 
 function gen() {
