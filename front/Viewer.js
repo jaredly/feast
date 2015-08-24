@@ -35,15 +35,11 @@ export default class Viewer extends React.Component {
 
   setPendingEnd(end) {
     invariant(this.state.pending, 'Cannot set pending end if no pending mark');
-    if (this.state.pending.end.verse === end.verse &&
-        this.state.pending.end.word === end.word) {
+    if (this.state.pending.get('end').equals(end)) {
       return;
     }
     this.setState({
-      pending: {
-        ...this.state.pending,
-        end,
-      }
+      pending: this.state.pending.set('end', fromJS(end)),
     });
   }
 
@@ -65,14 +61,14 @@ export default class Viewer extends React.Component {
     }
 
     this.setState({
-      editHandlePos: target,
+      editHandlePos: fromJS(target),
     });
   }
 
   setEditHandle(handle) {
     this.setState({
       editHandle: handle,
-      editHandlePos: this.props.marks.getIn([this.state.editing, handle]).toJS(),
+      editHandlePos: this.props.marks.getIn([this.state.editing, handle]),
     });
   }
 
@@ -81,7 +77,11 @@ export default class Viewer extends React.Component {
       return;
     }
     var editing = this.props.marks.get(this.state.editing).set(this.state.editHandle, fromJS(this.state.editHandlePos));
-    this.props.setMarkPos(this.state.editing, this.state.editHandle, fromJS(this.state.editHandlePos));
+    this.props.setMarkPos(
+      this.state.editing,
+      this.state.editHandle,
+      fromJS(this.state.editHandlePos)
+    );
     // todo sidelines recalc?
     // this.props.setMarks(marks);
     this.setState({
@@ -93,10 +93,7 @@ export default class Viewer extends React.Component {
   finishCreating() {
     var id = MID++ + '';
     invariant(this.state.pending);
-    this.props.addMark(fromJS({
-      ...balance(this.state.pending),
-      id,
-    }));
+    this.props.addMark(this.state.pending.set('id', id));
     this.setState({
       pending: null,
       editHandle: null,
@@ -107,13 +104,13 @@ export default class Viewer extends React.Component {
   startCreating(target) {
     this.setState({
       editing: null,
-      pending: {
+      pending: fromJS({
         start: target,
         end: target,
         style: {color: 'blue'},
         tags: [],
         id: 'pending',
-      }
+      })
     });
   }
 
@@ -172,24 +169,6 @@ function memoSideCoords(marks, pos, font, size) {
   return _coords.get(marks);
 }
 
-function isGreater(pos1, pos2) {
-  return (pos1.verse > pos2.verse) || (
-    pos1.verse === pos2.verse &&
-    pos1.word > pos2.word
-  );
-}
-
-function balance(mark) {
-  if (isGreater(mark.start, mark.end)) {
-    return {
-      ...mark,
-      start: mark.end,
-      end: mark.start,
-    };
-  }
-  return mark;
-}
-
 function isGreaterIm(pos1, pos2) {
   return (pos1.get('verse') > pos2.get('verse')) || (
     pos1.get('verse') === pos2.get('verse') &&
@@ -198,7 +177,7 @@ function isGreaterIm(pos1, pos2) {
 }
 
 function balanceIm(mark) {
-  if (isGreater(mark.get('start'), mark.get('end'))) {
+  if (isGreaterIm(mark.get('start'), mark.get('end'))) {
     return mark.set('start', mark.get('end'))
                .set('end', mark.get('start'));
   }

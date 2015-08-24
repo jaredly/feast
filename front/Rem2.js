@@ -88,10 +88,10 @@ export default class Remarkable {
     this._ctx.clearRect(0, 0, this._canv.width, this._canv.height);
     var marks = this.props.marks;
     if (this.props.pending) {
-      marks = marks.set('pending', balance(this.props.pending));
+      marks = marks.set('pending', balanceIm(this.props.pending));
     }
     if (this.props.editing) {
-      marks = marks.set(this.props.editing, balance(marks.get(this.props.editing).toJS()));
+      marks = marks.set(this.props.editing, balanceIm(marks.get(this.props.editing)));
     }
     drawMarks(
       this._ctx,
@@ -108,11 +108,11 @@ export default class Remarkable {
     if (this.props.editing != null) {
       var editMark = this.getEditing();
       if (editMark != null) {
-        drawEditHandles(this._ctx, balance(editMark.toJS()), this.props.lines, this.props.pos, this.props.font);
+        drawEditHandles(this._ctx, balanceIm(editMark).toJS(), this.props.lines, this.props.pos, this.props.font);
       }
     }
     if (this.props.pending) {
-      drawEditHandles(this._ctx, balance(this.props.pending), this.props.lines, this.props.pos, this.props.font);
+      drawEditHandles(this._ctx, balanceIm(this.props.pending).toJS(), this.props.lines, this.props.pos, this.props.font);
     }
     this._noteCoords = drawNotes(
       this._ctx,
@@ -283,7 +283,7 @@ export default class Remarkable {
       target = {
         verse: target.verse,
         // $FlowFixMe this.state.pending is not null
-        word: isGreater(this.props.pending.start, this.props.pending.end) ?
+        word: isGreaterIm(this.props.pending.get('start'), this.props.pending.get('end')) ?
           target.left : target.right,
       };
     }
@@ -397,14 +397,19 @@ function isGreater(pos1, pos2) {
   );
 }
 
-function balance(mark) {
-  if (isGreater(mark.start, mark.end)) {
-    return {
-      ...mark,
-      start: mark.end,
-      end: mark.start,
-    };
+function isGreaterIm(pos1, pos2) {
+  return (pos1.get('verse') > pos2.get('verse')) || (
+    pos1.get('verse') === pos2.get('verse') &&
+    pos1.get('word') > pos2.get('word')
+  );
+}
+
+function balanceIm(mark) {
+  if (isGreaterIm(mark.get('start'), mark.get('end'))) {
+    return mark.set('start', mark.get('end'))
+               .set('end', mark.get('start'));
   }
   return mark;
 }
+
 
