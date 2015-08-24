@@ -66,6 +66,7 @@ export default class Remarkable {
     this.listenWindow();
     this._canv = React.findDOMNode(this._node);
     this._ctx = this._canv.getContext('2d');
+    this._noteCoords = {};
 
     this.draw();
   }
@@ -111,7 +112,7 @@ export default class Remarkable {
     if (this.props.pending) {
       drawEditHandles(this._ctx, balance(this.props.pending), this.props.lines, this.props.pos, this.props.font);
     }
-    drawNotes(this._ctx, this.props.notes.toJS(), marks.toJS(), this.props.pos, this.props.sideCoords, this.props.size, this.props.font);
+    this._noteCoords = drawNotes(this._ctx, this.props.notes.toJS(), marks.toJS(), this.props.pos, this.props.sideCoords, this.props.size, this.props.font);
   }
 
   getEditing(): MarkMap {
@@ -141,6 +142,8 @@ export default class Remarkable {
     if (!target || target.word === false) {
       if (this.getSideline(e) != null) {
         return 'pointer';
+      } else if (this.getNote(e) != null) {
+        return 'pointer';
       }
       return 'default';
     } else if (this.marksFor(target).length) {
@@ -158,6 +161,17 @@ export default class Remarkable {
       }
     }
     return null;
+  }
+
+  getNote(e: DOMEvent): ?MarkID {
+    var {x, y} = this.eventPos(e);
+    for (var mid in this._noteCoords) {
+      var box = this._noteCoords[mid];
+      if (box.top <= y && y <= box.bottom &&
+          box.left <= x && x <= box.right) {
+        return mid;
+      }
+    }
   }
 
   // TODO can I get some flow goodness in here?

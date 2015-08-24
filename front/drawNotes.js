@@ -2,6 +2,7 @@
 import type {Context, Lines, Pos, SideCoords, Marks, FontConfig, SizeConfig, MarkID} from './types';
 
 export default function drawNotes(ctx, notes: any, marks: any, pos: Pos, sideCoords, size: SizeConfig, font: FontConfig) {
+  var noteBoxes = {};
   var ids = {};
   var markIds = [];
   for (var mid in marks) {markIds.push(mid)};
@@ -26,6 +27,15 @@ export default function drawNotes(ctx, notes: any, marks: any, pos: Pos, sideCoo
   var left = size.width - size.hmargin + font.space;
   var farLeft = size.hmargin / 2 - font.space * 5;
   var right = size.hmargin - font.space;
+
+  var fontSize = 15;
+  var font = {
+    family: 'serif',
+    space: fontSize / 3,
+    lineHeight: fontSize * 1.1,
+    size: fontSize,
+    indent: fontSize,
+  };
 
   markIds.forEach(mid => {
     var nids = ids[mid];
@@ -66,32 +76,37 @@ export default function drawNotes(ctx, notes: any, marks: any, pos: Pos, sideCoo
 
     ctx.stroke();
 
+    var box = {
+      top: top - font.size,
+      left: isLeft ? farLeft : left,
+      bottom: 0,
+      right: 0,
+    };
+
     nids.forEach(nid => {
       if (isLeft) {
-        top = drawTextChunk(ctx, farLeft, top, size.hmargin / 2, notes[nid].text) + font.lineHeight * .7;
+        top = drawTextChunk(ctx, farLeft, top, size.hmargin / 2, notes[nid].text, font) + font.lineHeight * 1.5;
       } else {
-        top = drawTextChunk(ctx, left + font.space * 4, top, size.hmargin / 2, notes[nid].text) + font.lineHeight * .7;
+        top = drawTextChunk(ctx, left + font.space * 4, top, size.hmargin / 2, notes[nid].text, font) + font.lineHeight * 1.5;
       }
     });
-    top += font.lineHeight * .3;
 
+    box.bottom = top - font.lineHeight * .7;
+    box.right = box.left + size.hmargin / 2;
+    noteBoxes[mid] = box;
+
+    top += font.lineHeight * .3;
     if (isLeft) {
       lpos = top;
     } else {
       rpos = top;
     }
   });
+
+  return noteBoxes;
 }
 
-function drawTextChunk(ctx, left, top, width, text) {
-  var fontSize = 15;
-  var font = {
-    family: 'serif',
-    space: fontSize / 3,
-    lineHeight: fontSize * 1.1,
-    size: fontSize,
-    indent: fontSize,
-  };
+function drawTextChunk(ctx, left, top, width, text, font) {
   ctx.font = font.size + 'px ' + font.family;
   ctx.fillStyle = 'black';
 

@@ -20,14 +20,12 @@ export default class Viewer extends React.Component {
     super(props);
 
     var {lines, pos, img, height} = predraw(props.verses, props.size, props.font);
-    // var sideCoords = calcSideCoords(marks.toJS(), pos, font, size);
 
     this.state = {
       lines,
       pos,
       height,
       baseImg: img,
-      // sideCoords,
       editing: null,
       editHandle: null,
       editHandlePos: null,
@@ -68,7 +66,6 @@ export default class Viewer extends React.Component {
     // var marks = this.props.marks.setIn([this.state.editing, this.state.editHandle], fromJS(target));
 
     this.setState({
-      // sideCoords: calcSideCoords(marks.toJS(), state.pos, fullState.font, fullState.size),
       editHandlePos: target,
     });
   }
@@ -124,7 +121,6 @@ export default class Viewer extends React.Component {
   removeMark() {
     this.props.removeMark(this.state.editing);
     this.setState({
-      // sideCoords: calcSideCoords(marks.toJS(), state.pos, fullState.font, fullState.size),
       editing: null,
       editHandle: null,
     });
@@ -168,7 +164,6 @@ function memoSideCoords(marks, pos, font, size) {
   }
   return _coords.get(marks);
 }
-
 
 function isGreater(pos1, pos2) {
   return (pos1.verse > pos2.verse) || (
