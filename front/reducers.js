@@ -10,7 +10,7 @@ import {fromJS} from 'immutable';
 import calcSideCoords from './calcSideCoords';
 import predraw from './predraw';
 
-import type {Context, Mark, Lines, WordRef, WordPos, Pos, MarkID, DOMEvent, Verses, FontConfig, SizeConfig, Marks, SideCoords} from './types';
+import type {Context, Mark, Marks, Tags, Tag, Lines, WordRef, WordPos, Pos, MarkID, DOMEvent, Verses, FontConfig, SizeConfig, SideCoords} from './types';
 
 function invariant(val, message) {
   if (!val) throw new Error(message);
@@ -31,6 +31,7 @@ var MARKS: Array<any> = [{
   end: {verse: 5, word: 5},
   type: 'sideline',
   style: {color: 'blue'},
+  tags: [],
 }, {
   start: {verse: 0, word: 5},
   end: {verse: 0, word: 8},
@@ -38,31 +39,33 @@ var MARKS: Array<any> = [{
     color: 'red',
     underline: true,
   },
+  tags: [],
 }, {
   start: {verse: 1, word: 1},
   end: {verse: 1, word: 8},
   style: {
     color: 'green',
   },
+  tags: [],
 }, {
   start: {verse: 0, word: 2},
   end: {verse: 2, word: 5},
   type: 'sideline',
   style: {color: 'orange'},
+  tags: [],
 }, {
   start: {verse: 1, word: 2},
   end: {verse: 3, word: 5},
   type: 'sideline',
   style: {color: 'green'},
+  tags: [],
 }, {
   start: {verse: 3, word: 9},
   end: {verse: 5, word: 5},
   type: 'sideline',
   style: {color: 'red'},
+  tags: [],
 }];
-
-var WORDS = {
-};
 
 var MID = 0;
 MARKS.forEach(mark => mark.id = MID++ + '');
@@ -70,6 +73,8 @@ MARKS.forEach(mark => mark.id = MID++ + '');
 type State = {
   font: FontConfig,
   size: SizeConfig,
+  tags: Tags,
+  marks: Marks,
   verses: Verses,
 };
 
@@ -80,29 +85,53 @@ function gen() {
 function getInitialState(verses, font, size): State {
   var marks = {};
   MARKS.forEach(mark => marks[mark.id] = mark);
-  marks = fromJS(marks);
 
   var notes = {
     [gen()]: {
       mark: MARKS[0].id,
       text: 'Hello friends this is great',
+      color: 'red',
     },
     [gen()]: {
       mark: MARKS[0].id,
       text: 'Another note on the same topic',
+      color: 'blue',
     },
     [gen()]: {
       mark: MARKS[1].id,
       text: 'This was a cool something that will now go on and on and never stop until it does at some later point unless it decites to continue blathering on about whatever it is.',
+      color: 'green',
     },
   };
   for (var id in notes) {
     notes[id].id = id;
   }
 
+  var awesomeTag = gen();
+  var questionTag = gen();
+  var tags = {
+    [awesomeTag]: {
+      id: awesomeTag,
+      name: 'awesome',
+      color: 'green',
+      namespace: '',
+    },
+    [questionTag]: {
+      id: questionTag,
+      namespace: 'question',
+      color: 'red',
+      name: 'how',
+    },
+  };
+
+  MARKS[0].tags = [awesomeTag];
+  MARKS[1].tags = [awesomeTag, questionTag];
+  MARKS[2].tags = [questionTag];
+
   return {
     verses,
-    marks,
+    marks: fromJS(marks),
+    tags: fromJS(tags),
     notes: fromJS(notes),
   };
 }

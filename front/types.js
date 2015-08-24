@@ -35,8 +35,20 @@ export type Mark = {
   id: MarkID,
   start: WordRef,
   end: WordRef,
+  tags: Array<TagID>,
   type?: MarkType,
   style: MarkStyle,
+};
+
+export type Verses = Array<{words: Array<string>}>;
+
+export type TagID = string;
+export type Tags = {[key: TagID]: Tag};
+export type Tag = {
+  id: TagID,
+  name: string,
+  namespace: string,
+  color: string,
 };
 
 export type Context = {
@@ -79,8 +91,6 @@ export type SizeConfig = {
   height: number,
 
 };
-
-export type Verses = Array<{words: Array<string>}>;
 
 export type Lines = Array<{verse: number, word: number, top: number, left: number, right: number}>;
 

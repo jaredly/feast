@@ -1,7 +1,7 @@
 
-import type {Context, Lines, Pos, SideCoords, Marks, FontConfig, SizeConfig, MarkID} from './types';
+import type {Context, Lines, Pos, SideCoords, Marks, Tags, FontConfig, SizeConfig, MarkID} from './types';
 
-export default function drawNotes(ctx, notes: any, marks: any, pos: Pos, sideCoords, size: SizeConfig, editing: ?MarkID) {
+export default function drawNotes(ctx, notes: any, marks: Marks, tags: Tags, pos: Pos, sideCoords, size: SizeConfig, editing: ?MarkID) {
   var noteBoxes = {};
   var ids = {};
   var markIds = [];
@@ -33,14 +33,17 @@ export default function drawNotes(ctx, notes: any, marks: any, pos: Pos, sideCoo
     indent: fontSize,
   };
 
+  ctx.font = font.size + 'px ' + font.family;
+
   var left = size.width - size.hmargin + font.space;
   var farLeft = size.hmargin / 2 - font.space * 15;
   var right = size.hmargin - font.space;
 
   markIds.forEach(mid => {
-    var nids = ids[mid];
-    if (!nids) return;
+    var nids = ids[mid] || [];;
     var mark = marks[mid];
+    var tids = mark.tags;
+    if (!nids.length && !tags.length) return;
     var isLeft = mark.type === 'sideline';
     var top;
 
@@ -83,6 +86,23 @@ export default function drawNotes(ctx, notes: any, marks: any, pos: Pos, sideCoo
       right: 0,
     };
 
+    tids.forEach(tid => {
+      if (!tags[tid]) {
+        console.log('no tags', tags, tid);
+        return;
+      }
+      var x = isLeft ? farLeft : left + font.space * 4;
+      var width = ctx.measureText(tags[tid].name).width;
+      ctx.fillStyle = tags[tid].color || '#ccc';
+      ctx.globalAlpha = 0.5;
+      drawTag(ctx, x, top - font.size + font.space, width + font.space * 2, font.size + font.space);
+      // ctx.fillRect();
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = 'black';
+      ctx.fillText(tags[tid].name, x + font.space, top + font.space);
+      top += font.lineHeight * 1.5;
+    });
+
     nids.forEach(nid => {
       if (isLeft) {
         top = drawTextChunk(ctx, farLeft, top, size.hmargin / 2, notes[nid].text, font) + font.lineHeight * 1.5;
@@ -110,8 +130,18 @@ export default function drawNotes(ctx, notes: any, marks: any, pos: Pos, sideCoo
   return noteBoxes;
 }
 
+function drawTag(ctx, x, y, w, h) {
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x + w, y);
+  ctx.lineTo(x + w + h / 2, y + h / 2);
+  ctx.lineTo(x + w, y + h);
+  ctx.lineTo(x, y + h);
+  ctx.fill();
+  // ctx.fillRect(x, y, w, h);
+}
+
 function drawTextChunk(ctx, left, top, width, text, font) {
-  ctx.font = font.size + 'px ' + font.family;
   ctx.fillStyle = 'black';
 
   var lines = text.split('\n')
