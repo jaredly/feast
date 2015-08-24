@@ -43,7 +43,7 @@ export default function drawNotes(ctx, notes: any, marks: Marks, tags: Tags, pos
     var nids = ids[mid] || [];;
     var mark = marks[mid];
     var tids = mark.tags;
-    if (!nids.length && !tags.length) return;
+    if (!nids.length && !tids.length) return;
     var isLeft = mark.type === 'sideline';
     var top;
 
@@ -63,6 +63,8 @@ export default function drawNotes(ctx, notes: any, marks: Marks, tags: Tags, pos
       top = Math.floor(top);
       ctx.moveTo(sideCoords[mid].left, wordBottom);
       ctx.lineTo(right - font.space * 14, top);
+      ctx.lineTo(right - font.space * 14, top - font.size / 2);
+      ctx.lineTo(right - font.space * 14, top + font.size / 2);
     } else {
       var wordTop = Math.floor(pos[mark.start.verse][mark.start.word].top - font.size / 2);
       top = Math.floor(rpos);
@@ -75,6 +77,8 @@ export default function drawNotes(ctx, notes: any, marks: Marks, tags: Tags, pos
       }
       ctx.moveTo(left, wordBottom);
       ctx.lineTo(left + font.space * 3, top);
+      ctx.lineTo(left + font.space * 3, top - font.size / 2);
+      ctx.lineTo(left + font.space * 3, top + font.size / 2);
     }
 
     ctx.stroke();
@@ -102,6 +106,9 @@ export default function drawNotes(ctx, notes: any, marks: Marks, tags: Tags, pos
       ctx.fillText(tags[tid].name, x + font.space, top + font.space);
       top += font.lineHeight * 1.5;
     });
+    if (tids.length && !nids.length) {
+      top += font.lineHeight * 0.5;
+    }
 
     nids.forEach(nid => {
       if (isLeft) {
@@ -111,7 +118,7 @@ export default function drawNotes(ctx, notes: any, marks: Marks, tags: Tags, pos
       }
     });
 
-    box.bottom = top - font.lineHeight * 1.5 + font.space;
+    box.bottom = top - font.lineHeight * 1.5 + font.space * 1.5;
     box.right = box.left + size.hmargin / 2 + font.space;
     noteBoxes[mid] = box;
 
@@ -138,7 +145,6 @@ function drawTag(ctx, x, y, w, h) {
   ctx.lineTo(x + w, y + h);
   ctx.lineTo(x, y + h);
   ctx.fill();
-  // ctx.fillRect(x, y, w, h);
 }
 
 function drawTextChunk(ctx, left, top, width, text, font) {

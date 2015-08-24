@@ -113,6 +113,7 @@ export default class Viewer extends React.Component {
         start: target,
         end: target,
         style: {color: 'blue'},
+        tags: [],
         id: 'pending',
       }
     });
