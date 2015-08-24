@@ -25,7 +25,7 @@ type Props = {
 
   // state
   marks: MarksMap,
-  // sideCoords: SideCoords,
+  sideCoords: SideCoords,
   pos: Pos,
   lines: Lines,
   editing: ?MarkID,
@@ -293,7 +293,11 @@ export default class Remarkable {
     var target = this.wordAt(e);
     if (!target || target.word === false) {
       var sideline = this.getSideline(e);
-      return sideline == null ? [] : [sideline];
+      if (sideline != null) {
+        return sideline;
+      }
+      var notemark = this.getNote(e);
+      return notemark == null ? [] : [notemark];
     }
     return this.marksFor(target);
   }
