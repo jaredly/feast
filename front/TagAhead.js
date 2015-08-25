@@ -145,8 +145,10 @@ var styles = {
   input: {
     padding: '5px 10px',
     border: 'none',
+    margin: 2,
     fontSize: 16,
     color: 'white',
+    width: 110,
     backgroundColor: '#333',
   },
 
