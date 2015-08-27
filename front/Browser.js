@@ -51,6 +51,7 @@ export default class Browser extends React.Component {
 
   getChildren(id) {
     db.node.where('parent_id').equals(id).toArray(children => {
+      children.sort((a, b) => a.display_order - b.display_order);
       this.setState({loading: false, children});
     });
   }
@@ -61,18 +62,6 @@ export default class Browser extends React.Component {
     }
     this.setState({loading: true, path: this.state.path.concat([this.state.current]), current: node});
     this.getChildren(node.id);
-  }
-
-  goBack() {
-    if (!this.state.path.length) {
-      return;
-    }
-    var current = this.state.path.slice(-1)[0];
-    this.setState({
-      current,
-      path: this.state.path.slice(0, -1),
-    });
-    this.getChildren(current.id);
   }
 
   getContents() {
@@ -130,17 +119,41 @@ export default class Browser extends React.Component {
     );
   }
 
+  goToPath(i) {
+    var path = this.state.path.slice(0, i);
+    var current = this.state.path[i];
+    this.setState({
+      current,
+      path,
+    });
+    this.getChildren(current.id);
+  }
+
+  renderBreadcrumb() {
+    var parents = this.state.path.map((item, i) => (
+      <Hoverable
+        base='li'
+        onClick={() => this.goToPath(i)}
+        style={styles.breadcrumbItem}
+        hoverStyle={styles.breadcrumbHover}
+      >
+        {item.title}
+      </Hoverable>
+    ));
+    return (
+      <ul style={styles.breadcrumb}>
+        {parents}
+        <li style={styles.title}>
+          {this.state.current.title}
+        </li>
+      </ul>
+    );
+  }
+
   render() {
     return (
       <div style={styles.container}>
-        <Hoverable
-          disabled={this.state.current.parent_id == null}
-          onClick={this.goBack.bind(this)}
-          style={styles.title}
-          hoverStyle={styles.titleHover}
-        >
-          {this.state.current.title}
-        </Hoverable>
+        {this.renderBreadcrumb()}
         <div style={styles.contents}>
           {this.getContents()}
         </div>
@@ -153,17 +166,32 @@ var styles = {
   container: {
     padding: 10,
   },
-  title: {
-    cursor: 'pointer',
-    padding: '10px 20px',
-  },
-  titleHover: {
-    backgroundColor: 'white',
-  },
+
   children: {
     listStyle: 'none',
     padding: 0,
     margin: 0,
+  },
+
+  breadcrumb: {
+    listStyle: 'none',
+    display: 'flex',
+    margin: 0,
+    padding: 0,
+  },
+
+  breadcrumbItem: {
+    padding: '10px 20px',
+    cursor: 'pointer',
+  },
+
+  breadcrumbHover: {
+    backgroundColor: 'white',
+  },
+
+  title: {
+    padding: '10px 20px',
+    backgroundColor: '#ddd',
   },
 
   child: {
