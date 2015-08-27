@@ -15,6 +15,8 @@ export default function measureText(ctx: Context, font: FontConfig, size: SizeCo
 
   verses.forEach((verse, i) => {
     var wordPos = [];
+    wordPos.numberLeft = left;
+    left += measure(verse.num, ctx).width + font.space + font.space;
     pos.push(wordPos);
     var words = verse.words;
     lines.push({

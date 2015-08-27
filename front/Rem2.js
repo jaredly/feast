@@ -247,13 +247,14 @@ export default class Remarkable {
     if (!target) {
       return;
     }
-    var mark = this.getEditing().toJS();
+    var mark = this.getEditing();
+    var other = this.props.editHandle === 'start' ? 'end' : 'start';
     if (target.word === false) {
       target = {
         verse: target.verse,
-        word: isGreater(
-          mark.start,
-          mark.end
+        word: isGreaterIm(
+          mark.get(other),
+          mark.get(this.props.editHandle)
         ) ? target.left : target.right,
       };
     }
