@@ -10,21 +10,10 @@ import { Provider } from 'react-redux';
 
 import reducers from './reducers';
 
-var dict = ['dolor', 'sit', 'amet', 'lorem', 'ipsum', 'awesome', 'cheeses', 'verily', 'I,'];
+import getScriptures from './get-scriptures';
+import makeVerses from './make-verses';
 
-function make_varse() {
-  var len = 10 + parseInt(Math.random() * 40);
-  var words = [];
-  for (var i=0; i<len; i++) {
-    words.push(dict[parseInt(Math.random() * dict.length)]);
-  }
-  return {words};
-}
-
-var verses = [];
-for (var i=0; i<6; i++) {
-  verses.push(make_varse());
-}
+window.getScriptures = getScriptures;
 
 var size = {
   width: 1000,
@@ -40,13 +29,12 @@ var font = {
   indent: fontSize,
 };
 
-
 var node = document.createElement('div');
 document.body.appendChild(node)
 
+var verses = makeVerses();
 var store = createStore(reducers(verses, font, size));
 
 React.render(<Provider store={store}>
   {() => <ReduxRem size={size} font={font} />}
 </Provider>, node);
-// React.render(<Wrapper font={font} verses={verses} size={size} />, node);

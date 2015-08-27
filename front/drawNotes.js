@@ -100,7 +100,6 @@ export default function drawNotes(ctx, notes: any, marks: Marks, tags: Tags, pos
       ctx.fillStyle = tags[tid].color || '#ccc';
       ctx.globalAlpha = 0.5;
       drawTag(ctx, x, top - font.size + font.space, width + font.space * 2, font.size + font.space);
-      // ctx.fillRect();
       ctx.globalAlpha = 1;
       ctx.fillStyle = 'black';
       ctx.fillText(tags[tid].name, x + font.space, top + font.space);

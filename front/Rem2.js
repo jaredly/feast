@@ -1,10 +1,4 @@
 /**
- * Marks of the form:
- *
- * {
- * }
- *
- * Text in split up things.
  * @flow
  */
 

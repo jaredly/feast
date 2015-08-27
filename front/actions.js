@@ -13,6 +13,7 @@ var actions = {
   setMarkPos: ['id', 'handle', 'pos'],
 };
 
+
 export default dispatch => {
   var fns = {};
   Object.keys(actions).forEach(name => {
