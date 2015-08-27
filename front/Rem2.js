@@ -388,13 +388,6 @@ function pointInBox(pos, box) {
   );
 }
 
-function isGreater(pos1, pos2) {
-  return (pos1.verse > pos2.verse) || (
-    pos1.verse === pos2.verse &&
-    pos1.word > pos2.word
-  );
-}
-
 function isGreaterIm(pos1, pos2) {
   return (pos1.get('verse') > pos2.get('verse')) || (
     pos1.get('verse') === pos2.get('verse') &&

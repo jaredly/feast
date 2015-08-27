@@ -6,6 +6,7 @@ import ReduxRem from './ReduxRem';
 import { createStore } from 'redux';
 import { Provider } from 'react-redux';
 
+import Hoverable from './Hoverable';
 import reducers from './reducers';
 
 window.db = db;
@@ -29,22 +30,6 @@ function parse_content(text) {
     intro,
     verses,
   };
-  /*
-  var lines = text.replace(/<sup>.<\/sup>/g, '')
-    .replace(/<span class="verseNumber">[^<]+<\/span>/g, '')
-    .split(/<p[^>]+>/g)
-    */
-    // .map(m => m.replace(/<\/p>.*/g, '')
-  /*
-               .replace(/<[^>]+>/g, ''));
-  lines.shift();
-  lines.shift();
-  var intro = lines.shift();
-  return {
-    verses: lines.map(l => ({words: l.split(/\s+/g)})),
-    intro,
-  };
-  */
 }
 
 export default class Browser extends React.Component {
@@ -95,9 +80,14 @@ export default class Browser extends React.Component {
       return (
         <ul style={styles.children}>
           {this.state.children.map(child => (
-            <li style={styles.child} onClick={() => this.goToChild(child)}>
+            <Hoverable
+              style={styles.child}
+              hoverStyle={styles.childHover}
+              onClick={() => this.goToChild(child)}
+              base='li'
+            >
               {child.title}
-            </li>
+            </Hoverable>
           ))}
         </ul>
       );
@@ -127,7 +117,11 @@ export default class Browser extends React.Component {
       indent: fontSize,
     };
 
-    var store = createStore(reducers(chapter.verses, font, size));
+    var notes = {};
+    var tags = {};
+    var marks = {};
+
+    var store = createStore(reducers(chapter.verses, marks, tags, notes));
 
     return (
       <Provider store={store}>
@@ -139,9 +133,14 @@ export default class Browser extends React.Component {
   render() {
     return (
       <div style={styles.container}>
-        <div onClick={this.goBack.bind(this)} style={styles.title}>
+        <Hoverable
+          disabled={this.state.current.parent_id == null}
+          onClick={this.goBack.bind(this)}
+          style={styles.title}
+          hoverStyle={styles.titleHover}
+        >
           {this.state.current.title}
-        </div>
+        </Hoverable>
         <div style={styles.contents}>
           {this.getContents()}
         </div>
@@ -156,6 +155,10 @@ var styles = {
   },
   title: {
     cursor: 'pointer',
+    padding: '10px 20px',
+  },
+  titleHover: {
+    backgroundColor: 'white',
   },
   children: {
     listStyle: 'none',
@@ -166,6 +169,10 @@ var styles = {
   child: {
     padding: '10px 20px',
     cursor: 'pointer',
+  },
+
+  childHover: {
+    backgroundColor: 'white',
   },
 };
 

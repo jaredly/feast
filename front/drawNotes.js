@@ -117,8 +117,8 @@ export default function drawNotes(ctx, notes: any, marks: Marks, tags: Tags, pos
       }
     });
 
-    box.bottom = top - font.lineHeight * 1.5 + font.space * 1.5;
-    box.right = box.left + size.hmargin / 2 + font.space;
+    box.bottom = Math.round(top - font.lineHeight * 1.5 + font.space * 1.5);
+    box.right = Math.round(box.left + size.hmargin / 2 + font.space);
     noteBoxes[mid] = box;
 
     if (editing === mid) {

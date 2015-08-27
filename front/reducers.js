@@ -82,63 +82,12 @@ function gen() {
   return Math.random().toString(16).slice(2);
 }
 
-function getInitialState(verses, font, size): State {
-  var marks = {};
-  MARKS.forEach(mark => {
-    marks[mark.id] = mark
-  });
-
-  var notes = {
-    [gen()]: {
-      mark: MARKS[0].id,
-      text: 'Hello friends this is great',
-      color: 'red',
-    },
-    [gen()]: {
-      mark: MARKS[0].id,
-      text: 'Another note on the same topic',
-      color: 'blue',
-    },
-    [gen()]: {
-      mark: MARKS[1].id,
-      text: 'This was a cool something that will now go on and on and never stop until it does at some later point unless it decites to continue blathering on about whatever it is.',
-      color: 'green',
-    },
-  };
-  for (var id in notes) {
-    notes[id].id = id;
-  }
-
-  var awesomeTag = gen();
-  var questionTag = gen();
-  var tags = {
-    [awesomeTag]: {
-      id: awesomeTag,
-      name: 'awesome',
-      color: 'green',
-      namespace: '',
-    },
-    [questionTag]: {
-      id: questionTag,
-      namespace: 'question',
-      color: 'red',
-      name: 'how',
-    },
-  };
-
-  MARKS[0].tags = [awesomeTag];
-  MARKS[1].tags = [awesomeTag, questionTag];
-  MARKS[2].tags = [questionTag];
-
-  MARKS.forEach(mark => {
-    mark.tags = Set(mark.tags);
-  });
-
+function getInitialState(verses, marks, tags, notes): State {
   return {
     verses,
-    marks: Map(),// fromJS(marks),
-    tags: Map(),// fromJS(tags),
-    notes: Map(),// fromJS(notes),
+    marks: fromJS(marks),
+    tags: fromJS(tags),
+    notes: fromJS(notes),
   };
 }
 
@@ -196,7 +145,7 @@ var actions = {
   setMarkPos(state, {id, handle, pos}) {
     var mark = state.marks.get(id);
     return {
-      marks: state.marks.set(id, fromJS(balance(mark.set(handle, pos).toJS()))),
+      marks: state.marks.set(id, balanceIm(mark.set(handle, pos))),
     };
   },
 
@@ -241,9 +190,9 @@ var actions = {
   },
 };
 
-export default function (verses: Verses, font: FontConfig, size: SizeConfig): (state: ?State, action: Object) => State {
+export default function (verses: Verses, marks, tags, notes): (state: ?State, action: Object) => State {
   return function reduce(state: ?State, action: Object): State {
-    if (!state) state = getInitialState(verses, font, size);
+    if (!state) state = getInitialState(verses, marks, tags, notes);
     if (!actions[action.type]) {
       return state;
     }
@@ -258,22 +207,20 @@ export default function (verses: Verses, font: FontConfig, size: SizeConfig): (s
   };
 }
 
-function isGreater(pos1, pos2) {
-  return (pos1.verse > pos2.verse) || (
-    pos1.verse === pos2.verse &&
-    pos1.word > pos2.word
+function isGreaterIm(pos1, pos2) {
+  return (pos1.get('verse') > pos2.get('verse')) || (
+    pos1.get('verse') === pos2.get('verse') &&
+    pos1.get('word') > pos2.get('word')
   );
 }
 
-function balance(mark) {
-  if (isGreater(mark.start, mark.end)) {
-    return {
-      ...mark,
-      start: mark.end,
-      end: mark.start,
-    };
+function balanceIm(mark) {
+  if (isGreaterIm(mark.get('start'), mark.get('end'))) {
+    return mark.set('start', mark.get('end'))
+               .set('end', mark.get('start'));
   }
   return mark;
 }
+
 
 

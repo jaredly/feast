@@ -27,17 +27,6 @@ export function getWordForPos(x: number, y: number, size: SizeConfig, font: Font
           pos[line.verse].length - 1,
       };
     }
-    /*
-    if (x < line.left) {
-      return {verse: line.verse, word: line.word};
-    }
-    if (x > line.right) {
-      if (lines[i + 1] && lines[i + 1].verse === line.verse) {
-        return {verse: line.verse, word: lines[i + 1].word - 1};
-      }
-      return {verse: line.verse, word: pos[line.verse].length - 1};
-    }
-    */
     var nextLine = lines[i + 1];
     var lastWord =
       (nextLine && nextLine.verse === line.verse) ?
