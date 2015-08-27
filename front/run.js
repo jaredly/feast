@@ -10,11 +10,14 @@ import { Provider } from 'react-redux';
 
 import reducers from './reducers';
 
-import getScriptures from './get-scriptures';
 import makeVerses from './make-verses';
 
+import getScriptures from './get-scriptures';
 window.getScriptures = getScriptures;
 
+import Browser from './Browser';
+
+/*
 var size = {
   width: 1000,
   vmargin: 50,
@@ -29,12 +32,16 @@ var font = {
   indent: fontSize,
 };
 
-var node = document.createElement('div');
-document.body.appendChild(node)
-
 var verses = makeVerses();
 var store = createStore(reducers(verses, font, size));
 
 React.render(<Provider store={store}>
   {() => <ReduxRem size={size} font={font} />}
 </Provider>, node);
+*/
+
+var node = document.createElement('div');
+document.body.appendChild(node)
+
+React.render(<Browser />, node);
+

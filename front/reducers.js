@@ -136,9 +136,9 @@ function getInitialState(verses, font, size): State {
 
   return {
     verses,
-    marks: fromJS(marks),
-    tags: fromJS(tags),
-    notes: fromJS(notes),
+    marks: Map(),// fromJS(marks),
+    tags: Map(),// fromJS(tags),
+    notes: Map(),// fromJS(notes),
   };
 }
 
