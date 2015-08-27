@@ -54,7 +54,7 @@ export default class Viewer extends React.Component {
   }
 
   setEditPos(target) {
-    var current = this.props.marks.getIn([this.state.editing, this.state.editHandle]);
+    var current = this.state.editHandlePos;
     if (target.verse === current.get('verse') &&
         target.word === current.get('word')) {
       return;
