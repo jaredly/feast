@@ -26,50 +26,6 @@ type MarkMap = {
   toJS: () => Mark,
 };
 
-var MARKS: Array<any> = [{
-  start: {verse: 1, word: 10},
-  end: {verse: 5, word: 5},
-  type: 'sideline',
-  style: {color: 'blue'},
-  tags: [],
-}, {
-  start: {verse: 0, word: 5},
-  end: {verse: 0, word: 8},
-  style: {
-    color: 'red',
-    underline: true,
-  },
-  tags: [],
-}, {
-  start: {verse: 1, word: 1},
-  end: {verse: 1, word: 8},
-  style: {
-    color: 'green',
-  },
-  tags: [],
-}, {
-  start: {verse: 0, word: 2},
-  end: {verse: 2, word: 5},
-  type: 'sideline',
-  style: {color: 'orange'},
-  tags: [],
-}, {
-  start: {verse: 1, word: 2},
-  end: {verse: 3, word: 5},
-  type: 'sideline',
-  style: {color: 'green'},
-  tags: [],
-}, {
-  start: {verse: 3, word: 9},
-  end: {verse: 5, word: 5},
-  type: 'sideline',
-  style: {color: 'red'},
-  tags: [],
-}];
-
-var MID = 0;
-MARKS.forEach(mark => mark.id = MID++ + '');
-
 type State = {
   font: FontConfig,
   size: SizeConfig,
@@ -77,10 +33,6 @@ type State = {
   marks: Marks,
   verses: Verses,
 };
-
-function gen() {
-  return Math.random().toString(16).slice(2);
-}
 
 function getInitialState(verses, marks, tags, notes): State {
   return {
@@ -98,13 +50,16 @@ function randColor() {
 
 var actions = {
   removeMark(state, {id}) {
-    var marks = state.marks.delete(state.editing);
     return {
       marks: state.marks.delete(id),
     };
   },
 
   setMarkStyle(state, {id, style}) {
+    return {
+      marks: state.marks.setIn([id, 'type'], style),
+    };
+    /*
     var mark = state.marks.get(id);
     switch (style) {
       case 'sideline':
@@ -121,6 +76,7 @@ var actions = {
     return {
       marks,
     };
+    */
   },
 
   changeNote(state, {id, text}) {
@@ -129,8 +85,7 @@ var actions = {
     };
   },
 
-  createNote(state, {mark, text}) {
-    var id = gen();
+  createNote(state, {id, mark, text}) {
     return {
       notes: state.notes.set(id, fromJS({id, mark, text})),
     };
@@ -155,9 +110,8 @@ var actions = {
     };
   },
 
-  createAndAddTag(state, {mid, text}) {
-    var tid = gen();
-    console.log('new tag', mid, text, tid);
+  createAndAddTag(state, {id, mid, text}) {
+    console.log('new tag', mid, text, id);
     var namespace, name;
     if (text.indexOf(':') !== -1) {
       [namespace, name] = text.split(':');
@@ -166,8 +120,8 @@ var actions = {
       namespace = '';
     }
     return {
-      marks: state.marks.updateIn([mid, 'tags'], tags => tags.add(tid)),
-      tags: state.tags.set(tid, Map({id: tid, name, namespace, color: randColor()})),
+      marks: state.marks.updateIn([mid, 'tags'], tags => tags.add(id)),
+      tags: state.tags.set(id, Map({id, name, namespace, color: randColor()})),
     };
   },
 

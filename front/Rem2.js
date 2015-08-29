@@ -347,7 +347,7 @@ export default class Remarkable {
           newTag={this.props.newTag}
           setMarkStyle={this.props.setMarkStyle}
           setMarkColor={this.props.setMarkColor}
-          createNote={() => this.props.createNote(this.props.editing, '')}
+          createNote={this.props.createNote}
           removeTag={this.props.removeTag}
           changeNote={this.props.changeNote}
           removeNote={this.props.removeNote}

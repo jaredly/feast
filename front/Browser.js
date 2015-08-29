@@ -8,29 +8,9 @@ import { Provider } from 'react-redux';
 
 import Hoverable from './Hoverable';
 import reducers from './reducers';
+import parseContent from './parseContent';
 
 window.db = db;
-
-function parse_content(text) {
-  var node = document.createElement('div');
-  node.innerHTML = text;
-  node = node.firstChild;
-  ;[].map.call(node.querySelectorAll('sup'), s => s.parentNode.removeChild(s));
-  ;[].map.call(node.querySelectorAll('.verseNumber'), s => s.parentNode.removeChild(s));
-  var verses = [].map.call(node.querySelectorAll('p.verse'), p => ({
-    words: p.textContent.split(/\s+/g),
-    uri: p.getAttribute('uri'),
-    num: p.getAttribute('id'),
-  }));
-  var intro = node.querySelector('p.studySummery');
-  if (intro) {
-    intro = intro.textContent;
-  }
-  return {
-    intro,
-    verses,
-  };
-}
 
 export default class Browser extends React.Component {
   constructor() {
@@ -58,10 +38,38 @@ export default class Browser extends React.Component {
 
   goToChild(node) {
     if (node.content) {
-      return this.setState({current: node, path: this.state.path.concat([this.state.current]), children: null});
+      this.setState({
+        loading: true,
+        current: node,
+        path: this.state.path.concat([this.state.current]),
+        children: null
+      });
+      this.getMarks(node);
+      return;
     }
     this.setState({loading: true, path: this.state.path.concat([this.state.current]), current: node});
     this.getChildren(node.id);
+  }
+
+  getMarks(node) {
+    db.annotations
+      .where('node_uri_start').equals(node.uri)
+      .or('node_uri_end').equals(node.uri)
+      .toArray(annotations => {
+        db.tags.toArray(tags => {
+          var ids = annotations.map(ann => ann.id);
+          db.notes.where('annotation_id').anyOf(ids).toArray(notes => {
+            this.setState({
+              loading: false,
+              dbdata: {
+                annotations,
+                tags,
+                notes,
+              }
+            });
+          });
+        });
+      });
   }
 
   getContents() {
@@ -82,7 +90,7 @@ export default class Browser extends React.Component {
       );
     }
     if (this.state.loading) {
-      return null;
+      return <h1>Loading...</h1>;
     }
     if (this.state.current.content) {
       return this.renderViewer();
@@ -90,7 +98,7 @@ export default class Browser extends React.Component {
   }
 
   renderViewer() {
-    var chapter = parse_content(this.state.current.content);
+    var chapter = parseContent(this.state.current.content);
 
     var size = {
       width: 1000,
@@ -107,8 +115,11 @@ export default class Browser extends React.Component {
     };
 
     var notes = {};
+    this.state.dbdata.notes.forEach(note => notes[note.id] = note);
     var tags = {};
+    this.state.dbdata.tags.forEach(tag => tags[tag.id] = tag);
     var marks = {};
+    this.state.dbdata.annotations.forEach(mark => marks[mark.id] = mark);
 
     var store = createStore(reducers(chapter.verses, marks, tags, notes));
 

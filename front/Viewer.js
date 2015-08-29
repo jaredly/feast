@@ -143,7 +143,11 @@ export default class Viewer extends React.Component {
   }
 
   newTag(text) {
-    this.props.createAndAddTag(this.state.editing, text);
+    this.props.createAndAddTag(gen(), this.state.editing, text);
+  }
+
+  createNote() {
+    this.props.createNote(gen(), this.state.editing, '');
   }
 
   render() {
@@ -190,5 +194,9 @@ function balanceIm(mark) {
                .set('end', mark.get('start'));
   }
   return mark;
+}
+
+function gen() {
+  return Math.random().toString(16).slice(2);
 }
 
