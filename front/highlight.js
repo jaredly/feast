@@ -15,7 +15,7 @@ export default function highlight(ctx: Context, mark: Mark, lines: Lines, pos: P
   ctx.fillStyle = mark.style.color;
   ctx.strokeStyle = mark.style.color;
   ctx.lineWidth = 2;
-  if (mark.style.underline) {
+  if (mark.type === 'underline') {
     ctx.globalAlpha = 1;
   } else {
     if (mark.type === 'sideline') {
@@ -25,7 +25,7 @@ export default function highlight(ctx: Context, mark: Mark, lines: Lines, pos: P
     }
   }
   if (startPos.line === endPos.line) {
-    if (mark.style.underline) {
+    if (mark.type === 'underline') {
       line(ctx, startPos.top + wordMarginV - 1, startPos.left, endPos.left + endPos.width);
     } else {
       roundRect(ctx,
@@ -39,7 +39,7 @@ export default function highlight(ctx: Context, mark: Mark, lines: Lines, pos: P
   }
 
   // word to end
-  if (mark.style.underline) {
+  if (mark.type === 'underline') {
     line(ctx, startPos.top + wordMarginV - 1, startPos.left, lines[startPos.line].right);
   } else {
     roundRect(ctx,
@@ -51,7 +51,7 @@ export default function highlight(ctx: Context, mark: Mark, lines: Lines, pos: P
   }
 
   for (var l = startPos.line + 1; l < endPos.line; l++) {
-    if (mark.style.underline) {
+    if (mark.type === 'underline') {
       line(ctx, lines[l].top + wordMarginV - 1, lines[l].left, lines[l].right);
     } else {
       roundRect(ctx,
@@ -63,7 +63,7 @@ export default function highlight(ctx: Context, mark: Mark, lines: Lines, pos: P
     }
   }
 
-  if (mark.style.underline) {
+  if (mark.type === 'underline') {
     line(ctx, lines[endPos.line].top + wordMarginV - 1, lines[endPos.line].left, endPos.left + endPos.width);
   } else {
     roundRect(ctx,

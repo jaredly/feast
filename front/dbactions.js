@@ -1,4 +1,6 @@
 
+import {fromJS, Set, Map} from 'immutable';
+
 export default {
   removeMark: {
     x(state, {id}) {
@@ -16,24 +18,6 @@ export default {
       return {
         marks: state.marks.setIn([id, 'type'], style),
       };
-      /*
-      var mark = state.marks.get(id);
-      switch (style) {
-        case 'sideline':
-          mark = mark.set('type', 'sideline').setIn(['style', 'underline'], false);
-          break;
-        case 'highlight':
-          mark = mark.set('type', 'highlight').setIn(['style', 'underline'], false);
-          break;
-        case 'underline':
-          mark = mark.set('type', 'highlight').setIn(['style', 'underline'], true);
-          break;
-      }
-      var marks = state.marks.set(id, mark);
-      return {
-        marks,
-      };
-      */
     },
     db(db, {id, style}) {
       return db.annotations.update(id, {type: style});
@@ -160,4 +144,20 @@ export default {
     },
   },
 };
+
+
+function isGreaterIm(pos1, pos2) {
+  return (pos1.get('verse') > pos2.get('verse')) || (
+    pos1.get('verse') === pos2.get('verse') &&
+    pos1.get('word') > pos2.get('word')
+  );
+}
+
+function balanceIm(mark) {
+  if (isGreaterIm(mark.get('start'), mark.get('end'))) {
+    return mark.set('start', mark.get('end'))
+               .set('end', mark.get('start'));
+  }
+  return mark;
+}
 

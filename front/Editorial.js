@@ -14,14 +14,7 @@ export default class Editorial {
       </li>
     ));
 
-    var currentType;
-    if (this.props.mark.get('type') === 'sideline') {
-      currentType = 'sideline';
-    } else if (this.props.mark.getIn(['style', 'underline'])) {
-      currentType = 'underline';
-    } else {
-      currentType = 'highlight';
-    }
+    var currentType = this.props.mark.get('type');;
 
     var types = TYPES.map(type => (
       <li style={{...styles.type, ...(type === currentType && styles.currentType)}} onClick={() => this.props.setMarkStyle(type)}>

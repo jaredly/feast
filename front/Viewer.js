@@ -107,6 +107,7 @@ export default class Viewer extends React.Component {
       pending: fromJS({
         start: target,
         end: target,
+        type: 'highlight',
         style: {color: 'blue'},
         tags: Set(),
         id: 'pending',

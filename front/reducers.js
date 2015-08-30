@@ -6,9 +6,7 @@ function invariant(val, message) {
   if (!val) throw new Error(message);
 }
 
-import {fromJS, Set, Map} from 'immutable';
-import calcSideCoords from './calcSideCoords';
-import predraw from './predraw';
+import {fromJS} from 'immutable';
 import dbactions from './dbactions';
 
 import type {Context, Mark, Marks, Tags, Tag, Lines, WordRef, WordPos, Pos, MarkID, DOMEvent, Verses, FontConfig, SizeConfig, SideCoords} from './types';
@@ -65,21 +63,4 @@ export default function (verses: Verses, marks, tags, notes): (state: ?State, ac
     };
   };
 }
-
-function isGreaterIm(pos1, pos2) {
-  return (pos1.get('verse') > pos2.get('verse')) || (
-    pos1.get('verse') === pos2.get('verse') &&
-    pos1.get('word') > pos2.get('word')
-  );
-}
-
-function balanceIm(mark) {
-  if (isGreaterIm(mark.get('start'), mark.get('end'))) {
-    return mark.set('start', mark.get('end'))
-               .set('end', mark.get('start'));
-  }
-  return mark;
-}
-
-
 
