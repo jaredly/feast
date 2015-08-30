@@ -25,6 +25,10 @@ function getPath(node) {
 }
 
 export default class Browser extends React.Component {
+  static contextTypes = {
+    router: React.PropTypes.func.isRequired,
+  };
+
   constructor() {
     super();
     this.state = {
@@ -38,13 +42,19 @@ export default class Browser extends React.Component {
 
   componentDidMount() {
     this.getGeneralData().then(() => {
-      if (window.location.hash) {
-        this.initFromHash(window.location.hash.slice(1));
+      if (this.props.params.splat) {
+        this.initFromHash('/' + this.props.params.splat);
       } else {
         this.getChildren(this.state.current.id);
       }
     }, err => console.error('fail', err))
     .catch(err => console.error('no', err));
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.params.splat !== this.props.params.splat) {
+      this.initFromHash('/' + nextProps.params.splat);
+    }
   }
 
   getGeneralData() {
@@ -59,9 +69,9 @@ export default class Browser extends React.Component {
   initFromHash(hash) {
     db.node.where('uri').equals(hash).first(
       current => {
-        console.log('ash', current);
         if (!current) {
-          return this.getChildren(this.state.current.id);
+          this.setState({current: BOOK, path: []});
+          return this.getChildren(BOOK.id);
         }
         this.loadFull(current);
       },
@@ -86,7 +96,7 @@ export default class Browser extends React.Component {
   }
 
   goToNode(node) {
-    window.location.hash = node.uri;
+    // window.location.hash = node.uri;
     if (node.content) {
       this.setState({
         loading: true,
@@ -101,8 +111,7 @@ export default class Browser extends React.Component {
   }
 
   goToChild(node) {
-    this.setState({path: this.state.path.concat([this.state.current])});
-    this.goToNode(node);
+    this.context.router.transitionTo('view', {splat: node.uri.slice(1)});
   }
 
   getMarks(node) {
@@ -189,12 +198,15 @@ export default class Browser extends React.Component {
   goToPath(i) {
     var path = this.state.path.slice(0, i);
     var current = this.state.path[i];
-    window.location.hash = current.uri;
+    this.context.router.transitionTo('view', {splat: current.uri.slice(1)});
+    /*
+    // window.location.hash = current.uri;
     this.setState({
       current,
       path,
     });
     this.getChildren(current.id);
+    */
   }
 
   renderStudies() {

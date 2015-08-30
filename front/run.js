@@ -15,33 +15,21 @@ import makeVerses from './make-verses';
 import getScriptures from './get-scriptures';
 window.getScriptures = getScriptures;
 
+import App from './App';
 import Browser from './Browser';
 
-/*
-var size = {
-  width: 1000,
-  vmargin: 50,
-  hmargin: 300,
-};
-var fontSize = 25;
-var font = {
-  family: 'serif',
-  space: fontSize / 3,
-  lineHeight: fontSize * 1.4,
-  size: fontSize,
-  indent: fontSize,
-};
+import Router, {Route, DefaultRoute} from 'react-router';
 
-var verses = makeVerses();
-var store = createStore(reducers(verses, font, size));
-
-React.render(<Provider store={store}>
-  {() => <ReduxRem size={size} font={font} />}
-</Provider>, node);
-*/
+var routes = (
+  <Route handler={App} path="/">
+    <DefaultRoute handler={Browser} />
+    <Route name="view" path="/view/*" handler={Browser} />
+    <Route name="edit" />
+  </Route>
+);
 
 var node = document.createElement('div');
 document.body.appendChild(node)
-
-React.render(<Browser />, node);
-
+Router.run(routes, function (Handler) {
+  React.render(<Handler/>, node);
+});
