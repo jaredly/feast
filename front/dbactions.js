@@ -99,16 +99,15 @@ export default {
 
   createAndAddTag: {
     x(state, {id, mid, name, namespace, color}) {
-      console.log('new tag', mid, text, id);
       return {
         marks: state.marks.updateIn([mid, 'tags'], tags => tags.add(id)),
         tags: state.tags.set(id, Map({id, name, namespace, color})),
       };
     },
-    db(db, {id, mid, text, color}) {
+    db(db, {id, mid, name, namespace, color}) {
       return Promise.all([
         db.annotations.where(':id').equals(mid).modify(obj => obj.tags.push(id)),
-        db.tags.put({id, text, color}),
+        db.tags.put({id, name, namespace, color}),
       ]);
     },
   },
@@ -149,7 +148,6 @@ export default {
     },
   },
 };
-
 
 function isGreaterIm(pos1, pos2) {
   return (pos1.get('verse') > pos2.get('verse')) || (

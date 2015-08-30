@@ -28,9 +28,9 @@ type State = {
 function getInitialState(verses, marks, tags, notes): State {
   return {
     verses,
-    marks: fromJS(marks),
+    marks: fromJS(marks).map(m => m.set('tags', m.get('tags').toSet())),
     tags: fromJS(tags),
-    notes: fromJS(notes),
+    notes: fromJS(notes).map(n => n.set('mark', n.get('annotation_id'))),
   };
 }
 
