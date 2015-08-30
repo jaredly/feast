@@ -57,27 +57,31 @@ export default {
     },
   },
 
-  // TODO make this state independant? e.g. pass in "shouldFlip" or not? or
-  // something...
   setMarkPos: {
     x(state, {id, handle, pos}) {
       var mark = state.marks.get(id);
       return {
-        marks: state.marks.set(id, balanceIm(mark.set(handle, pos))),
+        marks: state.marks.setIn([id, handle], pos),
       };
     },
     db(db, {id, handle, pos}, state) {
-      var other = handle === 'start' ? 'end' : 'start';
-      var mark = state.marks.get(id);
-      if (isGreaterIm(mark.get(handle), mark.get(other))) {
-        return db.annotations.update(id, {
-          end: pos,
-          start: mark.get(other).toJS(),
-        });
-      }
       return db.annotations.update(id, {
-        start: pos,
-        end: mark.get(other).toJS(),
+        [handle]: pos.toJS(),
+      });
+    },
+  },
+
+  setMarkEnds: {
+    x(state, {id, start, end}) {
+      var mark = state.marks.get(id);
+      return {
+        marks: state.marks.mergeIn([id], {start, end}),
+      };
+    },
+    db(db, {id, start, end}) {
+      return db.annotations.update(id, {
+        start: start.toJS(),
+        end: end.toJS(),
       });
     },
   },

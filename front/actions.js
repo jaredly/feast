@@ -15,6 +15,7 @@ var actions = {
   setMarkStyle: ['id', 'style'],
   setMarkColor: ['id', 'color'],
   setMarkPos: ['id', 'handle', 'pos'],
+  setMarkEnds: ['id', 'start', 'end'],
 };
 
 export default dispatch => {

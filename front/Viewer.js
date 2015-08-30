@@ -76,14 +76,20 @@ export default class Viewer extends React.Component {
     if (!this.state.editHandle) {
       return;
     }
-    var editing = this.props.marks.get(this.state.editing).set(this.state.editHandle, fromJS(this.state.editHandlePos));
-    this.props.setMarkPos(
-      this.state.editing,
-      this.state.editHandle,
-      fromJS(this.state.editHandlePos)
-    );
-    // todo sidelines recalc?
-    // this.props.setMarks(marks);
+    var mark = this.props.marks.get(this.state.editing).set(this.state.editHandle, this.state.editHandlePos);
+    if (isGreaterIm(mark.get('start'), mark.get('end'))) {
+      this.props.setMarkEnds(
+        this.state.editing,
+        mark.get('end'),
+        mark.get('start')
+      );
+    } else {
+      this.props.setMarkPos(
+        this.state.editing,
+        this.state.editHandle,
+        this.state.editHandlePos
+      );
+    }
     this.setState({
       editHandlePos: null,
       editHandle: null,
