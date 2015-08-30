@@ -17,6 +17,7 @@ window.getScriptures = getScriptures;
 
 import App from './App';
 import Browser from './Browser';
+import Editor from './Editor';
 
 import Router, {Route, DefaultRoute} from 'react-router';
 
@@ -24,7 +25,7 @@ var routes = (
   <Route handler={App} path="/">
     <DefaultRoute handler={Browser} />
     <Route name="view" path="/view/*" handler={Browser} />
-    <Route name="edit" />
+    <Route name="edit" handler={Editor} />
   </Route>
 );
 

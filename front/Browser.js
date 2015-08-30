@@ -9,6 +9,7 @@ import { Provider } from 'react-redux';
 import Hoverable from './Hoverable';
 import reducers from './reducers';
 import parseContent from './parseContent';
+import Nav from './Nav';
 
 window.db = db;
 
@@ -189,7 +190,7 @@ export default class Browser extends React.Component {
     var store = createStore(reducers(chapter.verses, marks, tags, notes));
 
     return (
-      <Provider store={store}>
+      <Provider store={store} key={Math.random() + ''}>
         {() => <ReduxRem studies={this.state.studies} study={this.state.study} uri={this.state.current.uri} size={size} font={font} />}
       </Provider>
     );
@@ -209,11 +210,18 @@ export default class Browser extends React.Component {
     */
   }
 
+  setStudy(id) {
+    this.setState({study: id, loading: true}, () => this.getMarks(this.state.current));
+  }
+
   renderStudies() {
     return (
       <ul style={styles.breadcrumb}>
         {this.state.studies.map(study => (
-          <li style={study.id == this.state.study ? styles.title : styles.breadcrumbItem}>
+          <li
+            style={study.id == this.state.study ? styles.title : styles.breadcrumbItem}
+            onClick={() => this.setStudy(study.id)}
+          >
             {study.title}
           </li>
         ))}
@@ -246,8 +254,11 @@ export default class Browser extends React.Component {
   render() {
     return (
       <div style={styles.container}>
-        {this.renderStudies()}
-        {this.renderBreadcrumb()}
+        <div style={styles.top}>
+          <Nav />
+          {this.renderStudies()}
+          {this.renderBreadcrumb()}
+        </div>
         <div style={styles.contents}>
           {this.getContents()}
         </div>
@@ -258,6 +269,13 @@ export default class Browser extends React.Component {
 
 var styles = {
   container: {
+  },
+
+  top: {
+    display: 'flex',
+  },
+
+  contents: {
     padding: 10,
   },
 

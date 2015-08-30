@@ -2,7 +2,11 @@
 import React from 'react';
 import {Link} from 'react-router';
 
-export default class Nav {
+export default class Nav extends React.Component {
+  static contextTypes = {
+    router: React.PropTypes.func.isRequired,
+  }
+
   render() {
     var items = [{
       title: 'View',
@@ -12,11 +16,17 @@ export default class Nav {
       title: 'Edit',
       name: 'edit',
     }];
+    var routes = this.context.router.getCurrentRoutes();
+    var lastRoute = routes[routes.length - 1];
     return (
       <ul style={styles.container}>
-        {items.map(item => (
-          <li key={item.name}>
-            <Link style={styles.item} params={item.params} activeStyle={styles.active} to={item.name}>
+        {items.map(item => lastRoute.name === item.name ? (
+          <li key={item.name} style={styles.active}>
+            {item.title}
+          </li>
+        ) : (
+          <li key={item.name} style={styles.item}>
+            <Link style={styles.link} to={item.name} params={item.params}>
               {item.title}
             </Link>
           </li>
@@ -33,16 +43,19 @@ var styles = {
     margin: 0,
     display: 'flex',
   },
-  item: {
+  link: {
     textDecoration: 'none',
     padding: '10px 20px',
+    display: 'block',
+    color: 'black',
+  },
+  item: {
     color: 'black',
     display: 'block',
   },
   active: {
     display: 'block',
     backgroundColor: '#aaa',
-    textDecoration: 'none',
     padding: '10px 20px',
     color: 'white',
   },
