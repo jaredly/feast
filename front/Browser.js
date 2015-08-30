@@ -12,21 +12,61 @@ import parseContent from './parseContent';
 
 window.db = db;
 
+var BOOK = {
+  title: 'Book of Mormon',
+  uri: '/scriptures/bofm',
+  id: 0,
+};
+
+function getPath(node) {
+  if (node.parent_id == 0) return Promise.resolve([BOOK]);
+  return db.node.where('id').equals(node.parent_id).first()
+    .then(
+      val => {
+        return getPath(val).then(path => path.concat([val]))
+      }
+    );
+  //return db.node.get(node.parent_id, val => val ? getPath(val).then(path => path.concat([val])) : [])
+}
+
 export default class Browser extends React.Component {
   constructor() {
     super();
     this.state = {
-      current: {
-        title: 'Book of Mormon',
-        id: 0,
-      },
+      current: BOOK,
       path: [],
       loading: true,
     };
   }
 
   componentDidMount() {
-    this.getChildren(this.state.current.id);
+    if (window.location.hash) {
+      this.initFromHash(window.location.hash.slice(1));
+    } else {
+      this.getChildren(this.state.current.id);
+    }
+  }
+
+  initFromHash(hash) {
+    db.node.where('uri').equals(hash).first(
+      current => {
+        console.log('ash', current);
+        if (!current) {
+          return this.getChildren(this.state.current.id);
+        }
+        this.loadFull(current);
+      },
+      err => this.getChildren(this.state.current.id)
+    ).catch(err => console.log('fail! hash', err));
+  }
+
+  loadFull(node) {
+    getPath(node).then(path => {
+      this.setState({path});
+      this.goToNode(node);
+    }, err => {
+      console.log('failed to get path', err);
+    });
   }
 
   getChildren(id) {
@@ -36,19 +76,24 @@ export default class Browser extends React.Component {
     });
   }
 
-  goToChild(node) {
+  goToNode(node) {
+    window.location.hash = node.uri;
     if (node.content) {
       this.setState({
         loading: true,
         current: node,
-        path: this.state.path.concat([this.state.current]),
         children: null
       });
       this.getMarks(node);
       return;
     }
-    this.setState({loading: true, path: this.state.path.concat([this.state.current]), current: node});
+    this.setState({loading: true, current: node});
     this.getChildren(node.id);
+  }
+
+  goToChild(node) {
+    this.setState({path: this.state.path.concat([this.state.current])});
+    this.goToNode(node);
   }
 
   getMarks(node) {
@@ -134,6 +179,7 @@ export default class Browser extends React.Component {
   goToPath(i) {
     var path = this.state.path.slice(0, i);
     var current = this.state.path[i];
+    window.location.hash = current.uri;
     this.setState({
       current,
       path,
@@ -145,7 +191,7 @@ export default class Browser extends React.Component {
     var parents = this.state.path.map((item, i) => (
       <Hoverable
         base='li'
-        key={item.id}
+        key={item.id + i}
         onClick={() => this.goToPath(i)}
         style={styles.breadcrumbItem}
         hoverStyle={styles.breadcrumbHover}
