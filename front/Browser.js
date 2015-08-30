@@ -21,12 +21,7 @@ var BOOK = {
 function getPath(node) {
   if (node.parent_id == 0) return Promise.resolve([BOOK]);
   return db.node.where('id').equals(node.parent_id).first()
-    .then(
-      val => {
-        return getPath(val).then(path => path.concat([val]))
-      }
-    );
-  //return db.node.get(node.parent_id, val => val ? getPath(val).then(path => path.concat([val])) : [])
+    .then(val => getPath(val).then(path => path.concat([val])));
 }
 
 export default class Browser extends React.Component {
@@ -35,16 +30,30 @@ export default class Browser extends React.Component {
     this.state = {
       current: BOOK,
       path: [],
+      studies: [],
       loading: true,
+      study: null,
     };
   }
 
   componentDidMount() {
-    if (window.location.hash) {
-      this.initFromHash(window.location.hash.slice(1));
-    } else {
-      this.getChildren(this.state.current.id);
-    }
+    this.getGeneralData().then(() => {
+      if (window.location.hash) {
+        this.initFromHash(window.location.hash.slice(1));
+      } else {
+        this.getChildren(this.state.current.id);
+      }
+    }, err => console.error('fail', err))
+    .catch(err => console.error('no', err));
+  }
+
+  getGeneralData() {
+    return db.studies.toArray(studies => {
+      this.setState({studies: studies.concat([{
+        id: null,
+        title: 'General',
+      }])});
+    });
   }
 
   initFromHash(hash) {
@@ -100,6 +109,7 @@ export default class Browser extends React.Component {
     db.annotations
       .where('node_uri_start').equals(node.uri)
       .or('node_uri_end').equals(node.uri)
+      .and(ann => ann.study_id == this.state.study)
       .toArray(annotations => {
         db.tags.toArray(tags => {
           var ids = annotations.map(ann => ann.id);
@@ -171,7 +181,7 @@ export default class Browser extends React.Component {
 
     return (
       <Provider store={store}>
-        {() => <ReduxRem uri={this.state.current.uri} size={size} font={font} />}
+        {() => <ReduxRem studies={this.state.studies} study={this.state.study} uri={this.state.current.uri} size={size} font={font} />}
       </Provider>
     );
   }
@@ -185,6 +195,18 @@ export default class Browser extends React.Component {
       path,
     });
     this.getChildren(current.id);
+  }
+
+  renderStudies() {
+    return (
+      <ul style={styles.breadcrumb}>
+        {this.state.studies.map(study => (
+          <li style={study.id == this.state.study ? styles.title : styles.breadcrumbItem}>
+            {study.title}
+          </li>
+        ))}
+      </ul>
+    );
   }
 
   renderBreadcrumb() {
@@ -212,6 +234,7 @@ export default class Browser extends React.Component {
   render() {
     return (
       <div style={styles.container}>
+        {this.renderStudies()}
         {this.renderBreadcrumb()}
         <div style={styles.contents}>
           {this.getContents()}

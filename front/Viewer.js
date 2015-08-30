@@ -115,6 +115,7 @@ export default class Viewer extends React.Component {
         end: target,
         node_uri_start: this.props.uri,
         node_uri_end: this.props.uri,
+        study_id: this.props.study,
         type: 'highlight',
         style: {color: 'blue'},
         tags: Set(),
