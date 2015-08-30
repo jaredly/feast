@@ -143,7 +143,14 @@ export default class Viewer extends React.Component {
   }
 
   newTag(text) {
-    this.props.createAndAddTag(gen(), this.state.editing, text);
+    var namespace, name;
+    if (text.indexOf(':') !== -1) {
+      [namespace, name] = text.split(':');
+    } else {
+      name = text;
+      namespace = '';
+    }
+    this.props.createAndAddTag(gen(), this.state.editing, namespace, name, randColor());
   }
 
   createNote() {
@@ -171,6 +178,11 @@ export default class Viewer extends React.Component {
       />
     );
   }
+}
+
+var COLORS = ['red', 'green', 'blue', 'orange', 'purple', 'brown'];
+function randColor() {
+  return COLORS[Math.floor(Math.random() * COLORS.length)];
 }
 
 var _coords = new Map();

@@ -7,7 +7,7 @@ var actions = {
   removeMark: 'id',
   removeTag: ['mid', 'tid'],
   addTag: ['mid', 'tid'],
-  createAndAddTag: ['id', 'mid', 'text'],
+  createAndAddTag: ['id', 'mid', 'namespace', 'name', 'color'],
   setMarkStyle: ['id', 'style'],
   setMarkColor: ['id', 'color'],
   setMarkPos: ['id', 'handle', 'pos'],

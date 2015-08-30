@@ -19,6 +19,14 @@ db.version(3).stores({
   note: 'id, annotation_id',
   tag: 'id, namespace',
 });
+db.version(4).stores({
+  books: 'uri',
+  node: 'uri, id, parent_id',
+  studies: 'id', // studies!!
+  annotations: 'id, study_id, node_uri_start, node_uri_end',
+  notes: 'id, annotation_id',
+  tags: 'id, namespace',
+});
 
 db.open().catch(err => console.error('failed to open db', err));
 
