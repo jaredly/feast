@@ -107,6 +107,8 @@ export default class Viewer extends React.Component {
       pending: fromJS({
         start: target,
         end: target,
+        node_uri_start: this.props.uri,
+        node_uri_end: this.props.uri,
         type: 'highlight',
         style: {color: 'blue'},
         tags: Set(),

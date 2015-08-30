@@ -78,6 +78,7 @@ export default class Browser extends React.Component {
         <ul style={styles.children}>
           {this.state.children.map(child => (
             <Hoverable
+              key={child.id}
               style={styles.child}
               hoverStyle={styles.childHover}
               onClick={() => this.goToChild(child)}
@@ -125,7 +126,7 @@ export default class Browser extends React.Component {
 
     return (
       <Provider store={store}>
-        {() => <ReduxRem size={size} font={font} />}
+        {() => <ReduxRem uri={this.state.current.uri} size={size} font={font} />}
       </Provider>
     );
   }
@@ -144,6 +145,7 @@ export default class Browser extends React.Component {
     var parents = this.state.path.map((item, i) => (
       <Hoverable
         base='li'
+        key={item.id}
         onClick={() => this.goToPath(i)}
         style={styles.breadcrumbItem}
         hoverStyle={styles.breadcrumbHover}

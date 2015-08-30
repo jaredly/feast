@@ -1,3 +1,7 @@
+// action creators...
+
+import dbactions from './dbactions';
+import db from './db';
 
 var actions = {
   addMark: 'mark',
@@ -13,13 +17,21 @@ var actions = {
   setMarkPos: ['id', 'handle', 'pos'],
 };
 
-
 export default dispatch => {
   var fns = {};
+  function dbdispatch(action) {
+    dispatch(action);
+    dbactions[action.type].db(db, action).then(
+      () => {},
+      err => {
+        console.log('FAILED to database', err);
+      }
+    );
+  }
   Object.keys(actions).forEach(name => {
     if (typeof actions[name] === 'string') {
       fns[name] = function (arg) {
-        dispatch({
+        dbdispatch({
           type: name,
           [actions[name]]: arg,
         });
@@ -30,14 +42,14 @@ export default dispatch => {
         actions[name].forEach((arg, i) => {
           args[arg] = arguments[i];
         });
-        dispatch({
+        dbdispatch({
           ...args,
           type: name,
         });
       };
     } else {
       fns[name] = function () {
-        dispatch({
+        dbdispatch({
           type: name,
         });
       };

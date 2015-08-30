@@ -2,18 +2,10 @@
  * @flow
  */
 
-function invariant(val, message) {
-  if (!val) throw new Error(message);
-}
-
 import {fromJS} from 'immutable';
 import dbactions from './dbactions';
 
 import type {Context, Mark, Marks, Tags, Tag, Lines, WordRef, WordPos, Pos, MarkID, DOMEvent, Verses, FontConfig, SizeConfig, SideCoords} from './types';
-
-function invariant(val, message) {
-  if (!val) throw new Error(message);
-}
 
 type MarksMap = {
   [key: string]: mixed,
@@ -42,20 +34,14 @@ function getInitialState(verses, marks, tags, notes): State {
   };
 }
 
-var actions = {};
-for (var name in dbactions) {
-  actions[name] = dbactions[name].x;
-}
-
 export default function (verses: Verses, marks, tags, notes): (state: ?State, action: Object) => State {
   return function reduce(state: ?State, action: Object): State {
     if (!state) state = getInitialState(verses, marks, tags, notes);
-    if (!actions[action.type]) {
+    if (!dbactions[action.type]) {
       return state;
     }
-    // invariant(actions[action.type], 'Unknown action type: ' + action.type);
-    console.log(action);
-    var newState = actions[action.type](state, action);
+    console.log('Action:', action);
+    var newState = dbactions[action.type].x(state, action);
     if (!newState) return state;
     return {
       ...state,

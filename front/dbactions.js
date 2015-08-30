@@ -68,6 +68,7 @@ export default {
     },
     db(db, {id, handle, pos}, state) {
       var other = handle === 'start' ? 'end' : 'start';
+      var mark = state.marks.get(id);
       if (isGreaterIm(mark.get(handle), mark.get(other))) {
         return db.annotations.update(id, {
           end: pos,
@@ -140,7 +141,7 @@ export default {
       };
     },
     db(db, {mark}) {
-      return db.annotations.put(mark);
+      return db.annotations.put(mark.toJS());
     },
   },
 };

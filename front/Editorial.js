@@ -10,14 +10,14 @@ export default class Editorial {
   render() {
     var currentColor = this.props.mark.getIn(['style', 'color']);
     var colors = COLORS.map(color => (
-      <li style={{...styles.color, backgroundColor: color, ...(color === currentColor && styles.currentColor)}} onClick={() => this.props.setMarkColor(color)}>
+      <li key={color} style={{...styles.color, backgroundColor: color, ...(color === currentColor && styles.currentColor)}} onClick={() => this.props.setMarkColor(color)}>
       </li>
     ));
 
     var currentType = this.props.mark.get('type');;
 
     var types = TYPES.map(type => (
-      <li style={{...styles.type, ...(type === currentType && styles.currentType)}} onClick={() => this.props.setMarkStyle(type)}>
+      <li key={type} style={{...styles.type, ...(type === currentType && styles.currentType)}} onClick={() => this.props.setMarkStyle(type)}>
         {type}
       </li>
     ));
@@ -27,7 +27,7 @@ export default class Editorial {
       var color = tag.get('color');
       // TODO click a tag to search it?
       return (
-        <li style={styles.tag}>
+        <li style={styles.tag} key={tid}>
           <div style={{
             ...styles.tagName,
             backgroundColor: color,
@@ -69,6 +69,7 @@ export default class Editorial {
           this.props.notes.map(note => (
             <NoteEditor
               note={note}
+              key={note.get('id')}
               onNewNote={this.props.createNote}
               onChange={text => this.props.changeNote(note.get('id'), text)}
               onRemove={() => this.props.removeNote(note.get('id'))}
