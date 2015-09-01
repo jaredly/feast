@@ -200,14 +200,6 @@ export default class Browser extends React.Component {
     var path = this.state.path.slice(0, i);
     var current = this.state.path[i];
     this.context.router.transitionTo('view', {splat: current.uri.slice(1)});
-    /*
-    // window.location.hash = current.uri;
-    this.setState({
-      current,
-      path,
-    });
-    this.getChildren(current.id);
-    */
   }
 
   setStudy(id) {

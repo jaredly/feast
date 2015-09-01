@@ -10,6 +10,7 @@ import calcSideCoords from './calcSideCoords';
 import drawEditHandles, {editHandleBoxes} from './drawEditHandles';
 import Editorial from './Editorial';
 import drawNotes from './drawNotes';
+import drawOver from './drawOver';
 
 import type {Context, Mark, Lines, WordRef, WordPos, Pos, MarkID, DOMEvent, FontConfig, SizeConfig, Marks, SideCoords} from './types';
 
@@ -109,6 +110,16 @@ export default class Remarkable {
     if (this.props.pending) {
       drawEditHandles(this._ctx, balanceIm(this.props.pending).toJS(), this.props.lines, this.props.pos, this.props.font);
     }
+    marks.forEach(mark => {
+      if (mark.get('type') === 'outline') {
+        drawOver(this._ctx, mark.toJS(), this.props.verses, this.props.lines, this.props.pos, this.props.font);
+      }
+    });
+    marks.forEach(mark => {
+      if (mark.get('type') === 'color') {
+        drawOver(this._ctx, mark.toJS(), this.props.verses, this.props.lines, this.props.pos, this.props.font);
+      }
+    });
     this._noteCoords = drawNotes(
       this._ctx,
       this.props.notes.toJS(),

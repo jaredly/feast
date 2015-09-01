@@ -4,7 +4,7 @@ import NoteEditor from './NoteEditor';
 import TagAhead from './TagAhead';
 
 var COLORS = ['red', 'green', 'blue', 'purple'];
-var TYPES = ['underline', 'highlight', 'sideline'];
+var TYPES = ['underline', 'highlight', 'sideline', 'outline', 'color'];
 
 export default class Editorial {
   render() {

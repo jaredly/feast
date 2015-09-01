@@ -18,6 +18,7 @@ window.getScriptures = getScriptures;
 import App from './App';
 import Browser from './Browser';
 import Editor from './Editor';
+// import Importer from './Importer';
 
 import Router, {Route, DefaultRoute} from 'react-router';
 
@@ -28,6 +29,7 @@ var routes = (
     <Route name="edit" handler={Editor} />
   </Route>
 );
+    // <Route name="import" handler={Importer} />
 
 var node = document.createElement('div');
 document.body.appendChild(node)

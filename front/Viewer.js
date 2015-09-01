@@ -99,7 +99,7 @@ export default class Viewer extends React.Component {
   finishCreating() {
     var id = gen(); // MID++ + '';
     invariant(this.state.pending);
-    this.props.addMark(this.state.pending.set('id', id));
+    this.props.addMark(balanceIm(this.state.pending.set('id', id)));
     this.setState({
       pending: null,
       editHandle: null,
@@ -185,6 +185,7 @@ export default class Viewer extends React.Component {
         sideCoords={memoSideCoords(marks, this.state.pos, this.props.font, this.props.size)}
         {...this.state}
         marks={marks}
+        verses={this.props.verses}
       />
     );
   }

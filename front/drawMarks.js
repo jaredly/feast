@@ -15,6 +15,8 @@ export default function drawMarks(ctx: Context, lines: Lines, pos: Pos, sideCoor
       if (mark.id === editing) {
         highlight(ctx, mark, lines, pos, font);
       }
+    } else if (mark.type === 'outline' || mark.type === 'color') {
+      // skip this, it will be drawn *after* the text
     } else {
       highlight(ctx, mark, lines, pos, font);
     }
