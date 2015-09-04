@@ -8,6 +8,9 @@ export default {
         marks: state.marks.delete(id),
       };
     },
+    mut(state, {id}) {
+      delete state.marks[id];
+    },
     db(db, {id}) {
       return db.annotations.delete(id);
     },
@@ -18,6 +21,9 @@ export default {
       return {
         marks: state.marks.setIn([id, 'type'], style),
       };
+    },
+    mut(state, {id, style}) {
+      state.marks[id].type = style;
     },
     db(db, {id, style}) {
       return db.annotations.update(id, {type: style});
@@ -30,6 +36,9 @@ export default {
         notes: state.notes.setIn([id, 'text'], text),
       };
     },
+    mut(state, {id, text}) {
+      state.notes[id].text = text;
+    },
     db(db, {id, text}) {
       return db.notes.update(id, {text});
     },
@@ -41,6 +50,9 @@ export default {
         notes: state.notes.set(id, fromJS({id, mark, text})),
       };
     },
+    mut(state, {id, mark, text}) {
+      state.notes[id] = {id, mark, text};
+    },
     db(db, {id, mark, text}) {
       return db.notes.put({id, annotation_id: mark, text});
     },
@@ -51,6 +63,9 @@ export default {
       return {
         notes: state.notes.delete(id),
       };
+    },
+    mut(state, {id}) {
+      delete state.notes[id];
     },
     db(db, {id}) {
       return db.notes.delete(id);
@@ -64,9 +79,12 @@ export default {
         marks: state.marks.setIn([id, handle], pos),
       };
     },
+    mut(state, {id, handle, pos}) {
+      state.marks[id].handle = pos;
+    },
     db(db, {id, handle, pos}, state) {
       return db.annotations.update(id, {
-        [handle]: pos.toJS(),
+        [handle]: pos,
       });
     },
   },
@@ -78,10 +96,14 @@ export default {
         marks: state.marks.mergeIn([id], {start, end}),
       };
     },
+    mut(state, {id, start, end}) {
+      state.marks[id].start = start;
+      state.marks[id].end = end;
+    },
     db(db, {id, start, end}) {
       return db.annotations.update(id, {
-        start: start.toJS(),
-        end: end.toJS(),
+        start: start,
+        end: end,
       });
     },
   },
@@ -91,6 +113,9 @@ export default {
       return {
         marks: state.marks.setIn([id, 'style', 'color'], color),
       };
+    },
+    mut(state, {id, color}) {
+      state.marks[id].style.color = color;
     },
     db(db, {id, color}) {
       return db.annotations.update(id, {'style.color': color});
@@ -103,6 +128,9 @@ export default {
         marks: state.marks.updateIn([mid, 'tags'], tags => tags.add(id)),
         tags: state.tags.set(id, Map({id, name, namespace, color})),
       };
+    },
+    mut(state, {id, mid, name, namespace, color}) {
+      state.marks[mid].tags.add(mid);
     },
     db(db, {id, mid, name, namespace, color}) {
       return Promise.all([
@@ -140,11 +168,11 @@ export default {
   addMark: {
     x(state, {mark}) {
       return {
-        marks: state.marks.set(mark.get('id'), mark),
+        marks: state.marks.set(mark.id, myFromJS(mark)),
       };
     },
     db(db, {mark}) {
-      return db.annotations.put(mark.toJS());
+      return db.annotations.put(mark);
     },
   },
 };

@@ -29,7 +29,6 @@ var routes = (
     <Route name="edit" handler={Editor} />
   </Route>
 );
-    // <Route name="import" handler={Importer} />
 
 var node = document.createElement('div');
 document.body.appendChild(node)

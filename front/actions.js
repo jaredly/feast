@@ -18,11 +18,16 @@ var actions = {
   setMarkEnds: ['id', 'start', 'end'],
 };
 
-export default dispatch => {
+export default (dispatch, socket) => {
   var fns = {};
   function dbdispatch(action) {
     dispatch(action);
-    dbactions[action.type].db(db, action).then(
+    var dbaction = {};
+    for (var name in action) {
+      dbaction[name] = action[name];
+    }
+    socket.send(dbaction);
+    dbactions[action.type].db(db, dbaction).then(
       () => {},
       err => {
         console.log('FAILED to database', err);
@@ -58,4 +63,7 @@ export default dispatch => {
   });
   return fns;
 };
+
+export function connect(socket) {
+}
 

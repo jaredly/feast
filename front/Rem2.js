@@ -94,7 +94,7 @@ export default class Remarkable {
       this.props.lines,
       this.props.pos,
       this.props.sideCoords,
-      marks.toJS(),
+      myToJS(marks),
       this.props.font,
       this.props.size,
       this.props.editing
@@ -104,26 +104,26 @@ export default class Remarkable {
     if (this.props.editing != null) {
       var editMark = this.getEditing();
       if (editMark != null) {
-        drawEditHandles(this._ctx, balanceIm(editMark).toJS(), this.props.lines, this.props.pos, this.props.font);
+        drawEditHandles(this._ctx, myToJS(balanceIm(editMark)), this.props.lines, this.props.pos, this.props.font);
       }
     }
     if (this.props.pending) {
-      drawEditHandles(this._ctx, balanceIm(this.props.pending).toJS(), this.props.lines, this.props.pos, this.props.font);
+      drawEditHandles(this._ctx, myToJS(balanceIm(this.props.pending)), this.props.lines, this.props.pos, this.props.font);
     }
     marks.forEach(mark => {
       if (mark.get('type') === 'outline') {
-        drawOver(this._ctx, mark.toJS(), this.props.verses, this.props.lines, this.props.pos, this.props.font);
+        drawOver(this._ctx, myToJS(mark), this.props.verses, this.props.lines, this.props.pos, this.props.font);
       }
     });
     marks.forEach(mark => {
       if (mark.get('type') === 'color') {
-        drawOver(this._ctx, mark.toJS(), this.props.verses, this.props.lines, this.props.pos, this.props.font);
+        drawOver(this._ctx, myToJS(mark), this.props.verses, this.props.lines, this.props.pos, this.props.font);
       }
     });
     this._noteCoords = drawNotes(
       this._ctx,
       this.props.notes.toJS(),
-      marks.toJS(),
+      myToJS(marks),
       this.props.tags.toJS(),
       this.props.pos,
       this.props.sideCoords,
@@ -210,7 +210,7 @@ export default class Remarkable {
     if (!mark) {
       return;
     }
-    mark = mark.toJS();
+    mark = myToJS(mark);
     var startPos = this.props.pos[mark.start.verse][mark.start.word];
     var endPos = this.props.pos[mark.end.verse][mark.end.word];
     var {start, end} = editHandleBoxes(startPos, endPos, this.props.font);

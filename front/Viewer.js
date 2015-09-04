@@ -13,8 +13,6 @@ function invariant(val, message) {
   if (!val) throw new Error(message);
 }
 
-// var MID = 1000;
-
 export default class Viewer extends React.Component {
   constructor(props) {
     super(props);
@@ -97,9 +95,9 @@ export default class Viewer extends React.Component {
   }
 
   finishCreating() {
-    var id = gen(); // MID++ + '';
+    var id = gen();
     invariant(this.state.pending);
-    this.props.addMark(balanceIm(this.state.pending.set('id', id)));
+    this.props.addMark(balance(myToJS(this.state.pending.set('id', id))));
     this.setState({
       pending: null,
       editHandle: null,
