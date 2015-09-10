@@ -275,6 +275,51 @@ describe('AllYourBase', () => {
       done();
     }, 450));
   });
+
+  it.only('tab rebase fuzzing', done => {
+    var serverActions = [];
+    var appliedActions = [];
+
+    var db = {
+      ...basicDb,
+      applyActions: pending => {
+        console.log('DB:apply', pending)
+        appliedActions = appliedActions.concat(pending);
+        return Promise.resolve(null)
+      },
+    };
+    var conn = {
+      ...basicConn,
+      update: (head, sending) => {
+        console.log('SS:update', head, sending);
+        serverActions = serverActions.concat(sending);
+        return tickp({head: head + sending.length}, 10)
+      },
+    };
+
+    const shared = new SharedManager(db, conn);
+    const colors = ['red', 'green', 'blue', 'gray', 'yellow'];
+
+    let clients = [];
+    for (var i=0; i<10; i++) {
+      const [clientPort, sharedPort] = makePorts(chalk[colors[i % colors.length]]('client' + i));
+      const client = new TabComm(clientPort, reduce);
+      shared.addConnection(sharedPort);
+      clients.push(client);
+    }
+
+    shared.init().then(() => Promise.all(clients.map(c => c.init()))).then(() => {
+      clients.forEach((c, i) => c.addAction('first from ' + i));
+      clients.forEach((c, i) => c.addAction('second from ' + i));
+    }).then(() => setTimeout(() => {
+      console.log('SERVER', serverActions);
+      expect(appliedActions).to.eql(serverActions);
+      clients.forEach(c => {
+        expect(c.state.toJS()).to.eql(serverActions);
+      });
+      done();
+    }, 450));
+  });
 });
 
 
