@@ -56,6 +56,7 @@ export default class Socketeer {
       }
       if (this.config.breakSync) {
         console.warn('breaking sync', this.waiting);
+        this.waiting.done(new Error('broken sync'));
         this.waiting = null;
         this.onMessage(data);
       } else {

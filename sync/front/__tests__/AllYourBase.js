@@ -73,7 +73,7 @@ function reduce(state, action) {
 }
 
 describe('AllYourBase', () => {
-  it('should not fail utterly', done => {
+  it.only('should not fail utterly', done => {
 
     var appliedActions = [];
     var serverActions = [];
@@ -98,7 +98,7 @@ describe('AllYourBase', () => {
 
     var shared = new SharedManager(db, conn);
 
-    var [clientPort, sharedPort] = makePorts();
+    var [clientPort, sharedPort] = makePorts('one');
     var client = new TabComm(clientPort, reduce);
     shared.addConnection(sharedPort);
 
@@ -108,11 +108,12 @@ describe('AllYourBase', () => {
       client.addAction('c');
     }).then(() => {
       setTimeout(() => {
+        expect(client.pending).to.eql([]);
         expect(client.state.toJS()).to.eql(['a', 'b', 'c'], 'client state');
-        expect(appliedActions).to.eql(['a', 'b', 'c'], 'applied to db');
         expect(serverActions).to.eql(['a', 'b', 'c'], 'sent to server');
+        expect(appliedActions).to.eql(['a', 'b', 'c'], 'applied to db');
         done();
-      }, 50);
+      }, 100);
     }, err => {
       done(err);
     });
@@ -130,7 +131,7 @@ describe('AllYourBase', () => {
     };
     var shared = new SharedManager(basicDb, conn);
 
-    var [clientPort, sharedPort] = makePorts();
+    var [clientPort, sharedPort] = makePorts('one');
     var client = new TabComm(clientPort, reduce);
     shared.addConnection(sharedPort);
 
@@ -167,7 +168,7 @@ describe('AllYourBase', () => {
     };
     var shared = new SharedManager(db, conn);
 
-    var [clientPort, sharedPort] = makePorts();
+    var [clientPort, sharedPort] = makePorts('one');
     var client = new TabComm(clientPort, reduce);
     shared.addConnection(sharedPort);
 
@@ -181,7 +182,7 @@ describe('AllYourBase', () => {
     }, 50));
   });
 
-  it.only('should reconcile a rebase from another tab', done => {
+  it('should reconcile a rebase from another tab', done => {
     var serverActions = [];
     var appliedActions = [];
 

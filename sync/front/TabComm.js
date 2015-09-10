@@ -68,6 +68,9 @@ export default class TabComm {
       }
     }).catch(err => {
       console.log('failed to sync', err);
+      this.waiting = false;
+      this.pending = sending.concat(this.pending);
+      this.sync();
     });
   }
 
