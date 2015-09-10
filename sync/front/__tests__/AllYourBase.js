@@ -18,11 +18,10 @@ function tick(fn) {
 }
 
 function rtick(fn, offset) {
-  var times = [10, 23, 13, 16, 18, 10, 11, 10, 14];
-  // setTimeout(fn, times[offset % times.length]);
-  setTimeout(fn, Math.floor(Math.random() * 10 + 10));
+  setTimeout(fn, 5 + Math.floor(offset));
 }
 
+var start = Date.now();
 var tickp = (val, time) => prom(done => setTimeout(() => done(null, val), time || 1));
 
 var j = v => JSON.stringify(v);
@@ -32,12 +31,18 @@ function makePorts(name, random) {
   var count = 0;
   var one = {
     addEventListener: fn => {},
-    postMessage: data => ticker(() => console.log('\t\t\t\t\t\t\t\ts<<c', name, data.type, j(data)) && false || two.onmessage({data}), ++count),
+    postMessage: data => ticker(() => {
+      console.log('\t\t\t\t\t\t\t\ts<<c', name, data.type, j(data), Date.now() - start);
+      return two.onmessage({data});
+    }, count += Math.random() / 5),
     onmessage: () => {},
   };
   var two = {
     addEventListener: fn => {},
-    postMessage: data => ticker(() => console.log('\t\t\t\ts>>c', name, data.type, j(data)) && false || one.onmessage({data}), ++count),
+    postMessage: data => ticker(() => {
+      console.log('\t\t\t\ts>>c', name, data.type, j(data), Date.now() - start);
+      return one.onmessage({data});
+    }, ++count),
     onmessage: () => {},
   };
   return [one, two];
@@ -335,7 +340,8 @@ describe('AllYourBase', () => {
     }, 600));
   });
 
-  it('tab rebase fuzzing (random  latency)', done => {
+  it('tab rebase fuzzing (random  latency)', function (done) {
+    this.timeout(3000);
     var {serverActions, appliedActions, shared} = makeTracking();
     const colors = ['red', 'green', 'blue', 'gray', 'yellow'];
 
@@ -372,7 +378,7 @@ describe('AllYourBase', () => {
         throw errs[0];
       }
       done();
-    }, 600));
+    }, 2000));
   });
 });
 
