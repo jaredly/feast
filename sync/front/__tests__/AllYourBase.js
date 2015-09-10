@@ -110,7 +110,6 @@ function reduce(state, action) {
 
 describe('AllYourBase', () => {
   it('should not fail utterly', done => {
-
     var appliedActions = [];
     var serverActions = [];
 
@@ -336,12 +335,12 @@ describe('AllYourBase', () => {
     }, 600));
   });
 
-  it.only('tab rebase fuzzing (random  latency)', done => {
+  it('tab rebase fuzzing (random  latency)', done => {
     var {serverActions, appliedActions, shared} = makeTracking();
     const colors = ['red', 'green', 'blue', 'gray', 'yellow'];
 
     let clients = [];
-    for (var i=0; i<2; i++) {
+    for (var i=0; i<10; i++) {
       const [clientPort, sharedPort] = makePorts(chalk[colors[i % colors.length]]('client' + i), true);
       const client = new TabComm(clientPort, reduce);
       shared.addConnection(sharedPort);

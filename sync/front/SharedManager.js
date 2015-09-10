@@ -45,6 +45,13 @@ export default class SharedManager {
         this.addActions(actions);
         this.clients.forEach(other => {
           if (other === sack) return;
+          // TODO have some knowledge of the where the client's head is, so we
+          // won't send redundent updates (e.g. if the client sent and update
+          // and got a rebase with this action.... but wait, maybe this would
+          // actually never happen b/c sends are ordered? idk. I think the
+          // randomness might be approximating multi-process things, but it's
+          // also likely that there are some ordering guarantees that I'm
+          // invalidating w/ the randomness. Anyway.
           other.send({
             type: 'update',
             newTail: actions,

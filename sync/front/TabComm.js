@@ -77,6 +77,9 @@ export default class TabComm {
   }
 
   rebase(response, fromServer) {
+    if (response.head <= this.head) {
+      return console.error('REBASE INVALID', this.head, response);
+    }
     console.log('REBASE', response, fromServer, this.serverState, this.syncedState, this.state, this.pending, this.sending)
     var base = fromServer ? this.serverState : this.syncedState;
     var syncedState = this.applyActions(base, response.newTail);
@@ -93,7 +96,7 @@ export default class TabComm {
     this.state = this.applyActions(syncedState, rebased);
     this.pending = rebased;
     this.head = response.head;
-    console.log('ESABER', this.serverState, this.syncedState, this.state, this.pending, this.sending);
+    console.log('ESABER server', this.serverState, 'synced', this.syncedState, 'state', this.state, 'pending', this.pending, 'sending', this.sending);
   }
 
   addAction(action) {
