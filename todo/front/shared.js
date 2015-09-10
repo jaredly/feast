@@ -19,14 +19,14 @@ class DBMiddle {
   }
 
   commitPending(pending) {
-    return Promise.all([this.applyActions(pending), this.removePending(pending)]);
+    return Promise.all([this.applyActions(pending.map(p => p.action)), this.removePending(pending)]);
   }
 
-  applyActions(pending) {
+  applyActions(actions) {
     // TODO figure out what things can be done concurrently
     // var actions = compressActions(pending.map(p => p.action));
     // actions.reduce((prom, actions) => prom.then(() => this.applyActionParallel(actions)));
-    return pending.reduce((prom, {id, action}) => {
+    return actions.reduce((prom, action) => {
       return prom.then(() => this.applyAction(action));
     }, Promise.resolve());
   }

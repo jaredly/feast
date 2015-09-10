@@ -48,7 +48,7 @@ var basicDb = {
     return Promise.resolve();
   },
   commitPending(pending) {
-    return Promise.all([this.applyActions(pending), this.removePending(pending)]);
+    return Promise.all([this.applyActions(pending.map(p => p.action)), this.removePending(pending)]);
   },
   applyActions: actions => tickp(null, 10),
   removePending: () => null,
@@ -141,7 +141,7 @@ describe('AllYourBase', () => {
     }, 50));
   });
 
-  it.only('should reconcile a rebase from the server', done => {
+  it('should reconcile a rebase from the server', done => {
     var serverActions = [];
     var appliedActions = [];
 
@@ -149,7 +149,7 @@ describe('AllYourBase', () => {
       ...basicDb,
       applyActions: pending => {
         console.log('DB:apply', pending)
-        appliedActions = appliedActions.concat(pending.map(p => p.action));
+        appliedActions = appliedActions.concat(pending);
         return Promise.resolve(null)
       },
     };
@@ -173,11 +173,11 @@ describe('AllYourBase', () => {
     shared.init().then(() => client.init()).then(() => {
       client.addAction('something');
     }).then(() => setTimeout(() => {
-      expect(client.state.toJS()).to.eql(['thisfirst', 'something']);
-      expect(serverActions).to.eql(['something']);
-      expect(appliedActions).to.eql(['thisfirst', 'something']);
+      expect(client.state.toJS()).to.eql(['thisfirst', 'something'], 'client state');
+      expect(serverActions).to.eql(['something'], 'sent to server');
+      expect(appliedActions).to.eql(['thisfirst', 'something'], 'applied to db');
       done();
-    }, 150));
+    }, 50));
   });
 });
 
