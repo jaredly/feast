@@ -1,6 +1,8 @@
 
 import Socketback from './Socketback';
 
+import defaultRebase from './defaultRebase';
+
 function invariant(check, message) {
   if (!check) throw new Error(message);
 }
@@ -8,11 +10,12 @@ function invariant(check, message) {
 export default class SharedManager {
   // conn: connection to the server
   // db: the DB wrapper
-  constructor(db, conn) {
+  constructor(db, conn, rebase) {
     this.pending = [];
     this.lastPendingID = 0;
     this.head = 0;
 
+    this.rebaseActions = rebase || defaultRebase;
     this.db = db;
     this.conn = conn;
     this._dumpCache = null;
@@ -34,7 +37,7 @@ export default class SharedManager {
         if (head !== this.lastPendingID) {
           return {
             type: 'rebase',
-            newTail: this.pending.slice(head - this.lastPendingID),
+            newTail: this.pending.slice(head - this.lastPendingID).map(p => p.action),
             head: this.lastPendingID,
             oldHead: head,
           };
@@ -102,16 +105,17 @@ export default class SharedManager {
           return this.processActions(actions);
         });
       }
-      this.conn.update(this.head, pending).then(result => {
+      this.conn.update(this.head, pending.map(p => p.action)).then(result => {
+        // {head:, rebase:}
         if (!result.rebase) {
           // this isn't really the head yet.... but does that matter to the
           // tabs? I don't think so.
           this.head = result.head;
           return this.commitPending(pending, result.head);
         }
-        var rebased = rebaseActions(pending, result.rebase);
+        var rebased = this.rebaseActions(pending.map(p => p.action), result.rebase);
         return this.processActions(rebased).then(() => {
-          this.sendRebase(result.rebase.concat(rebased), pending);
+          this.sendRebase(result.rebase.concat(rebased), pending.map(p => p.action));
         });
       });
     }).then(() => {
@@ -120,9 +124,9 @@ export default class SharedManager {
   }
 
   commitPending(pending, head, lastId) {
-    this.clients.forEach(client => client.send({type: 'sync', serverHead: head, head: lastId, actions: pending}));
+    this.clients.forEach(client => client.send({type: 'sync', serverHead: head, head: lastId, actions: pending.map(p => p.action)}));
     var start = lastId - pending.length + 1;
-    return this.db.commitPending(pending.map((action, i) => ({id: start + i, action}))).then(() => {
+    return this.db.commitPending(pending).then(() => {
       // TODO can I avoid resending this actions? Basically, if
       // [shared] here are my pendings, syncing...
       // [client] add another action to the mix!
@@ -149,8 +153,8 @@ export default class SharedManager {
   }
 
   addAction(action) {
-    this.pending.push(action);
     this.lastPendingID += 1;
+    this.pending.push({id: lastPendingID, action});
     var id = this.lastPendingID;
     this.withLock(() => {
       this.db.addPending([{id, action}]);
@@ -159,8 +163,8 @@ export default class SharedManager {
   }
 
   addActions(actions) {
-    this.pending = this.pending.concat(actions);
     var pending = actions.map((action, i) => ({id: this.lastPendingID + 1 + i, action}));
+    this.pending = this.pending.concat(pending);
     this.db.addPending(pending);
     this.lastPendingID += actions.length;
     this.enqueuePush();
@@ -170,25 +174,37 @@ export default class SharedManager {
     if (this._waiting) clearTimeout(this._waiting);
     if (this._pushwait) return;
     this._pushwait = setTimeout(() => this.withLock(() => {
-      this._pushwait = null;
-      var sending = this._sending = this.pending
-      var lastId = this.lastPendingID;
-      this.pending = [];
-      return this.conn.update(this.head, sending).then(result => {
-        if (!result.rebase) {
-          // this isn't really the head yet.... but does that matter to the
-          // tabs? I don't think so.
-          this.head = result.head;
-          return this.commitPending(sending, result.head, lastId);
-        }
-        var rebased = rebaseActions(sending, result.rebase);
-        this.head = result.head;
-        this.processActions(result.rebase, result.head);
-        return this.processActions(actions).then(() => {
-          this.sendRebase(result.rebase.concat(rebased), sending);
-        });
-      });
+      return this.doPush();
     }), this.pushTime);
+  }
+
+  doPush() {
+    var sending = this._sending = this.pending
+    var actions = sending.map(p => p.action);
+    var lastId = this.lastPendingID;
+    this.pending = [];
+    return this.conn.update(this.head, actions).then(result => {
+      console.log('push, updating', this.head, sending, result);
+      if (!result.rebase) {
+        // this isn't really the head yet.... but does that matter to the
+        // tabs? I don't think so.
+        this.head = result.head;
+        return this.commitPending(sending, result.head, lastId);
+      }
+      var rebased = this.rebaseActions(actions, result.rebase);
+      this.head = result.head;
+      this.pending = rebased
+        .map((action, i) => ({action, id: rebased[i].id}))
+        .concat(this.pending);
+      return this.db.applyActions(result.rebase).then(() => {
+        return this.sendRebase(result.rebase.concat(rebased), actions);
+      }).then(() => this.doPush()); // push the now rebased pendings
+    }).then(() => {
+      this._pushwait = null;
+      if (this.pending.length) {
+        this.enqueuePush();
+      }
+    });
   }
 
   enqueuePoll() {

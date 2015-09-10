@@ -2,23 +2,27 @@
 import Immutable from 'immutable';
 import Socketeer from './Socketeer';
 
+import defaultRebase from './defaultRebase';
+
 export default class TabComm {
-  constructor(port, reducers) {
+  constructor(port, reducers, rebase) {
     this.pending = [];
     this.serverState = null;
     this.syncedState = null;
     this.reducers = reducers;
+    this.rebaseActions = rebase || defaultRebase;
     this.waiting = false;
 
     this.sock = new Socketeer({
       listen: fn => port.onmessage = evt => fn(evt.data),
       send: data => port.postMessage(data),
     }, message => {
+      console.log('front got a message from the server');
       // rebasing from the *server*
       if (message.type === 'rebase') {
-        this.rebase(response, true);
+        this.rebase(message, true);
       } else if (message.type === 'update') {
-        this.rebase(response, false);
+        this.rebase(message, false);
       } else if (message.type === 'sync') {
         this.serverState = this.applyActions(this.serverState, message.actions);
         this.serverHead = message.serverHead;
@@ -73,7 +77,7 @@ export default class TabComm {
     if (fromServer) {
       this.serverState = syncedState;
     }
-    var rebased = rebaseActions(this.pending, response.newTail, response.oldTail)
+    var rebased = this.rebaseActions(this.pending, response.newTail, response.oldTail)
     this.state = this.applyActions(syncedState, rebased);
     this.pending = rebased;
     this.head = response.head;
