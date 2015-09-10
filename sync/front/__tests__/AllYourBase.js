@@ -19,8 +19,8 @@ function tick(fn) {
 
 function rtick(fn, offset) {
   var times = [10, 23, 13, 16, 18, 10, 11, 10, 14];
-  setTimeout(fn, times[offset % times.length]);
-  // setTimeout(fn, Math.floor(Math.random() * 10 + 10));
+  // setTimeout(fn, times[offset % times.length]);
+  setTimeout(fn, Math.floor(Math.random() * 10 + 10));
 }
 
 var tickp = (val, time) => prom(done => setTimeout(() => done(null, val), time || 1));
