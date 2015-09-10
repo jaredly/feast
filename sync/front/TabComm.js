@@ -41,7 +41,7 @@ export default class TabComm {
       this.serverHead = serverHead;
       this.serverState = state;
       this.syncedState = state;
-      this.state = state;
+      this.state = state; console.log('init', state);
     });
   }
 
@@ -54,11 +54,11 @@ export default class TabComm {
       head: this.head,
       serverHead: this.serverHead,
     }).then(response => {
+      this.sending = null;
       if (response.type !== 'rebase') {
         this.head = response.head;
         this.syncedState = this.applyActions(this.syncedState, sending);
       } else {
-        this.sending = null;
         this.pending = sending.concat(this.pending);
         this.rebase(response, false);
       }
@@ -69,28 +69,35 @@ export default class TabComm {
     }).catch(err => {
       console.log('failed to sync', err);
       this.waiting = false;
-      this.pending = sending.concat(this.pending);
+      if (this.sending) {
+        this.pending = this.sending.concat(this.pending);
+      }
       this.sync();
     });
   }
 
   rebase(response, fromServer) {
-    console.log('REBASE', response, fromServer, this.serverState, this.syncedState, this.state)
+    console.log('REBASE', response, fromServer, this.serverState, this.syncedState, this.state, this.pending, this.sending)
     var base = fromServer ? this.serverState : this.syncedState;
     var syncedState = this.applyActions(base, response.newTail);
     this.syncedState = syncedState;
     if (fromServer) {
       this.serverState = syncedState;
     }
+    // a sync was interrupted
+    if (this.sending) {
+      this.pending = this.sending.concat(this.pending);
+      this.sending = null;
+    }
     var rebased = this.rebaseActions(this.pending, response.newTail, response.oldTail)
     this.state = this.applyActions(syncedState, rebased);
     this.pending = rebased;
     this.head = response.head;
-    console.log('ESABER', this.serverState, this.syncedState, this.state);
+    console.log('ESABER', this.serverState, this.syncedState, this.state, this.pending, this.sending);
   }
 
   addAction(action) {
-    this.state = this.reducers(this.state, action);
+    this.state = this.reducers(this.state, action); console.log('add action', this.state);
     this.pending.push(action);
 
     if (!this.waiting) {

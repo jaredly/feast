@@ -1,4 +1,5 @@
 
+import chalk from 'chalk';
 import {expect} from 'chai';
 import {EventEmitter} from 'events';
 import {List} from 'immutable';
@@ -9,6 +10,8 @@ import prom from '../prom';
 
 import SharedManager from '../SharedManager';
 import TabComm from '../TabComm';
+
+chalk.enabled = true;
 
 function tick(fn) {
   setTimeout(fn, 10);
@@ -21,12 +24,12 @@ var j = v => JSON.stringify(v);
 function makePorts(name) {
   var one = {
     addEventListener: fn => {},
-    postMessage: data => tick(() => console.log('\t\t\t\t\t\t\t\ts<<c', name, j(data)) && false || two.onmessage({data})),
+    postMessage: data => tick(() => console.log('\t\t\t\t\t\t\t\ts<<c', name, data.type, j(data)) && false || two.onmessage({data})),
     onmessage: () => {},
   };
   var two = {
     addEventListener: fn => {},
-    postMessage: data => tick(() => console.log('\t\t\t\ts>>c', name, j(data)) && false || one.onmessage({data})),
+    postMessage: data => tick(() => console.log('\t\t\t\ts>>c', name, data.type, j(data)) && false || one.onmessage({data})),
     onmessage: () => {},
   };
   return [one, two];
@@ -73,7 +76,7 @@ function reduce(state, action) {
 }
 
 describe('AllYourBase', () => {
-  it.only('should not fail utterly', done => {
+  it('should not fail utterly', done => {
 
     var appliedActions = [];
     var serverActions = [];
@@ -205,11 +208,11 @@ describe('AllYourBase', () => {
 
     var shared = new SharedManager(db, conn);
 
-    var [clientPort, sharedPort] = makePorts('FIRST');
+    var [clientPort, sharedPort] = makePorts(chalk.yellow('FIRST'));
     var client = new TabComm(clientPort, reduce);
     shared.addConnection(sharedPort);
 
-    var [clientPort2, sharedPort2] = makePorts('SECOND');
+    var [clientPort2, sharedPort2] = makePorts(chalk.red('SECOND'));
     var client2 = new TabComm(clientPort2, reduce);
     shared.addConnection(sharedPort2);
 
@@ -253,11 +256,11 @@ describe('AllYourBase', () => {
 
     var shared = new SharedManager(db, conn);
 
-    var [clientPort, sharedPort] = makePorts('FIRST');
+    var [clientPort, sharedPort] = makePorts(chalk.yellow('FIRST'));
     var client = new TabComm(clientPort, reduce);
     shared.addConnection(sharedPort);
 
-    var [clientPort2, sharedPort2] = makePorts('SECOND');
+    var [clientPort2, sharedPort2] = makePorts(chalk.red('SECOND'));
     var client2 = new TabComm(clientPort2, reduce);
     shared.addConnection(sharedPort2);
 
