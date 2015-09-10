@@ -32,7 +32,7 @@ export default class SharedManager {
       update: ({actions, head, serverHead}) => {
         if (serverHead !== this.head) {
           console.warn('got an update, but misaligned head. erroring out');
-          throw new Error('Invalid head: ' + serverHead + ' expected ' + this.head);
+          throw new Error('Invalid head in "update" request from a client: ' + serverHead + ' expected ' + this.head);
         }
         if (head !== this.lastPendingID) {
           return {

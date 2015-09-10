@@ -49,7 +49,7 @@ export default class Socketeer {
     }
     if (data.type !== this.waiting.type || data.syncid !== this.waiting.syncid) {
       if (data.syncid) {
-        return console.warn('Dropping an unpaired response');
+        return console.warn('Dropping an unpaired response', data, this.config.breakSync, this.waiting);
       }
       if (this.config.breakSync) {
         console.warn('breaking sync', this.waiting);

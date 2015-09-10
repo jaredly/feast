@@ -108,9 +108,9 @@ describe('AllYourBase', () => {
       client.addAction('c');
     }).then(() => {
       setTimeout(() => {
-        expect(client.state.toJS()).to.eql(['a', 'b', 'c']);
-        expect(appliedActions).to.eql(['a', 'b', 'c']);
-        expect(serverActions).to.eql(['a', 'b', 'c']);
+        expect(client.state.toJS()).to.eql(['a', 'b', 'c'], 'client state');
+        expect(appliedActions).to.eql(['a', 'b', 'c'], 'applied to db');
+        expect(serverActions).to.eql(['a', 'b', 'c'], 'sent to server');
         done();
       }, 50);
     }, err => {
@@ -118,7 +118,7 @@ describe('AllYourBase', () => {
     });
   });
 
-  it('should propagate a change from Tab to Server', () => {
+  it('should propagate a change from Tab to Server', done => {
     var serverActions = [];
     var conn = {
       ...basicConn,
@@ -137,7 +137,8 @@ describe('AllYourBase', () => {
     shared.init().then(() => client.init()).then(() => {
       client.addAction('something');
     }).then(() => setTimeout(() => {
-      expect(serverActions).to.equal(['something']);
+      expect(serverActions).to.eql(['something'], 'sent to server');
+      done();
     }, 50));
   });
 
@@ -176,6 +177,49 @@ describe('AllYourBase', () => {
       expect(client.state.toJS()).to.eql(['thisfirst', 'something'], 'client state');
       expect(serverActions).to.eql(['something'], 'sent to server');
       expect(appliedActions).to.eql(['thisfirst', 'something'], 'applied to db');
+      done();
+    }, 50));
+  });
+
+  it.only('should reconcile a rebase from another tab', done => {
+    var serverActions = [];
+    var appliedActions = [];
+
+    var db = {
+      ...basicDb,
+      applyActions: pending => {
+        console.log('DB:apply', pending)
+        appliedActions = appliedActions.concat(pending);
+        return Promise.resolve(null)
+      },
+    };
+    var conn = {
+      ...basicConn,
+      update: (head, sending) => {
+        console.log('SS:update', head, sending);
+        serverActions = serverActions.concat(sending);
+        return tickp({head: head + sending.length}, 10)
+      },
+    };
+
+    var shared = new SharedManager(db, conn);
+
+    var [clientPort, sharedPort] = makePorts();
+    var client = new TabComm(clientPort, reduce);
+    shared.addConnection(sharedPort);
+
+    var [clientPort2, sharedPort2] = makePorts();
+    var client2 = new TabComm(clientPort2, reduce);
+    shared.addConnection(sharedPort2);
+
+    shared.init().then(() => Promise.all([client.init(), client2.init()])).then(() => {
+      client2.addAction('first thing');
+      client.addAction('second thing');
+    }).then(() => setTimeout(() => {
+      expect(client.state.toJS()).to.eql(['first thing', 'second thing'], 'first client state');
+      expect(client2.state.toJS()).to.eql(['first thing', 'second thing'], 'second client state');
+      // expect(serverActions).to.eql(['something'], 'sent to server');
+      // expect(appliedActions).to.eql(['thisfirst', 'something'], 'applied to db');
       done();
     }, 50));
   });

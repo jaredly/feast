@@ -4,7 +4,7 @@
   "description": "",
   "main": "schema.js",
   "scripts": {
-    "test": "mocha --compilers js:babel-core/register 'sync/**/__tests__/*.js'"
+    "test": "mocha --colors --compilers js:babel-core/register 'sync/**/__tests__/*.js'"
   },
   "author": "Jared Forsyth",
   "devDependencies": {
