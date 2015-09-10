@@ -16,8 +16,8 @@ export default class TabComm {
     this.sock = new Socketeer({
       listen: fn => port.onmessage = evt => fn(evt.data),
       send: data => port.postMessage(data),
+      breakSync: true,
     }, message => {
-      console.log('front got a message from the server');
       // rebasing from the *server*
       if (message.type === 'rebase') {
         this.rebase(message, true);
@@ -56,6 +56,7 @@ export default class TabComm {
     }).then(response => {
       if (response.type !== 'rebase') {
         this.head = response.head;
+        this.syncedState = this.applyActions(this.syncedState, sending);
       } else {
         this.sending = null;
         this.pending = sending.concat(this.pending);
@@ -71,6 +72,7 @@ export default class TabComm {
   }
 
   rebase(response, fromServer) {
+    console.log('REBASE', response, fromServer, this.serverState, this.syncedState, this.state)
     var base = fromServer ? this.serverState : this.syncedState;
     var syncedState = this.applyActions(base, response.newTail);
     this.syncedState = syncedState;
@@ -81,6 +83,7 @@ export default class TabComm {
     this.state = this.applyActions(syncedState, rebased);
     this.pending = rebased;
     this.head = response.head;
+    console.log('ESABER', this.serverState, this.syncedState, this.state);
   }
 
   addAction(action) {

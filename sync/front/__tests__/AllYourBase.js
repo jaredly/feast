@@ -11,22 +11,22 @@ import SharedManager from '../SharedManager';
 import TabComm from '../TabComm';
 
 function tick(fn) {
-  setTimeout(fn, 1);
+  setTimeout(fn, 10);
 }
 
 var tickp = (val, time) => prom(done => setTimeout(() => done(null, val), time || 1));
 
 var j = v => JSON.stringify(v);
 
-function makePorts() {
+function makePorts(name) {
   var one = {
     addEventListener: fn => {},
-    postMessage: data => tick(() => console.log('\t\t\t\t\t\t\t\ts<<c', j(data)) && false || two.onmessage({data})),
+    postMessage: data => tick(() => console.log('\t\t\t\t\t\t\t\ts<<c', name, j(data)) && false || two.onmessage({data})),
     onmessage: () => {},
   };
   var two = {
     addEventListener: fn => {},
-    postMessage: data => tick(() => console.log('\t\t\t\ts>>c', j(data)) && false || one.onmessage({data})),
+    postMessage: data => tick(() => console.log('\t\t\t\ts>>c', name, j(data)) && false || one.onmessage({data})),
     onmessage: () => {},
   };
   return [one, two];
@@ -204,11 +204,59 @@ describe('AllYourBase', () => {
 
     var shared = new SharedManager(db, conn);
 
-    var [clientPort, sharedPort] = makePorts();
+    var [clientPort, sharedPort] = makePorts('FIRST');
     var client = new TabComm(clientPort, reduce);
     shared.addConnection(sharedPort);
 
-    var [clientPort2, sharedPort2] = makePorts();
+    var [clientPort2, sharedPort2] = makePorts('SECOND');
+    var client2 = new TabComm(clientPort2, reduce);
+    shared.addConnection(sharedPort2);
+
+    shared.init().then(() => Promise.all([client.init(), client2.init()])).then(() => {
+      client2.addAction('first thing');
+    }).then(() => {
+      return prom(done => setTimeout(() => {
+        client.addAction('second thing');
+        done();
+      }, 100));
+    }).then(() => setTimeout(() => {
+      expect(serverActions).to.eql(['first thing', 'second thing'], 'server state');
+      expect(appliedActions).to.eql(['first thing', 'second thing'], 'db actions');
+
+      expect(client.state.toJS()).to.eql(['first thing', 'second thing'], 'first client state');
+      expect(client2.state.toJS()).to.eql(['first thing', 'second thing'], 'second client state');
+      done();
+    }, 450));
+  });
+
+  it('should reconcile a complex (time-crossing) rebase from another tab', done => {
+    var serverActions = [];
+    var appliedActions = [];
+
+    var db = {
+      ...basicDb,
+      applyActions: pending => {
+        console.log('DB:apply', pending)
+        appliedActions = appliedActions.concat(pending);
+        return Promise.resolve(null)
+      },
+    };
+    var conn = {
+      ...basicConn,
+      update: (head, sending) => {
+        console.log('SS:update', head, sending);
+        serverActions = serverActions.concat(sending);
+        return tickp({head: head + sending.length}, 10)
+      },
+    };
+
+    var shared = new SharedManager(db, conn);
+
+    var [clientPort, sharedPort] = makePorts('FIRST');
+    var client = new TabComm(clientPort, reduce);
+    shared.addConnection(sharedPort);
+
+    var [clientPort2, sharedPort2] = makePorts('SECOND');
     var client2 = new TabComm(clientPort2, reduce);
     shared.addConnection(sharedPort2);
 
@@ -216,12 +264,12 @@ describe('AllYourBase', () => {
       client2.addAction('first thing');
       client.addAction('second thing');
     }).then(() => setTimeout(() => {
-      expect(client.state.toJS()).to.eql(['first thing', 'second thing'], 'first client state');
       expect(client2.state.toJS()).to.eql(['first thing', 'second thing'], 'second client state');
+      expect(client.state.toJS()).to.eql(['first thing', 'second thing'], 'first client state');
       // expect(serverActions).to.eql(['something'], 'sent to server');
       // expect(appliedActions).to.eql(['thisfirst', 'something'], 'applied to db');
       done();
-    }, 50));
+    }, 450));
   });
 });
 

@@ -13,7 +13,7 @@ export default class Socketback {
   }
 
   handle(data) {
-    p(this.responders[data.type](data.args)).then(
+    Promise.resolve().then(() => this.responders[data.type](data.args)).then(
       val => this.config.send({
         syncid: data.syncid,
         type: data.type,

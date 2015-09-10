@@ -45,7 +45,7 @@ export default class SharedManager {
         this.addActions(actions);
         this.clients.forEach(other => {
           if (other === sack) return;
-          sack.send({
+          other.send({
             type: 'update',
             newTail: actions,
             head: this.lastPendingID,

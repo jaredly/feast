@@ -45,6 +45,9 @@ export default class Socketeer {
 
   handle(data) {
     if (!this.waiting) {
+      if (data.syncid) {
+        return console.warn('Dropping the other side of a pair');
+      }
       return this.onMessage(data);
     }
     if (data.type !== this.waiting.type || data.syncid !== this.waiting.syncid) {
