@@ -1,7 +1,8 @@
 
 export default class BaseDB {
-  constructor() {
+  constructor(reduce) {
     this.lastId = 0;
+    this.reduce = reduce;
   }
 
   init() {
@@ -31,6 +32,13 @@ export default class BaseDB {
       return {rebase: actions, head: newHead};
     }
     return {head: await this.addActions(actions)};
+  }
+
+  dump() {
+    return this.getActionsSince(0).then(({actions, head}) => {
+      const data = actions.reduce(this.reduce, null);
+      return {data, head};
+    });
   }
 }
 

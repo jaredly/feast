@@ -16,7 +16,7 @@ export default class APITalker {
     fetch(this.base + head + '/poll').then(res => res.json());
   }
 
-  dump(head) {
+  dump() {
     fetch(this.base + '/dump').then(res => res.json());
   }
 

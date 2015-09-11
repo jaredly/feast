@@ -2,8 +2,8 @@
 import BaseDB from './basedb';
 
 class LevelDB extends BaseDB {
-  constructor(db) {
-    super();
+  constructor(db, reduce) {
+    super(reduce);
     this.db = db;
   }
 

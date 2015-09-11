@@ -108,11 +108,11 @@ export default class SharedManager {
       // this._sending = this.pending; this.pending = [];
       this.head = sync ? sync.head : 0;
       if (!pending) {
-        return this.conn.poll(this.head).then(({actions, head, oldHead}) => {
+        return this.conn.getActionsSince(this.head).then(({actions, head, oldHead}) => {
           return this.processActions(actions);
         });
       }
-      this.conn.update(this.head, pending.map(p => p.action)).then(result => {
+      this.conn.tryAddActions(pending.map(p => p.action), this.head).then(result => {
         // {head:, rebase:}
         if (!result.rebase) {
           // this isn't really the head yet.... but does that matter to the
@@ -190,7 +190,7 @@ export default class SharedManager {
     var actions = sending.map(p => p.action);
     var lastId = this.lastPendingID;
     this.pending = [];
-    return this.conn.update(this.head, actions).then(result => {
+    return this.conn.tryAddActions(actions, this.head).then(result => {
       console.log('push, updating', this.head, sending, result);
       if (!result.rebase) {
         // this isn't really the head yet.... but does that matter to the
@@ -219,7 +219,8 @@ export default class SharedManager {
     this._waiting = setTimeout(() => {
       this.withLock(() => {
         this._waiting = null;
-        return this.conn.poll(this.head).then(({actions, head, oldHead}) => {
+        return this.conn.getActionsSince(this.head)
+        .then(({actions, head, oldHead}) => {
           return this.processActions(actions);
         });
       });

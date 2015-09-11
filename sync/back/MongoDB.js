@@ -2,8 +2,8 @@
 import BaseDB from './basedb';
 
 export default class MongoDB extends BaseDB {
-  constructor(collection) {
-    super();
+  constructor(collection, reduce) {
+    super(reduce);
     this.coll = collection;
   }
 
