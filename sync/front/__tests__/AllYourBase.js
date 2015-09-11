@@ -85,6 +85,30 @@ describe('SharedManager + TabComm, with shimmed db + remote', () => {
     }, 50));
   });
 
+  it('should handle client starting before shared', done => {
+    var serverActions = [];
+    var remote = {
+      ...basicRemote,
+      tryAddActions: (sending, head) => {
+        console.log('SS:update', head, sending);
+        serverActions = serverActions.concat(sending);
+        return tickp({head: head + sending.length}, 10)
+      },
+    };
+    var shared = new SharedManager(basicDb, remote);
+
+    var [clientPort, sharedPort] = makePorts('one');
+    var client = new TabComm(clientPort, reduce);
+    shared.addConnection(sharedPort);
+
+    Promise.all([shared.init(), client.init()]).then(() => {
+      client.addAction('something');
+    }).then(() => setTimeout(() => {
+      expect(serverActions).to.eql(['something'], 'sent to server');
+      done();
+    }, 50));
+  });
+
   it('should reconcile a rebase from the server', done => {
     var serverActions = [];
     var appliedActions = [];

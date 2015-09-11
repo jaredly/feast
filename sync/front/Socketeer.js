@@ -19,6 +19,7 @@
 // - < update:rebase
 // - > new stuff
 
+import chalk from 'chalk';
 import prom from './prom';
 
 var gen = () => Math.random().toString(16).slice(2);
@@ -55,7 +56,7 @@ export default class Socketeer {
         return console.warn('Dropping an unpaired response', data, this.config.breakSync, this.waiting);
       }
       if (this.config.breakSync) {
-        console.warn('breaking sync', this.waiting);
+        console.warn(chalk.red('breaking sync'), this.waiting);
         this.waiting.done(new Error('broken sync'));
         this.waiting = null;
         this.onMessage(data);

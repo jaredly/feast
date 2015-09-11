@@ -10,7 +10,7 @@ function invariant(check, message) {
 export default class SharedManager {
   // remote: remote database
   // db: the DB wrapper
-  constructor(db, remote, rebase) {
+  constructor(db, remote, rebase, pollTime) {
     this.pending = [];
     this.lastPendingID = 0;
     this.head = 0;
@@ -21,7 +21,9 @@ export default class SharedManager {
     this._dumpCache = null;
     this.withLock = locker();
     this.clients = [];
-    this.pollTime = 1000;
+    this.pollTime = pollTime || 1000;
+    this.initprom = new Promise((res, rej) => this.initfns = {res, rej});
+    this.initialized = false;
   }
 
   addConnection(port) {
@@ -75,12 +77,15 @@ export default class SharedManager {
     });
   }
 
-  dump() {
-    // TODO initialize _dumpCache as just the loaded fresh data?
-    if (this._dumpCache) {
-      return Promise.resolve({data: this._dumpCache, serverHead: this.head, head: this.lastPendingID});
+  async dump() {
+    if (this.initprom) {
+      await this.initprom();
     }
-    return this.db.dump().then(data => (this._dumpCache = data, {data, serverHead: this.head, head: this.lastPendingID}));
+    return this.db.dump().then(data => ({
+      data,
+      serverHead: this.head,
+      head: this.lastPendingID
+    }));
   }
 
   fresh() {
@@ -113,35 +118,65 @@ export default class SharedManager {
           return this.processActions(actions);
         });
       }
-      this.remote.tryAddActions(pending.map(p => p.action), this.head).then(result => {
+      var sending = this._sending = pending;
+      var actions = sending.map(p => p.action);
+      var lastId = this.lastPendingID;
+      this.pending = [];
+      this.remote.tryAddActions(actions, this.head).then(result => {
         // {head:, rebase:}
         if (!result.rebase) {
           // this isn't really the head yet.... but does that matter to the
-          // tabs? I don't think so.
+          // tabs? I don't think so. FIXME this might be wrong - we send this
+          // as serverHead to the tabs :/ ?
           this.head = result.head;
-          return this.commitPending(pending, result.head);
+          return this.commitPending(sending, result.head, lastId);
         }
-        var rebased = this.rebaseActions(pending.map(p => p.action), result.rebase);
-        return this.processActions(rebased).then(() => {
-          this.sendRebase(result.rebase.concat(rebased), pending.map(p => p.action));
-        });
+
+        var rebased = this.rebaseActions(actions, result.rebase);
+        this.head = result.head;
+        this.pending = rebased
+          .map((action, i) => ({action, id: sending[i].id}))
+          .concat(this.pending);
+        return this.db.applyActions(result.rebase).then(() => {
+          return this.sendRebase(result.rebase.concat(rebased), actions);
+        }).then(() => this.doPush()); // push the now rebased pendings
+
+        // return this.processActions(rebased).then(() => {
+          // this.sendRebase(result.rebase.concat(rebased), pending.map(p => p.action));
+        // });
+      }).then(() => {
+        this._pushwait = null;
+        if (this.pending.length) {
+          this.enqueuePush();
+        } else {
+          this.enqueuePoll();
+        }
       });
     }).then(() => {
-      this.enqueuePoll();
+      this.initfns.res();
+      this.initprom = null;
+      this.initfns = null;
+    }, err => {
+      this.initfns.rej(err);
+      this.initprom = null;
+      this.initfns = null;
     });
   }
 
   commitPending(pending, head, lastId) {
-    this.clients.forEach(client => client.send({type: 'sync', serverHead: head, head: lastId, actions: pending.map(p => p.action)}));
-    var start = lastId - pending.length + 1;
-    return this.db.commitPending(pending).then(() => {
-      // TODO can I avoid resending this actions? Basically, if
-      // [shared] here are my pendings, syncing...
-      // [client] add another action to the mix!
-      // [shared] ok tab, we're synced!
-      // [client] but how far up are we synced?
-      // this.clients.forEach(client => client.send({pending, synced: true}));
-    });
+    // TODO can I avoid resending this actions? Basically, if
+    // [shared] here are my pendings, syncing...
+    // [client] add another action to the mix!
+    // [shared] ok tab, we're synced!
+    // [client] but how far up are we synced?
+    // this.clients.forEach(client => client.send({pending, synced: true}));
+    this.clients.forEach(client => client.send({
+      type: 'sync',
+      serverHead: head,
+      head: lastId,
+      actions: pending.map(p => p.action)
+    }));
+    return this.db.commitPending(pending);
   }
 
   sendRebase(newTail, oldTail) {
@@ -203,7 +238,7 @@ export default class SharedManager {
       var rebased = this.rebaseActions(actions, result.rebase);
       this.head = result.head;
       this.pending = rebased
-        .map((action, i) => ({action, id: rebased[i].id}))
+        .map((action, i) => ({action, id: sending[i].id}))
         .concat(this.pending);
       return this.db.applyActions(result.rebase).then(() => {
         return this.sendRebase(result.rebase.concat(rebased), actions);

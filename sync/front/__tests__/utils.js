@@ -35,7 +35,7 @@ export function makePorts(name, random) {
     addEventListener: fn => {},
     postMessage: data => ticker(() => {
       console.log('\t\t\t\ts>>c', name, data.type, j(data), Date.now() - start);
-      return one.onmessage({data});
+      one.onmessage({data});
     }, ++count),
     onmessage: () => {},
   };

@@ -2,6 +2,7 @@
 import Immutable from 'immutable';
 import Socketeer from './Socketeer';
 
+import prom from './prom';
 import defaultRebase from './defaultRebase';
 
 export default class TabComm {
@@ -42,6 +43,9 @@ export default class TabComm {
       this.serverState = state;
       this.syncedState = state;
       this.state = state; console.log('init', state);
+    }).catch(err => {
+      return prom(done => setTimeout(() => done(), 200))
+        .then(() => this.init());
     });
   }
 
@@ -80,7 +84,7 @@ export default class TabComm {
     if (response.head <= this.head) {
       return console.error('REBASE INVALID', this.head, response);
     }
-    console.log('REBASE', response, fromServer, this.serverState, this.syncedState, this.state, this.pending, this.sending)
+    // console.log('REBASE', response, fromServer, this.serverState, this.syncedState, this.state, this.pending, this.sending)
     var base = fromServer ? this.serverState : this.syncedState;
     var syncedState = this.applyActions(base, response.newTail);
     this.syncedState = syncedState;
@@ -96,7 +100,7 @@ export default class TabComm {
     this.state = this.applyActions(syncedState, rebased);
     this.pending = rebased;
     this.head = response.head;
-    console.log('ESABER server', this.serverState, 'synced', this.syncedState, 'state', this.state, 'pending', this.pending, 'sending', this.sending);
+    // console.log('ESABER server', this.serverState, 'synced', this.syncedState, 'state', this.state, 'pending', this.pending, 'sending', this.sending);
   }
 
   addAction(action) {
