@@ -40,7 +40,7 @@ function mutReduce(state, action) {
 }
 
 describe('Multiple SharedManagers', () => {
-  it.only('should work', done => {
+  it('should work', done => {
 
     var db = new MemDB(mutReduce);
 
@@ -63,6 +63,40 @@ describe('Multiple SharedManagers', () => {
         done();
       }).catch(done);
     }, 150)).catch(done);
+  });
+
+  it.only('should handle multiple shared managers', done => {
+    var remoteDB = new RemoteMemDB(mutReduce);
+
+    var db = new MemDB(mutReduce);
+    var shared = new SharedManager(db, remoteDB);
+
+    var db2 = new MemDB(mutReduce);
+    var shared2 = new SharedManager(db2, remoteDB);
+
+    var [clientPort, sharedPort] = makePorts('one');
+    var client = new TabComm(clientPort, immReduce);
+    shared.addConnection(sharedPort);
+
+    var [clientPort2, sharedPort2] = makePorts('two');
+    var client2 = new TabComm(clientPort2, immReduce);
+    shared2.addConnection(sharedPort2);
+
+    shared.init().then(() => client.init())
+    shared2.init().then(() => client2.init()).then(() => {
+      client.addAction({type: 'add', num: 10});
+      client2.addAction({type: 'mul', num: 5});
+      client.addAction({type: 'add', num: 2});
+    }).then(() => setTimeout(() => {
+      expect(db.state.num).to.equal(52, 'local db');
+      expect(client.state.get('num')).to.equal(52, 'client state');
+      expect(db2.state.num).to.equal(52, 'local db 2');
+      expect(client2.state.get('num')).to.equal(52, 'client state 2');
+      remoteDB.dump().then(({data, head}) => {
+        expect(data.num).to.equal(52, 'remote db')
+        done();
+      }).catch(done);
+    }, 1250)).catch(done);
   });
 });
 

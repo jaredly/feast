@@ -13,9 +13,9 @@ import TabComm from '../TabComm';
 
 chalk.enabled = true;
 
-import {tick, rtick, tickp, makePorts, make, makeTracking, basicDb, basicConn, reduce} from './utils';
+import {tick, rtick, tickp, makePorts, make, makeTracking, basicDb, basicRemote, reduce} from './utils';
 
-describe('SharedManager + TabComm, with shimmed db + conn', () => {
+describe('SharedManager + TabComm, with shimmed db + remote', () => {
   it('should not fail utterly', done => {
     var appliedActions = [];
     var serverActions = [];
@@ -29,16 +29,16 @@ describe('SharedManager + TabComm, with shimmed db + conn', () => {
       },
     };
 
-    var conn = {
-      ...basicConn,
-      update: (head, sending) => {
+    var remote = {
+      ...basicRemote,
+      tryAddActions: (sending, head) => {
         console.log('SS:update', head, sending);
         serverActions = serverActions.concat(sending);
         return tickp({head: head + sending.length}, 10)
       },
     };
 
-    var shared = new SharedManager(db, conn);
+    var shared = new SharedManager(db, remote);
 
     var [clientPort, sharedPort] = makePorts('one');
     var client = new TabComm(clientPort, reduce);
@@ -63,15 +63,15 @@ describe('SharedManager + TabComm, with shimmed db + conn', () => {
 
   it('should propagate a change from Tab to Server', done => {
     var serverActions = [];
-    var conn = {
-      ...basicConn,
-      update: (head, sending) => {
+    var remote = {
+      ...basicRemote,
+      tryAddActions: (sending, head) => {
         console.log('SS:update', head, sending);
         serverActions = serverActions.concat(sending);
         return tickp({head: head + sending.length}, 10)
       },
     };
-    var shared = new SharedManager(basicDb, conn);
+    var shared = new SharedManager(basicDb, remote);
 
     var [clientPort, sharedPort] = makePorts('one');
     var client = new TabComm(clientPort, reduce);
@@ -97,9 +97,9 @@ describe('SharedManager + TabComm, with shimmed db + conn', () => {
         return Promise.resolve(null)
       },
     };
-    var conn = {
-      ...basicConn,
-      update: (head, sending) => {
+    var remote = {
+      ...basicRemote,
+      tryAddActions: (sending, head) => {
         if (head === 1000) {
           return tickp({head: head + 1, rebase: ['thisfirst']})
         }
@@ -108,7 +108,7 @@ describe('SharedManager + TabComm, with shimmed db + conn', () => {
         return tickp({head: head + sending.length}, 10)
       },
     };
-    var shared = new SharedManager(db, conn);
+    var shared = new SharedManager(db, remote);
 
     var [clientPort, sharedPort] = makePorts('one');
     var client = new TabComm(clientPort, reduce);
@@ -136,16 +136,16 @@ describe('SharedManager + TabComm, with shimmed db + conn', () => {
         return Promise.resolve(null)
       },
     };
-    var conn = {
-      ...basicConn,
-      update: (head, sending) => {
+    var remote = {
+      ...basicRemote,
+      tryAddActions: (sending, head) => {
         console.log('SS:update', head, sending);
         serverActions = serverActions.concat(sending);
         return tickp({head: head + sending.length}, 10)
       },
     };
 
-    var shared = new SharedManager(db, conn);
+    var shared = new SharedManager(db, remote);
 
     var [clientPort, sharedPort] = makePorts(chalk.yellow('FIRST'));
     var client = new TabComm(clientPort, reduce);

@@ -1,5 +1,5 @@
 
-export default class APITalker {
+export default class RemoteHTTP {
   constructor(apiBase) {
     this.base = apiBase;
   }
@@ -12,7 +12,7 @@ export default class APITalker {
     }
   }
 
-  poll(head) {
+  getActionsSince(head) {
     fetch(this.base + head + '/poll').then(res => res.json());
   }
 
@@ -20,7 +20,7 @@ export default class APITalker {
     fetch(this.base + '/dump').then(res => res.json());
   }
 
-  update(head, pending) {
+  tryAddActions(pending, head) {
     fetch(this.base + head + '/update', {
       method: 'POST',
       body: JSON.stringify(pending),

@@ -8,19 +8,20 @@ function invariant(check, message) {
 }
 
 export default class SharedManager {
-  // conn: connection to the server
+  // remote: remote database
   // db: the DB wrapper
-  constructor(db, conn, rebase) {
+  constructor(db, remote, rebase) {
     this.pending = [];
     this.lastPendingID = 0;
     this.head = 0;
 
     this.rebaseActions = rebase || defaultRebase;
     this.db = db;
-    this.conn = conn;
+    this.remote = remote;
     this._dumpCache = null;
     this.withLock = locker();
     this.clients = [];
+    this.pollTime = 1000;
   }
 
   addConnection(port) {
@@ -83,7 +84,7 @@ export default class SharedManager {
   }
 
   fresh() {
-    return this.conn.dump().then(({data, head}) => {
+    return this.remote.dump().then(({data, head}) => {
       this.head = head;
       // TODO will this ever not be the same as "dump"?
       this._dumpCache = data;
@@ -108,11 +109,11 @@ export default class SharedManager {
       // this._sending = this.pending; this.pending = [];
       this.head = sync ? sync.head : 0;
       if (!pending) {
-        return this.conn.getActionsSince(this.head).then(({actions, head, oldHead}) => {
+        return this.remote.getActionsSince(this.head).then(({actions, head, oldHead}) => {
           return this.processActions(actions);
         });
       }
-      this.conn.tryAddActions(pending.map(p => p.action), this.head).then(result => {
+      this.remote.tryAddActions(pending.map(p => p.action), this.head).then(result => {
         // {head:, rebase:}
         if (!result.rebase) {
           // this isn't really the head yet.... but does that matter to the
@@ -179,6 +180,7 @@ export default class SharedManager {
 
   enqueuePush() {
     if (this._waiting) clearTimeout(this._waiting);
+    this._waiting = null;
     if (this._pushwait) return;
     this._pushwait = setTimeout(() => this.withLock(() => {
       return this.doPush();
@@ -190,7 +192,7 @@ export default class SharedManager {
     var actions = sending.map(p => p.action);
     var lastId = this.lastPendingID;
     this.pending = [];
-    return this.conn.tryAddActions(actions, this.head).then(result => {
+    return this.remote.tryAddActions(actions, this.head).then(result => {
       console.log('push, updating', this.head, sending, result);
       if (!result.rebase) {
         // this isn't really the head yet.... but does that matter to the
@@ -210,16 +212,19 @@ export default class SharedManager {
       this._pushwait = null;
       if (this.pending.length) {
         this.enqueuePush();
+      } else {
+        this.enqueuePoll();
       }
     });
   }
 
   enqueuePoll() {
     if (this._waiting || this._pushwait) return;
+    console.log('POLL');
     this._waiting = setTimeout(() => {
       this.withLock(() => {
         this._waiting = null;
-        return this.conn.getActionsSince(this.head)
+        return this.remote.getActionsSince(this.head)
         .then(({actions, head, oldHead}) => {
           return this.processActions(actions);
         });

@@ -61,16 +61,16 @@ export function makeTracking() {
       return Promise.resolve(null)
     },
   };
-  var conn = {
-    ...basicConn,
-    update: (head, sending) => {
+  var remote = {
+    ...basicRemote,
+    tryAddActions: (sending, head) => {
       console.log('SS:update', head, sending);
       serverActions.push(...sending);
       return tickp({head: head + sending.length}, 10)
     },
   };
 
-  var shared = new SharedManager(db, conn);
+  var shared = new SharedManager(db, remote);
   return {serverActions, appliedActions, shared};
 }
 
@@ -91,16 +91,16 @@ export var basicDb = {
   dump: () => Promise.resolve([]),
 };
 
-export var basicConn = {
+export var basicRemote = {
   dump: () => {
     console.log('SS:dump');
     return Promise.resolve({data: [], head: 1000})
   },
-  poll: head => {
+  getActionsSince: head => {
     console.log('SS:poll');
     return Promise.resolve({actions: [], head, oldHead: head})
   },
-  update: (head, sending) => tickp({head: head + sending.length}, 10),
+  tryAddActions: (head, sending) => tickp({head: head + sending.length}, 10),
 };
 
 export function reduce(state, action) {
