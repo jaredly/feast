@@ -14,6 +14,7 @@ import MemDB from '../MemDB';
 import RemoteMemDB from '../../back/db';
 
 import {tick, rtick, tickp, makePorts, make, makeTracking, basicDb, basicConn} from './utils';
+import {Viz, wrapDb, patchPort, patchTab} from './VIz';
 
 chalk.enabled = true;
 
@@ -75,7 +76,7 @@ describe('Multiple SharedManagers', () => {
       client.addAction({type: 'add', num: 2});
     }).then(() => setTimeout(() => {
       expect(db.state.num).to.equal(52, 'local db');
-      expect(client.state.get('num')).to.equal(52, 'client state');
+      expect(client.state.local.get('num')).to.equal(52, 'client state');
       remoteDB.dump().then(({data, head}) => {
         expect(data.num).to.equal(52, 'remote db')
         done();
@@ -83,35 +84,52 @@ describe('Multiple SharedManagers', () => {
     }, 150)).catch(done);
   });
 
-  it('should handle multiple shared managers', done => {
-    var remoteDB = new RemoteMemDB(mutReduce);
+  it.only('should handle multiple shared managers', done => {
+    var viz = new Viz(__dirname + '/TEST_OUT.json');
+    var remoteDB = new RemoteMemDB(mutSimple);
+    remoteDB.id = 'remote';
 
-    var db = new MemDB(mutReduce);
-    var shared = new SharedManager(db, remoteDB);
+    var db = new MemDB(mutSimple);
+    db.id = 'db1';
+    var shared = new SharedManager(wrapDb(db, 'shared1', viz), wrapDb(remoteDB, 'shared1', viz));
+    shared.id = 'shared1';
 
-    var db2 = new MemDB(mutReduce);
-    var shared2 = new SharedManager(db2, remoteDB);
+    var db2 = new MemDB(mutSimple);
+    db2.id = 'db2';
+    var shared2 = new SharedManager(wrapDb(db2, 'shared2', viz), wrapDb(remoteDB, 'shared2', viz));
+    shared2.id = 'shared2';
 
     var [clientPort, sharedPort] = makePorts('one');
-    var client = new TabComm(clientPort, immReduce);
+    patchPort(clientPort, 'tab1', 'shared1', viz);
+    patchPort(sharedPort, 'shared1', 'tab1', viz);
+    var client = new TabComm(clientPort, immSimple);
+    client.id = 'tab1';
     shared.addConnection(sharedPort);
 
+    patchTab(client, viz);
+
     var [clientPort2, sharedPort2] = makePorts('two');
-    var client2 = new TabComm(clientPort2, immReduce);
+    patchPort(clientPort2, 'tab2', 'shared2', viz);
+    patchPort(sharedPort2, 'shared2', 'tab2', viz);
+    var client2 = new TabComm(clientPort2, immSimple);
+    client2.id = 'client2';
     shared2.addConnection(sharedPort2);
+
+    patchTab(client2, viz);
 
     shared.init().then(() => client.init())
     shared2.init().then(() => client2.init()).then(() => {
-      client.addAction({type: 'add', num: 10});
-      client2.addAction({type: 'mul', num: 5});
-      client.addAction({type: 'add', num: 2});
+      client.addAction({name: 'c1-1'});
+      client2.addAction({name: 'c2-1'});
+      client.addAction({name: 'c1-2'});
     }).then(() => setTimeout(() => {
-      var value = db.state.num;
-      expect(client.state.get('num')).to.equal(value, 'client state');
-      expect(db2.state.num).to.equal(value, 'local db 2');
-      expect(client2.state.get('num')).to.equal(value, 'client state 2');
+      viz.dump();
+      var value = db.state;
+      expect(client.state.local.toJS()).to.eql(value, 'client state');
+      expect(db2.state).to.eql(value, 'local db 2');
+      expect(client2.state.local.toJS()).to.eql(value, 'client state 2');
       remoteDB.dump().then(({data, head}) => {
-        expect(data.num).to.equal(value, 'remote db')
+        expect(data).to.eql(value, 'remote db')
         done();
       }).catch(done);
     }, 1250)).catch(done);
@@ -127,7 +145,7 @@ describe('Multiple SharedManagers', () => {
    *   Tab1  Tab2  Tab3  Tab4
    *
    ****************************/
-  it('should handle mutlple shared managers and multiple tabs', done => {
+  it.skip('should handle mutlple shared managers and multiple tabs', done => {
     var remoteDB = new RemoteMemDB(mutSimple);
 
     var db1 = new MemDB(mutSimple);
@@ -150,7 +168,7 @@ describe('Multiple SharedManagers', () => {
     }).then(() => setTimeout(() => {
       var goalState = ['hello', 'world'];
       tabs.forEach(tab => {
-        expect(tab.state.toJS()).to.eql(goalState);
+        expect(tab.state.local.toJS()).to.eql(goalState);
       });
       expect(db1.state).to.eql(goalState);
       remoteDB.dump().then(({data, head}) => {
@@ -183,7 +201,7 @@ describe('Multiple SharedManagers', () => {
     ])).then(() => setTimeout(() => {
       var truth = ['remote-1', 'remote-2', 'db1-pending-1', 'db1-pending-2'];
       remoteDB.dump().then(({data, head}) => {
-        expect(tab1.state.toJS()).to.eql(truth);
+        expect(tab1.state.local.toJS()).to.eql(truth);
         expect(db1.state).to.eql(truth);
         expect(data).to.eql(truth);
         done();
@@ -191,7 +209,7 @@ describe('Multiple SharedManagers', () => {
     }, 200)).catch(done);
   });
 
-  it.only('All the rebasing without concurrent startup, pretty much', done => {
+  it.skip('All the rebasing without concurrent startup, pretty much', done => {
     var remoteDB = new RemoteMemDB(mutSimple);
 
     var db1 = new MemDB(mutSimple);
@@ -244,7 +262,7 @@ describe('Multiple SharedManagers', () => {
         var errs = [];
         tabs.forEach((tab, i) => {
           try {
-            expect(tab.state.toJS()).to.eql(goalState, 'tab check ' + i);
+            expect(tab.state.local.toJS()).to.eql(goalState, 'tab check ' + i);
           } catch (e) {
             console.error('Tab', i, 'fail');
             console.log(e.actual);
@@ -301,7 +319,7 @@ describe('Multiple SharedManagers', () => {
       remoteDB.dump().then(({data, head}) => {
         var goalState = data;
         tabs.forEach(tab => {
-          expect(tab.state.toJS()).to.eql(goalState);
+          expect(tab.state.local.toJS()).to.eql(goalState);
         });
         expect(db1.state).to.eql(goalState);
         expect(db2.state).to.eql(goalState);

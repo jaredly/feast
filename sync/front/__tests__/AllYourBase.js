@@ -51,7 +51,7 @@ describe('SharedManager + TabComm, with shimmed db + remote', () => {
     }).then(() => {
       setTimeout(() => {
         expect(client.pending).to.eql([]);
-        expect(client.state.toJS()).to.eql(['a', 'b', 'c'], 'client state');
+        expect(client.state.local.toJS()).to.eql(['a', 'b', 'c'], 'client state');
         expect(serverActions).to.eql(['a', 'b', 'c'], 'sent to server');
         expect(appliedActions).to.eql(['a', 'b', 'c'], 'applied to db');
         done();
@@ -141,7 +141,7 @@ describe('SharedManager + TabComm, with shimmed db + remote', () => {
     shared.init().then(() => client.init()).then(() => {
       client.addAction('something');
     }).then(() => setTimeout(() => {
-      expect(client.state.toJS()).to.eql(['thisfirst', 'something'], 'client state');
+      expect(client.state.local.toJS()).to.eql(['thisfirst', 'something'], 'client state');
       expect(serverActions).to.eql(['something'], 'sent to server');
       expect(appliedActions).to.eql(['thisfirst', 'something'], 'applied to db');
       done();
@@ -190,8 +190,8 @@ describe('SharedManager + TabComm, with shimmed db + remote', () => {
       expect(serverActions).to.eql(['first thing', 'second thing'], 'server state');
       expect(appliedActions).to.eql(['first thing', 'second thing'], 'db actions');
 
-      expect(client.state.toJS()).to.eql(['first thing', 'second thing'], 'first client state');
-      expect(client2.state.toJS()).to.eql(['first thing', 'second thing'], 'second client state');
+      expect(client.state.local.toJS()).to.eql(['first thing', 'second thing'], 'first client state');
+      expect(client2.state.local.toJS()).to.eql(['first thing', 'second thing'], 'second client state');
       done();
     }, 450));
   });
@@ -211,8 +211,8 @@ describe('SharedManager + TabComm, with shimmed db + remote', () => {
       client2.addAction('first thing');
       client.addAction('second thing');
     }).then(() => setTimeout(() => {
-      expect(client2.state.toJS()).to.eql(['first thing', 'second thing'], 'second client state');
-      expect(client.state.toJS()).to.eql(['first thing', 'second thing'], 'first client state');
+      expect(client2.state.local.toJS()).to.eql(['first thing', 'second thing'], 'second client state');
+      expect(client.state.local.toJS()).to.eql(['first thing', 'second thing'], 'first client state');
       expect(serverActions).to.eql(['first thing', 'second thing'], 'sent to server');
       expect(appliedActions).to.eql(['first thing', 'second thing'], 'db applied');
       done();
@@ -235,8 +235,8 @@ describe('SharedManager + TabComm, with shimmed db + remote', () => {
       client.addAction('second thing');
     }).then(() => setTimeout(() => {
       expect(appliedActions).to.eql(serverActions, 'db should match server');
-      expect(client2.state.toJS()).to.eql(serverActions, 'second client state should match server');
-      expect(client.state.toJS()).to.eql(serverActions, 'first client state should match server');
+      expect(client2.state.local.toJS()).to.eql(serverActions, 'second client state should match server');
+      expect(client.state.local.toJS()).to.eql(serverActions, 'first client state should match server');
       done();
     }, 450));
   });
@@ -260,7 +260,7 @@ describe('SharedManager + TabComm, with shimmed db + remote', () => {
       console.log('SERVER', serverActions);
       expect(appliedActions).to.eql(serverActions, 'applied actions should equal server actions');
       clients.forEach((c, i) => {
-        expect(c.state.toJS()).to.eql(serverActions, 'client ' + i + ' state should equal server actions');
+        expect(c.state.local.toJS()).to.eql(serverActions, 'client ' + i + ' state should equal server actions');
       });
       done();
     }, 600));
@@ -290,9 +290,9 @@ describe('SharedManager + TabComm, with shimmed db + remote', () => {
         var cer = checks([
           () => expect(c.head).to.eql(shared.lastPendingID, 'Client ' + i + ' head === lastPendingID'),
           () => expect(c.serverHead).to.eql(shared.head, 'Client ' + i + ' serverHead === shared.head'),
-          () => expect(c.state.toJS()).to.eql(c.syncedState.toJS(), 'client ' + i + ' state == syncedState'),
-          () => expect(c.state.toJS()).to.eql(c.serverState.toJS(), 'client ' + i + ' state == serverState'),
-          () => expect(c.state.toJS()).to.eql(serverActions, 'client ' + i + ' state should equal server actions'),
+          () => expect(c.state.local.toJS()).to.eql(c.state.synced.toJS(), 'client ' + i + ' state == state.synced'),
+          () => expect(c.state.local.toJS()).to.eql(c.state.server.toJS(), 'client ' + i + ' state == serverState'),
+          () => expect(c.state.local.toJS()).to.eql(serverActions, 'client ' + i + ' state should equal server actions'),
         ])
         if (cer.length) {
           console.log('Client', i, 'failed', cer);
