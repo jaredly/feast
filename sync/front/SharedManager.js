@@ -118,7 +118,7 @@ export default class SharedManager {
       this.head = sync ? sync.head : 0;
       if (!pending) {
         return this.remote.getActionsSince(this.head).then(({actions, head, oldHead}) => {
-          return this.processActions(actions);
+          return this.processActions(actions, this.lastPendingID);
         });
       }
       var sending = this._sending = pending;
@@ -158,6 +158,8 @@ export default class SharedManager {
       this.initfns.rej(err);
       this.initprom = null;
       this.initfns = null;
+      console.log(this.id, 'INIT FAILED', err);
+      throw err;
     });
   }
 
@@ -189,7 +191,7 @@ export default class SharedManager {
   // actions gotten from the server....
   processActions(actions, head) {
     if (!actions.length) return Promise.resolve();
-    this.clients.forEach(client => client.send({type: 'update', newTail: actions, head}));
+    this.clients.forEach(client => client.send({type: 'rebase', newTail: actions, oldTail: [], head, serverHead: this.head}));
     return this.db.applyActions(actions);
   }
 
@@ -259,8 +261,13 @@ export default class SharedManager {
         this._waiting = null;
         return this.remote.getActionsSince(this.head)
         .then(({actions, head, oldHead}) => {
-          return this.processActions(actions);
-        });
+          if (this.head !== oldHead) {
+            return console.error(this.id, 'Got a poll result, but the head didn\'t match', this.head, head, oldHead, actions);
+          }
+          console.log(this.id, 'poll result', this.head, actions, head, oldHead);
+          this.head = head;
+          return this.processActions(actions, this.lastPendingID);
+        }).then(() => this.enqueuePoll());
       });
     }, this.pollTime);
   }

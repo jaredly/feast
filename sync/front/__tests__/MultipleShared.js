@@ -219,12 +219,12 @@ describe('Multiple SharedManagers', () => {
         {name: 'remote-1'},
         {name: 'remote-2'}
       ]),
-      /*
       db1.addPending([
         {id: 10, action: {name: 'db1-pending-1'}},
         {id: 11, action: {name: 'db1-pending-2'}},
       ]),
       db1.setLatestSync({head: 0}),
+      /*
       db2.addPending([
         {id: 30, action: {name: 'db2-pending-1'}},
         {id: 31, action: {name: 'db2-pending-2'}},
@@ -241,8 +241,6 @@ describe('Multiple SharedManagers', () => {
       remoteDB.dump().then(({data, head}) => {
         var goalState = data;
         console.log('Goal state', data);
-        expect(db1.state).to.eql(goalState, 'db1');
-        expect(db2.state).to.eql(goalState, 'db2');
         var errs = [];
         tabs.forEach((tab, i) => {
           try {
@@ -253,12 +251,14 @@ describe('Multiple SharedManagers', () => {
             errs.push(e);
           }
         });
+        expect(db1.state).to.eql(goalState, 'db1');
+        expect(db2.state).to.eql(goalState, 'db2');
         if (errs) {
           throw errs[0];
         }
         done();
       }).catch(done);
-    }, 500)).catch(done);
+    }, 700)).catch(done);
   });
 
   it.skip('All the rebasing, pretty much', done => {
