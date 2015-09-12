@@ -50,8 +50,8 @@ function mutReduce(state, action) {
   return state;
 }
 
-function makeTab(name, reduce, shared) {
-  var [clientPort, sharedPort] = makePorts(name);
+function makeTab(name, reduce, shared, random) {
+  var [clientPort, sharedPort] = makePorts(name, random);
   var client = new TabComm(clientPort, reduce);
   shared.addConnection(sharedPort);
   return client;
@@ -210,6 +210,8 @@ describe('Multiple SharedManagers', () => {
     shared2.id = chalk.green('shared2');
     tab1.id = chalk.yellow('tab1');
     tab2.id = chalk.red('tab2');
+    tab3.id = chalk.blue('tab3');
+    tab4.id = chalk.green('tab4');
 
     // seed the databases
     Promise.all([
@@ -222,13 +224,11 @@ describe('Multiple SharedManagers', () => {
         {id: 11, action: {name: 'db1-pending-2'}},
       ]),
       db1.setLatestSync({head: 0}),
-      /*
       db2.addPending([
         {id: 30, action: {name: 'db2-pending-1'}},
         {id: 31, action: {name: 'db2-pending-2'}},
       ]),
       db2.setLatestSync({head: 0}),
-      */
     ]).then(() => Promise.all(
       [shared1.init(), shared2.init()]
     )).then(() => tabs.map(c => c.init())).then(() => {
@@ -237,11 +237,12 @@ describe('Multiple SharedManagers', () => {
     }).then(() => setTimeout(() => {
       remoteDB.dump().then(({data, head}) => {
         var goalState = data;
+        console.log('Goal state', data);
+        expect(db1.state).to.eql(goalState, 'db1');
+        expect(db2.state).to.eql(goalState, 'db2');
         tabs.forEach((tab, i) => {
           expect(tab.state.toJS()).to.eql(goalState, 'tab check ' + i);
         });
-        expect(db1.state).to.eql(goalState, 'db1');
-        expect(db2.state).to.eql(goalState, 'db2');
         done();
       }).catch(done);
     }, 500)).catch(done);
