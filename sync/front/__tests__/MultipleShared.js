@@ -160,7 +160,7 @@ describe('Multiple SharedManagers', () => {
     }, 200)).catch(done);
   });
 
-  it.only('Offline-saved startup', done => {
+  it('Offline-saved startup', done => {
     var remoteDB = new RemoteMemDB(mutSimple);
 
     var db1 = new MemDB(mutSimple);
@@ -191,7 +191,7 @@ describe('Multiple SharedManagers', () => {
     }, 200)).catch(done);
   });
 
-  it.skip('All the rebasing without concurrent startup, pretty much', done => {
+  it.only('All the rebasing without concurrent startup, pretty much', done => {
     var remoteDB = new RemoteMemDB(mutSimple);
 
     var db1 = new MemDB(mutSimple);
@@ -206,18 +206,23 @@ describe('Multiple SharedManagers', () => {
 
     var tabs = [tab1, tab2, tab3, tab4];
 
+    shared1.id = chalk.red('shared1');
+    shared2.id = chalk.green('shared2');
+    tab1.id = chalk.yellow('tab1');
+    tab2.id = chalk.red('tab2');
+
     // seed the databases
     Promise.all([
       remoteDB.addActions([
         {name: 'remote-1'},
         {name: 'remote-2'}
       ]),
-      /*
       db1.addPending([
         {id: 10, action: {name: 'db1-pending-1'}},
         {id: 11, action: {name: 'db1-pending-2'}},
       ]),
       db1.setLatestSync({head: 0}),
+      /*
       db2.addPending([
         {id: 30, action: {name: 'db2-pending-1'}},
         {id: 31, action: {name: 'db2-pending-2'}},
@@ -232,11 +237,11 @@ describe('Multiple SharedManagers', () => {
     }).then(() => setTimeout(() => {
       remoteDB.dump().then(({data, head}) => {
         var goalState = data;
-        tabs.forEach(tab => {
-          expect(tab.state.toJS()).to.eql(goalState);
+        tabs.forEach((tab, i) => {
+          expect(tab.state.toJS()).to.eql(goalState, 'tab check ' + i);
         });
-        expect(db1.state).to.eql(goalState);
-        expect(db2.state).to.eql(goalState);
+        expect(db1.state).to.eql(goalState, 'db1');
+        expect(db2.state).to.eql(goalState, 'db2');
         done();
       }).catch(done);
     }, 500)).catch(done);

@@ -7,10 +7,13 @@ function invariant(check, message) {
   if (!check) throw new Error(message);
 }
 
+const gen = () => Math.random().toString(16).slice(2);
+
 export default class SharedManager {
   // remote: remote database
   // db: the DB wrapper
   constructor(db, remote, rebase, pollTime) {
+    this.id = gen();
     this.pending = [];
     this.lastPendingID = 0;
     this.head = 0;
@@ -122,7 +125,7 @@ export default class SharedManager {
       var actions = sending.map(p => p.action);
       var lastId = this.lastPendingID;
       this.pending = [];
-      this.remote.tryAddActions(actions, this.head).then(result => {
+      return this.remote.tryAddActions(actions, this.head).then(result => {
         // {head:, rebase:}
         if (!result.rebase) {
           // this isn't really the head yet.... but does that matter to the
@@ -140,19 +143,14 @@ export default class SharedManager {
         return this.db.applyActions(result.rebase).then(() => {
           return this.sendRebase(result.rebase.concat(rebased), actions);
         }).then(() => this.doPush()); // push the now rebased pendings
-
-        // return this.processActions(rebased).then(() => {
-          // this.sendRebase(result.rebase.concat(rebased), pending.map(p => p.action));
-        // });
-      }).then(() => {
-        this._pushwait = null;
-        if (this.pending.length) {
-          this.enqueuePush();
-        } else {
-          this.enqueuePoll();
-        }
       });
     }).then(() => {
+      this._pushwait = null;
+      if (this.pending.length) {
+        this.enqueuePush();
+      } else {
+        this.enqueuePoll();
+      }
       this.initfns.res();
       this.initprom = null;
       this.initfns = null;
@@ -228,7 +226,7 @@ export default class SharedManager {
     var lastId = this.lastPendingID;
     this.pending = [];
     return this.remote.tryAddActions(actions, this.head).then(result => {
-      console.log('push, updating', this.head, sending, result);
+      console.log(this.id, 'push, updating', this.head, sending, result);
       if (!result.rebase) {
         // this isn't really the head yet.... but does that matter to the
         // tabs? I don't think so.
@@ -255,7 +253,7 @@ export default class SharedManager {
 
   enqueuePoll() {
     if (this._waiting || this._pushwait) return;
-    console.log('POLL');
+    console.log(this.id, 'POLL');
     this._waiting = setTimeout(() => {
       this.withLock(() => {
         this._waiting = null;
@@ -278,7 +276,7 @@ function locker() {
     run(queue.shift());
   }
   function run(fn) {
-    fn().then(next, err => {console.log('error in lock', err, err.stack); next()});
+    fn().then(next, err => {console.log(this.id, 'error in lock', err, err.stack); next()});
   }
   return function withLock(fn) {
     if (busy) return queue.push(fn);

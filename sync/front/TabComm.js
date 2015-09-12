@@ -5,8 +5,11 @@ import Socketeer from './Socketeer';
 import prom from './prom';
 import defaultRebase from './defaultRebase';
 
+const gen = () => Math.random().toString(16).slice(2);
+
 export default class TabComm {
   constructor(port, reducers, rebase) {
+    this.id = gen();
     this.pending = [];
     this.serverState = null;
     this.syncedState = null;
@@ -42,7 +45,7 @@ export default class TabComm {
       this.serverHead = serverHead;
       this.serverState = state;
       this.syncedState = state;
-      this.state = state; console.log('init', state);
+      this.state = state; console.log(this.id, 'GOT DUMP', state);
     }).catch(err => {
       return prom(done => setTimeout(() => done(), 200))
         .then(() => this.init());
@@ -71,7 +74,7 @@ export default class TabComm {
         this.sync();
       }
     }).catch(err => {
-      console.log('failed to sync', err);
+      console.log(this.id, 'failed to sync', err);
       this.waiting = false;
       if (this.sending) {
         this.pending = this.sending.concat(this.pending);
@@ -84,7 +87,7 @@ export default class TabComm {
     if (response.head <= this.head) {
       return console.error('REBASE INVALID', this.head, response);
     }
-    // console.log('REBASE', response, fromServer, this.serverState, this.syncedState, this.state, this.pending, this.sending)
+    console.log(this.id, 'REBASE', response, fromServer, this.serverState, this.syncedState, this.state, this.pending, this.sending)
     var base = fromServer ? this.serverState : this.syncedState;
     var syncedState = this.applyActions(base, response.newTail);
     this.syncedState = syncedState;
@@ -100,11 +103,11 @@ export default class TabComm {
     this.state = this.applyActions(syncedState, rebased);
     this.pending = rebased;
     this.head = response.head;
-    // console.log('ESABER server', this.serverState, 'synced', this.syncedState, 'state', this.state, 'pending', this.pending, 'sending', this.sending);
+    console.log(this.id, 'ESABER server', this.serverState, 'synced', this.syncedState, 'state', this.state, 'pending', this.pending, 'sending', this.sending);
   }
 
   addAction(action) {
-    this.state = this.reducers(this.state, action); console.log('add action', this.state);
+    this.state = this.reducers(this.state, action); console.log(this.id, 'add action', this.state);
     this.pending.push(action);
 
     if (!this.waiting) {
