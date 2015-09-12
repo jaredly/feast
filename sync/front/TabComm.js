@@ -46,6 +46,7 @@ export default class TabComm {
       this.serverState = state;
       this.syncedState = state;
       this.state = state; console.log(this.id, 'GOT DUMP', state);
+      console.log(this.id, 'initialized');
     }).catch(err => {
       return prom(done => setTimeout(() => done(), 200))
         .then(() => this.init());
