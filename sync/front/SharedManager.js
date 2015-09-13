@@ -136,12 +136,13 @@ export default class SharedManager {
         }
 
         var rebased = this.rebaseActions(actions, result.rebase);
+        var oldHead = this.head;
         this.head = result.head;
         this.pending = rebased
           .map((action, i) => ({action, id: sending[i].id}))
           .concat(this.pending);
         return this.db.applyActions(result.rebase).then(() => {
-          return this.sendRebase(result.rebase.concat(rebased), actions);
+          return this.sendRebase(result.rebase.concat(rebased), actions, oldHead, result.head);
         }).then(() => this.doPush()); // push the now rebased pendings
       });
     }).then(() => {
@@ -179,11 +180,13 @@ export default class SharedManager {
     return this.db.commitPending(pending);
   }
 
-  sendRebase(newTail, oldTail) {
+  sendRebase(newTail, oldTail, oldHead, newHead) {
     this.clients.forEach(client => client.send({
       type: 'rebase',
       newTail,
       oldTail,
+      newHead,
+      oldHead,
     }));
   }
 
@@ -236,12 +239,13 @@ export default class SharedManager {
         return this.commitPending(sending, result.head, lastId);
       }
       var rebased = this.rebaseActions(actions, result.rebase);
+      var oldHead = this.head;
       this.head = result.head;
       this.pending = rebased
         .map((action, i) => ({action, id: sending[i].id}))
         .concat(this.pending);
       return this.db.applyActions(result.rebase).then(() => {
-        return this.sendRebase(result.rebase.concat(rebased), actions);
+        return this.sendRebase(result.rebase.concat(rebased), actions, oldHead, result.head);
       }).then(() => this.doPush()); // push the now rebased pendings
     }).then(() => {
       this._pushwait = null;
@@ -260,11 +264,8 @@ export default class SharedManager {
       this.withLock(() => {
         this._waiting = null;
         return this.remote.getActionsSince(this.head)
-        .then(({actions, head, oldHead}) => {
-          if (this.head !== oldHead) {
-            return console.error(this.id, 'Got a poll result, but the head didn\'t match', this.head, head, oldHead, actions);
-          }
-          console.log(this.id, 'poll result', this.head, actions, head, oldHead);
+        .then(({actions, head}) => {
+          console.log(this.id, 'poll result', this.head, actions, head);
           this.head = head;
           return this.processActions(actions, this.lastPendingID);
         }).then(() => this.enqueuePoll());

@@ -31,8 +31,10 @@ export default class TabComm {
       } else if (message.type === 'update') {
         this.rebase(message, false);
       } else if (message.type === 'sync') {
-        this.setState(this.applyActions(this.state.server, message.actions), 'server');
-        this.serverHead = message.serverHead;
+        if (this.serverHead < message.serverHead) {
+          this.setState(this.applyActions(this.state.server, message.actions), 'server');
+          this.serverHead = message.serverHead;
+        }
       }
     });
   }
@@ -103,7 +105,8 @@ export default class TabComm {
     var syncedState = this.applyActions(base, response.newTail);
     this.setState(syncedState, 'synced');
     if (fromServer) {
-      this.setState(syncedState, 'server');
+      this.setState(this.applyActions(base, response.newTail.slice(0, -response.oldTail.length)), 'server');
+      this.serverHead = response.newHead;
     }
     // a sync was interrupted
     if (this.sending) {

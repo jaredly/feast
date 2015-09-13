@@ -1,2 +1,4 @@
 build
 node_modules
+sync/front/viz/bundle.js
+sync/front/viz/TEST_OUT.json

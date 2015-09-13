@@ -14,7 +14,7 @@ import MemDB from '../MemDB';
 import RemoteMemDB from '../../back/db';
 
 import {tick, rtick, tickp, makePorts, make, makeTracking, basicDb, basicConn} from './utils';
-import {Viz, wrapDb, patchPort, patchTab} from './VIz';
+import {Viz, wrapDb, patchPort, patchTab} from '../viz/VIz';
 
 chalk.enabled = true;
 
@@ -84,8 +84,8 @@ describe('Multiple SharedManagers', () => {
     }, 150)).catch(done);
   });
 
-  it.only('should handle multiple shared managers', done => {
-    var viz = new Viz(__dirname + '/TEST_OUT.json');
+  it('should handle multiple shared managers', done => {
+    var viz = new Viz(__dirname + '/../viz/TEST_OUT.json');
     var remoteDB = new RemoteMemDB(mutSimple);
     remoteDB.id = 'remote';
 
@@ -112,7 +112,7 @@ describe('Multiple SharedManagers', () => {
     patchPort(clientPort2, 'tab2', 'shared2', viz);
     patchPort(sharedPort2, 'shared2', 'tab2', viz);
     var client2 = new TabComm(clientPort2, immSimple);
-    client2.id = 'client2';
+    client2.id = 'tab2';
     shared2.addConnection(sharedPort2);
 
     patchTab(client2, viz);
