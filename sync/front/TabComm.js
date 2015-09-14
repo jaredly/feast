@@ -16,6 +16,10 @@ export default class TabComm {
       server: null,
       synced: null,
     };
+    this.head = {
+      local: null,
+      server: null,
+    };
     this.reducers = reducers;
     this.rebaseActions = rebase || defaultRebase;
     this.waiting = false;
@@ -31,9 +35,9 @@ export default class TabComm {
       } else if (message.type === 'update') {
         this.rebase(message, false);
       } else if (message.type === 'sync') {
-        if (this.serverHead < message.serverHead) {
+        if (this.head.server < message.serverHead) {
           this.setState(this.applyActions(this.state.server, message.actions), 'server');
-          this.serverHead = message.serverHead;
+          this.setHead(message.serverHead, 'server');
         }
       }
     });
@@ -47,6 +51,10 @@ export default class TabComm {
     }
   }
 
+  setHead(head, type) {
+    this.head[type || 'local'] = head;
+  }
+
   applyActions(state, actions) {
     return actions.reduce(this.reducers, state);
   }
@@ -54,8 +62,8 @@ export default class TabComm {
   init() {
     return this.sock.send('dump').then(({head, serverHead, data}) => {
       var state = Immutable.fromJS(data);
-      this.head = head;
-      this.serverHead = serverHead;
+      this.setHead(head);
+      this.setHead(serverHead, 'server');
       this.setState(state, 'all');
       console.log(this.id, 'GOT DUMP', state);
       console.log(this.id, 'initialized');
@@ -71,12 +79,12 @@ export default class TabComm {
     this.pending = [];
     this.waiting = this.sock.send('update', {
       actions: sending,
-      head: this.head,
-      serverHead: this.serverHead,
+      head: this.head.local,
+      serverHead: this.head.server,
     }).then(response => {
       this.sending = null;
       if (response.type !== 'rebase') {
-        this.head = response.head;
+        this.setHead(response.head);
         this.setState(this.applyActions(this.state.synced, sending), 'synced');
       } else {
         this.pending = sending.concat(this.pending);
@@ -97,8 +105,8 @@ export default class TabComm {
   }
 
   rebase(response, fromServer) {
-    if (response.head <= this.head) {
-      return console.error('REBASE INVALID', this.head, response);
+    if (response.head <= this.head.local) {
+      return console.error('REBASE INVALID', this.head.local, response);
     }
     console.log(this.id, 'REBASE', response, fromServer, this.state, this.pending, this.sending)
     var base = fromServer ? this.state.server : this.state.synced;
@@ -106,7 +114,7 @@ export default class TabComm {
     this.setState(syncedState, 'synced');
     if (fromServer) {
       this.setState(this.applyActions(base, response.newTail.slice(0, -response.oldTail.length)), 'server');
-      this.serverHead = response.newHead;
+      this.setHead(response.newHead, 'server');
     }
     // a sync was interrupted
     if (this.sending) {
@@ -116,7 +124,7 @@ export default class TabComm {
     var rebased = this.rebaseActions(this.pending, response.newTail, response.oldTail)
     this.setState(this.applyActions(syncedState, rebased));
     this.pending = rebased;
-    this.head = response.head;
+    this.setHead(response.head);
     console.log(this.id, 'ESABER state', this.state, 'pending', this.pending, 'sending', this.sending);
   }
 

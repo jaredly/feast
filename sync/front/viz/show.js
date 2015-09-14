@@ -3,7 +3,7 @@ import React from 'react';
 
 var data = require('./TEST_OUT.json');
 
-var line = ['tab1', 'shared1', 'db1', 'remote', 'db2', 'shared2', 'tab2'];
+var line = ['tab1', 'tab2', 'shared1', 'db1', 'remote', 'db2', 'shared2', 'tab3', 'tab4'];
 var ixs = {};
 line.forEach((name, i) => ixs[name] = i);
 var width = 1400;
@@ -100,8 +100,12 @@ function formatTrace(stack) {
 }
 
 var styles = {
+  eventTop: {
+    fontFamily: 'sans-serif',
+  },
   body: {
     whiteSpace: 'pre',
+    fontFamily: 'monospace',
     textAlign: 'left',
   },
   container: {

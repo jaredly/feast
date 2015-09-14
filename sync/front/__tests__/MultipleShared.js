@@ -58,6 +58,17 @@ function makeTab(name, reduce, shared, random) {
   return client;
 }
 
+function makeVTab(name, reduce, shared, viz, random) {
+  var [clientPort, sharedPort] = makePorts(name, random);
+  patchPort(clientPort, name, shared.id, viz);
+  patchPort(sharedPort, shared.id, name, viz);
+  var client = new TabComm(clientPort, reduce);
+  client.id = name;
+  patchTab(client, viz);
+  shared.addConnection(sharedPort);
+  return client;
+}
+
 describe('Multiple SharedManagers', () => {
   it('should work', done => {
 
@@ -146,17 +157,23 @@ describe('Multiple SharedManagers', () => {
    *
    ****************************/
   it.skip('should handle mutlple shared managers and multiple tabs', done => {
+    var viz = new Viz(__dirname + '/../viz/TEST_OUT.json');
     var remoteDB = new RemoteMemDB(mutSimple);
+    remoteDB.id = 'remote';
 
     var db1 = new MemDB(mutSimple);
-    var shared1 = new SharedManager(db1, remoteDB, null, 100);
-    var tab1 = makeTab('one', immSimple, shared1);
-    var tab2 = makeTab('two', immSimple, shared1);
+    db1.id = 'db1'
+    var shared1 = new SharedManager(wrapDb(db1, 'shared1', viz), wrapDb(remoteDB, 'shared1', viz), null, 100);
+    shared1.id = 'shared1'
+    var tab1 = makeVTab('tab1', immSimple, shared1, viz);
+    var tab2 = makeVTab('tab2', immSimple, shared1, viz);
 
     var db2 = new MemDB(mutSimple);
-    var shared2 = new SharedManager(db2, remoteDB, null, 100);
-    var tab3 = makeTab('three', immSimple, shared2);
-    var tab4 = makeTab('four', immSimple, shared2);
+    db2.id = 'db2';
+    var shared2 = new SharedManager(wrapDb(db2, 'shared2', viz), wrapDb(remoteDB, 'shared2', viz), null, 100);
+    shared2.id = 'shared2';
+    var tab3 = makeVTab('tab3', immSimple, shared2, viz);
+    var tab4 = makeVTab('tab4', immSimple, shared2, viz);
 
     var tabs = [tab1, tab2, tab3, tab4];
 
@@ -166,6 +183,7 @@ describe('Multiple SharedManagers', () => {
       tab1.addAction({name: 'hello'});
       tab4.addAction({name: 'world'});
     }).then(() => setTimeout(() => {
+      viz.dump();
       var goalState = ['hello', 'world'];
       tabs.forEach(tab => {
         expect(tab.state.local.toJS()).to.eql(goalState);
@@ -175,7 +193,7 @@ describe('Multiple SharedManagers', () => {
         expect(data).to.eql(goalState);
         done();
       }).catch(done);
-    }, 200)).catch(done);
+    }, 300)).catch(done);
   });
 
   it('Offline-saved startup', done => {

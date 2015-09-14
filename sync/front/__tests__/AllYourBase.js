@@ -288,8 +288,8 @@ describe('SharedManager + TabComm, with shimmed db + remote', () => {
       var errs = [];
       clients.forEach((c, i) => {
         var cer = checks([
-          () => expect(c.head).to.eql(shared.lastPendingID, 'Client ' + i + ' head === lastPendingID'),
-          () => expect(c.serverHead).to.eql(shared.head, 'Client ' + i + ' serverHead === shared.head'),
+          () => expect(c.head.local).to.eql(shared.lastPendingID, 'Client ' + i + ' head === lastPendingID'),
+          () => expect(c.serverHead).to.eql(shared.head.local, 'Client ' + i + ' serverHead === shared.head'),
           () => expect(c.state.local.toJS()).to.eql(c.state.synced.toJS(), 'client ' + i + ' state == state.synced'),
           () => expect(c.state.local.toJS()).to.eql(c.state.server.toJS(), 'client ' + i + ' state == serverState'),
           () => expect(c.state.local.toJS()).to.eql(serverActions, 'client ' + i + ' state should equal server actions'),
