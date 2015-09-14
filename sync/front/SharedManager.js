@@ -7,7 +7,7 @@ function invariant(check, message) {
   if (!check) throw new Error(message);
 }
 
-const gen = () => Math.random().toString(16).slice(2);
+var gen = () => Math.random().toString(16).slice(2);
 
 export default class SharedManager {
   // remote: remote database
@@ -187,6 +187,7 @@ export default class SharedManager {
       oldTail,
       newHead,
       oldHead,
+      head: this.lastPendingID,
     }));
   }
 

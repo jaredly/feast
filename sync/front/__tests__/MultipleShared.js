@@ -156,7 +156,7 @@ describe('Multiple SharedManagers', () => {
    *   Tab1  Tab2  Tab3  Tab4
    *
    ****************************/
-  it.skip('should handle mutlple shared managers and multiple tabs', done => {
+  it.only('should handle mutlple shared managers and multiple tabs', done => {
     var viz = new Viz(__dirname + '/../viz/TEST_OUT.json');
     var remoteDB = new RemoteMemDB(mutSimple);
     remoteDB.id = 'remote';

@@ -43,6 +43,16 @@ export function patchTab(tab, viz) {
     viz.log(tab.id, null, 'add action', action);
     return oldAction.call(tab, action);
   };
+  var oldHead = tab.setHead;
+  tab.setHead = (head, type) => {
+    viz.log(tab.id, null, 'head:' + (type || 'local'), head);
+    return oldHead.call(tab, head, type);
+  };
+  var oldRebase = tab.rebase;
+  tab.rebase = (response, fromServer) => {
+    viz.log(tab.id, null, 'rebase' + (fromServer ? ':server' : ''), response);
+    return oldRebase.call(tab, response, fromServer);
+  };
 }
 
 export class Viz {
