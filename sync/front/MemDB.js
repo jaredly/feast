@@ -1,8 +1,6 @@
 /* @flow */
 
-import type {Sync, Pending, SharedDB} from './types';
-
-type Reducer<State, Action> = (state: ?State, action: Action) => State;
+import type {Reducer, Sync, Pending, SharedDB} from './types';
 
 export default class MemDB<State, Action> {
   reduce: Reducer<State, Action>;

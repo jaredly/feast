@@ -1,7 +1,13 @@
+/* @flow */
 
 import Socketback from './Socketback';
 
 import defaultRebase from './defaultRebase';
+
+import type {RemoteDB, SharedDB, Pending, Reducer, Sync} from './types';
+
+type Rebaser = any;
+type Port = any;
 
 function invariant(check, message) {
   if (!check) throw new Error(message);
@@ -9,10 +15,29 @@ function invariant(check, message) {
 
 var gen = () => Math.random().toString(16).slice(2);
 
-export default class SharedManager {
+export default class SharedManager<State, Action> {
+  id: string;
+  pending: Array<Pending<Action>>;
+  lastPendingID: number;
+  head: number;
+  rebaseActions: Rebaser;
+  db: SharedDB<State, Action>;
+  remote: RemoteDB<State, Action>;
+  _dumpCache: ?State;
+  withLock: (fn: () => any) => void;
+  clients: Array<any>;
+  pollTime: number;
+  initprom: ?Promise<void>;
+  initialized: boolean;
+  initfns: ?{res: () => void, rej: (err: Error) => void};
+  _pushwait: ?number;
+  _waiting: ?number;
+  _sending: ?Array<Pending<Action>>;
+  pushTime: number;
+
   // remote: remote database
   // db: the DB wrapper
-  constructor(db, remote, rebase, pollTime) {
+  constructor(db: SharedDB, remote: RemoteDB, rebase: ?Rebaser, pollTime: ?number) {
     this.id = gen();
     this.pending = [];
     this.lastPendingID = 0;
@@ -25,11 +50,13 @@ export default class SharedManager {
     this.withLock = locker();
     this.clients = [];
     this.pollTime = pollTime || 1000;
+    this.pushTime = 10;
+    // $FlowFixMe
     this.initprom = new Promise((res, rej) => this.initfns = {res, rej});
     this.initialized = false;
   }
 
-  addConnection(port) {
+  addConnection(port: Port) {
     var sack = new Socketback({
       listen: fn => port.onmessage = evt => fn(evt.data),
       send: data => port.postMessage(data),
@@ -80,9 +107,10 @@ export default class SharedManager {
     });
   }
 
-  async dump() {
+  // $FlowFixMe why don't you understand!!
+  async dump(): Promise<{data: State, serverHead: number, head: number}> {
     if (this.initprom) {
-      await this.initprom();
+      await this.initprom;
     }
     return this.db.dump().then(data => ({
       data,
@@ -91,7 +119,8 @@ export default class SharedManager {
     }));
   }
 
-  fresh() {
+  fresh(): Promise<any> {
+    // $FlowFixMe flow is confused :/
     return this.remote.dump().then(({data, head}) => {
       this.head = head;
       // TODO will this ever not be the same as "dump"?
@@ -103,21 +132,22 @@ export default class SharedManager {
     });
   }
 
-  init() {
+  init(): Promise<any> {
     return Promise.all([
       this.db.getPendingActions(),
       this.db.getLatestSync(),
-    ]).then(([pending, sync]) => {
+      // $FlowFixMe tuple promise not understood
+    ]).then(([pending, sync]: [Array<Pending<Action>>, ?Sync]) => {
       if (!sync) {
         invariant(!pending.length, "If there have been no syncs, nothing should have happened to make a pending action");
         return this.fresh();
       }
 
-      this.lastPendingID = pending ? pending[pending.length - 1].id : 0;
+      this.lastPendingID = pending ? +pending[pending.length - 1].id : 0;
       // this._sending = this.pending; this.pending = [];
       this.head = sync ? sync.head : 0;
       if (!pending) {
-        return this.remote.getActionsSince(this.head).then(({actions, head, oldHead}) => {
+        return this.remote.getActionsSince(this.head).then(({actions, head}) => {
           return this.processActions(actions, this.lastPendingID);
         });
       }
@@ -127,7 +157,7 @@ export default class SharedManager {
       this.pending = [];
       return this.remote.tryAddActions(actions, this.head).then(result => {
         // {head:, rebase:}
-        if (!result.rebase) {
+        if (result.type === 'sync') {
           // this isn't really the head yet.... but does that matter to the
           // tabs? I don't think so. FIXME this might be wrong - we send this
           // as serverHead to the tabs :/ ?
@@ -142,6 +172,7 @@ export default class SharedManager {
           .map((action, i) => ({action, id: sending[i].id}))
           .concat(this.pending);
         return this.db.applyActions(result.rebase).then(() => {
+          // $FlowFixMe this is unreachable if result.type === 'sync'
           return this.sendRebase(result.rebase.concat(rebased), actions, oldHead, result.head);
         }).then(() => this.doPush()); // push the now rebased pendings
       });
@@ -152,11 +183,11 @@ export default class SharedManager {
       } else {
         this.enqueuePoll();
       }
-      this.initfns.res();
+      if (this.initfns) this.initfns.res();
       this.initprom = null;
       this.initfns = null;
     }, err => {
-      this.initfns.rej(err);
+      if (this.initfns) this.initfns.rej(err);
       this.initprom = null;
       this.initfns = null;
       console.log(this.id, 'INIT FAILED', err);
@@ -164,7 +195,7 @@ export default class SharedManager {
     });
   }
 
-  commitPending(pending, head, lastId) {
+  commitPending(pending: Array<Pending<Action>>, head: number, lastId: number): Promise<void> {
     // TODO can I avoid resending this actions? Basically, if
     // [shared] here are my pendings, syncing...
     // [client] add another action to the mix!
@@ -180,7 +211,7 @@ export default class SharedManager {
     return this.db.commitPending(pending);
   }
 
-  sendRebase(newTail, oldTail, oldHead, newHead) {
+  sendRebase(newTail: Array<Action>, oldTail: Array<Action>, oldHead: number, newHead: number) {
     this.clients.forEach(client => client.send({
       type: 'rebase',
       newTail,
@@ -193,24 +224,24 @@ export default class SharedManager {
 
   // TODO should I always wait? maybe not
   // actions gotten from the server....
-  processActions(actions, head) {
+  processActions(actions: Array<Action>, head: number) {
     if (!actions.length) return Promise.resolve();
     this.clients.forEach(client => client.send({type: 'rebase', newTail: actions, oldTail: [], head, serverHead: this.head}));
     return this.db.applyActions(actions);
   }
 
-  addAction(action) {
+  addAction(action: Action) {
     this.lastPendingID += 1;
-    this.pending.push({id: lastPendingID, action});
+    this.pending.push({id: '' + this.lastPendingID, action});
     var id = this.lastPendingID;
     this.withLock(() => {
-      this.db.addPending([{id, action}]);
+      this.db.addPending([{id: '' + id, action}]);
     });
     this.enqueuePush();
   }
 
-  addActions(actions) {
-    var pending = actions.map((action, i) => ({id: this.lastPendingID + 1 + i, action}));
+  addActions(actions: Array<Action>) {
+    var pending = actions.map((action, i) => ({id: this.lastPendingID + 1 + i + '', action}));
     this.pending = this.pending.concat(pending);
     this.db.addPending(pending);
     this.lastPendingID += actions.length;
@@ -226,14 +257,14 @@ export default class SharedManager {
     }), this.pushTime);
   }
 
-  doPush() {
+  doPush(): Promise<void> {
     var sending = this._sending = this.pending
     var actions = sending.map(p => p.action);
     var lastId = this.lastPendingID;
     this.pending = [];
     return this.remote.tryAddActions(actions, this.head).then(result => {
       console.log(this.id, 'push, updating', this.head, sending, result);
-      if (!result.rebase) {
+      if (result.type === 'sync') {
         // this isn't really the head yet.... but does that matter to the
         // tabs? I don't think so.
         this.head = result.head;
@@ -246,6 +277,7 @@ export default class SharedManager {
         .map((action, i) => ({action, id: sending[i].id}))
         .concat(this.pending);
       return this.db.applyActions(result.rebase).then(() => {
+        // $FlowFixMe this is unreachable if result.type === 'sync'
         return this.sendRebase(result.rebase.concat(rebased), actions, oldHead, result.head);
       }).then(() => this.doPush()); // push the now rebased pendings
     }).then(() => {
@@ -285,7 +317,7 @@ function locker() {
     run(queue.shift());
   }
   function run(fn) {
-    fn().then(next, err => {console.log(this.id, 'error in lock', err, err.stack); next()});
+    fn().then(next, err => {console.log('error in lock', err, err.stack); next()});
   }
   return function withLock(fn) {
     if (busy) return queue.push(fn);
