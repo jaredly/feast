@@ -102,7 +102,7 @@ describe('TabShared stuff', () => {
     });
   }));
 
-  it.only('should reconcile contending actions from a few tabs, lots of actions', pit(async () => {
+  it('should reconcile contending actions from a few tabs, lots of actions', pit(async () => {
     var shared = new ShallowShared(rebaser);
 
     var tabs = [];
@@ -123,6 +123,7 @@ describe('TabShared stuff', () => {
       var goal = shared.state.pending.reduce(reducer, null);
       return goal.names.length === tabs.length * 10;
     }, 50, 1000);
+
     var goal = shared.state.pending.reduce(reducer, null);
     // console.log('shared', goal);
     expect(goal.names.length).to.eql(tabs.length * 10);

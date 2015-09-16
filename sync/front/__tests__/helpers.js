@@ -4,7 +4,12 @@ import {EventEmitter} from 'events';
 export const prom = fn => new Promise((res, rej) => fn((err, val) => err ? rej(err) : res(val)));
 
 export function pit(fn) {
-  return done => fn().then(() => done(), done)
+  return function (done) {
+    fn().then(
+      () => setTimeout(() => done(), 0),
+      err => setTimeout(() => done(err), 0)
+    );
+  };
 }
 
 export function pwait(time) {
@@ -117,7 +122,10 @@ export function fakeDb(reducer, data, serverHead, pending) {
   serverHead = serverHead || 0;
   return {
     async dumpData() {
-      return added.reduce(reducer, data);
+      return {
+        data: added.reduce(reducer, data),
+        serverHead,
+      };
     },
     async dump() {
       return {

@@ -43,7 +43,7 @@ export default class Shared extends ShallowShared {
   initConnection(ws) {
     this.local.dumpData().then(({serverHead, data}) => {
       if (serverHead !== this.state.serverHead) {
-        warn('Trying to initialize a connection, and there is too much traffick... trying again');
+        warn('Trying to initialize a connection, and there is too much traffick... trying again', serverHead, this.state.serverHead);
         return this.initConnection(ws);
       }
       ws.send({type: 'dump', data: {
@@ -52,7 +52,7 @@ export default class Shared extends ShallowShared {
         sharedActions: this.state.pending,
         sharedHead: this.state.pendingStart + this.state.pending.length,
       }});
-    });
+    }).catch(err => error(err));
   }
 
   gotResult() {
