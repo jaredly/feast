@@ -19,14 +19,8 @@ function makeRebaser(rebaser) {
 
 export default class Tab {
   constructor(ws, reducer, rebaser) {
-    this.state = {
-      server: null,
-      shared: null,
-      local: null,
-      serverHead: 0,
-      sharedHead: 0,
-      pending: [],
-    };
+    // State is initialized when a `dump` is received from the shared manager
+    this.state = null;
     this.fns = {reducer, rebaser: makeRebaser(rebaser)};
     this.waiting = false;
     this.ws = ws;
@@ -36,6 +30,14 @@ export default class Tab {
       }
       this.process(payload.type, payload.data);
     });
+  }
+
+  async init() {
+    if (this.state) return;
+    if (!this._initwait) {
+      this._initwait = new Promise((res, rej) => this._initpair = {res, rej});
+    }
+    return await this._initwait;
   }
 
   gotResult() {
@@ -68,6 +70,11 @@ export default class Tab {
     info(this.state, result);
     if (!result) {
       return false;
+    }
+    if (!this.state && this._initpair) {
+      this._initpair.res();
+      this._initpair = null;
+      this._initwait = null;
     }
     this.state = result;
     if (result.pending.length) {

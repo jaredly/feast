@@ -1,8 +1,9 @@
 
+import ShallowShared from '../ShallowShared';
 import Shared from '../Shared';
 import Tab from '../Tab';
 
-import {fakeDb, socketPair, laggySocketPair, randomSocketPair, checkUntil} from './helpers';
+import {pit, pwait, pcheck, prom, fakeDb, socketPair, laggySocketPair, randomSocketPair, checkUntil} from './helpers';
 import {expect} from 'chai';
 
 function rebaser(actions, oldTail, newTail) {
@@ -18,9 +19,7 @@ describe('TabShared stuff', () => {
   it('tab add action should sync w/ shared', () => {
     var [tabSock, sharedSock] = socketPair();
     var tab = new Tab(tabSock, reducer, rebaser);
-    var [remoteSock, sharedEnd] = socketPair();
-    var localDb = fakeDb();
-    var shared = new Shared(localDb, sharedEnd, rebaser);
+    var shared = new ShallowShared(rebaser);
     shared.addConnection(sharedSock);
 
     tab.addAction({name: 'hello'});
@@ -30,9 +29,7 @@ describe('TabShared stuff', () => {
   });
 
   it('should sync between two tabs', () => {
-    var [remoteSock, sharedEnd] = socketPair();
-    var localDb = fakeDb();
-    var shared = new Shared(localDb, sharedEnd, rebaser);
+    var shared = new ShallowShared(rebaser);
 
     var [tabSock, sharedSock] = socketPair();
     var tab = new Tab(tabSock, reducer, rebaser);
@@ -50,10 +47,8 @@ describe('TabShared stuff', () => {
     expect(tab2.state.local).to.eql({names: ['hello']});
   });
 
-  it('should reconcile contending actions from two tabs', done => {
-    var [remoteSock, sharedEnd] = socketPair();
-    var localDb = fakeDb();
-    var shared = new Shared(localDb, sharedEnd, rebaser);
+  it('should reconcile contending actions from two tabs', pit(async () => {
+    var shared = new ShallowShared(rebaser);
 
     var [tabSock, sharedSock] = laggySocketPair(2);
     var tab = new Tab(tabSock, reducer, rebaser);
@@ -63,23 +58,21 @@ describe('TabShared stuff', () => {
     var tab2 = new Tab(tabSock2, reducer, rebaser);
     shared.addConnection(sharedSock2);
 
+    await Promise.all([tab.init(), tab2.init()]);
+
     tab2.addAction({name: 'world'});
     tab.addAction({name: 'hello'});
 
     var goal = {names: ['hello', 'world+']};
-    setTimeout(() => {
-      expect(tab.state.shared).to.eql(goal, 'tab state');
-      expect(tab.state.local).to.eql(goal, 'tab local');
-      expect(tab2.state.shared).to.eql(goal, 'tab2 shared');
-      expect(tab2.state.local).to.eql(goal, 'tab2 local');
-      done();
-    }, 100);
-  });
+    await pwait(100);
+    expect(tab.state.shared).to.eql(goal, 'tab state');
+    expect(tab.state.local).to.eql(goal, 'tab local');
+    expect(tab2.state.shared).to.eql(goal, 'tab2 shared');
+    expect(tab2.state.local).to.eql(goal, 'tab2 local');
+  }));
 
-  it('should reconcile contending actions from lots of tabs', done => {
-    var [remoteSock, sharedEnd] = socketPair();
-    var localDb = fakeDb();
-    var shared = new Shared(localDb, sharedEnd, rebaser);
+  it('should reconcile contending actions from lots of tabs', pit(async () => {
+    var shared = new ShallowShared(rebaser);
 
     var tabs = [];
     for (var i=0; i<10; i++) {
@@ -89,29 +82,28 @@ describe('TabShared stuff', () => {
       tabs.push(tab);
     }
 
+    await Promise.all(tabs.map(t => t.init()));
+
     tabs.forEach((tab, i) => tab.addAction({name: 'first ' + i}));
     tabs.forEach((tab, i) => tab.addAction({name: 'second ' + i}));
 
-    checkUntil(() => {
+    await pcheck(() => {
       var goal = shared.state.pending.reduce(reducer, null);
       return goal.names.length === tabs.length * 2;
-    }, () => {
-      var goal = shared.state.pending.reduce(reducer, null);
-      // console.log('shared', goal);
-      expect(goal.names.length).to.eql(tabs.length * 2);
-
-      tabs.forEach((tab, i) => {
-        expect(tab.state.shared).to.eql(goal, i + 'tab state');
-        expect(tab.state.local).to.eql(goal, i + 'tab local');
-      });
-      done();
     }, 50, 1000);
-  });
 
-  it('should reconcile contending actions from a few tabs, lots of actions', done => {
-    var [remoteSock, sharedEnd] = socketPair();
-    var localDb = fakeDb();
-    var shared = new Shared(localDb, sharedEnd, rebaser);
+    var goal = shared.state.pending.reduce(reducer, null);
+    // console.log('shared', goal);
+    expect(goal.names.length).to.eql(tabs.length * 2);
+
+    tabs.forEach((tab, i) => {
+      expect(tab.state.shared).to.eql(goal, i + 'tab state');
+      expect(tab.state.local).to.eql(goal, i + 'tab local');
+    });
+  }));
+
+  it.only('should reconcile contending actions from a few tabs, lots of actions', pit(async () => {
+    var shared = new ShallowShared(rebaser);
 
     var tabs = [];
     for (var i=0; i<3; i++) {
@@ -121,24 +113,24 @@ describe('TabShared stuff', () => {
       tabs.push(tab);
     }
 
+    await Promise.all(tabs.map(t => t.init()));
+
     for (var i=0; i<10; i++) {
       tabs.forEach((tab, t) => tab.addAction({name: 'round ' + i + ' tab ' + t}));
     }
 
-    checkUntil(() => {
+    await pcheck(() => {
       var goal = shared.state.pending.reduce(reducer, null);
       return goal.names.length === tabs.length * 10;
-    }, () => {
-      var goal = shared.state.pending.reduce(reducer, null);
-      // console.log('shared', goal);
-      expect(goal.names.length).to.eql(tabs.length * 10);
-
-      tabs.forEach((tab, i) => {
-        expect(tab.state.shared).to.eql(goal, i + 'tab state');
-        expect(tab.state.local).to.eql(goal, i + 'tab local');
-      });
-      done();
     }, 50, 1000);
-  });
+    var goal = shared.state.pending.reduce(reducer, null);
+    // console.log('shared', goal);
+    expect(goal.names.length).to.eql(tabs.length * 10);
+
+    tabs.forEach((tab, i) => {
+      expect(tab.state.shared).to.eql(goal, i + 'tab state');
+      expect(tab.state.local).to.eql(goal, i + 'tab local');
+    });
+  }));
 });
 

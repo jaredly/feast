@@ -8,8 +8,8 @@ const error = debug('sync:tab:error');
 const gen = () => Math.random().toString(16).slice(2);
 
 export function dump(state, {reducer}, {server, sharedActions, serverHead, sharedHead}) {
-  shared = sharedActions.reduce(reducer, server);
-  local = shared;
+  var shared = sharedActions.reduce(reducer, server);
+  var local = shared;
   return {
     server, shared, local, serverHead, sharedHead,
     pending: [],
