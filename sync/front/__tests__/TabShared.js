@@ -6,7 +6,7 @@ import {socketPair, laggySocketPair} from './helpers';
 import {expect} from 'chai';
 
 function rebaser(actions, oldTail, newTail) {
-  return actions;
+  return actions.map(({id, action: {name}}) => ({id, action: {name: name + '+'}}));
 }
 
 function reducer(state, {action}) {
@@ -60,7 +60,7 @@ describe('TabShared stuff', () => {
     tab2.addAction({name: 'world'});
     tab.addAction({name: 'hello'});
 
-    var goal = {names: ['hello', 'world']};
+    var goal = {names: ['hello', 'world+']};
     setTimeout(() => {
       expect(tab.state.shared).to.eql(goal, 'tab state');
       expect(tab.state.local).to.eql(goal, 'tab local');
@@ -86,6 +86,7 @@ describe('TabShared stuff', () => {
     setTimeout(() => {
       var goal = shared.state.pending.reduce(reducer, null);
       console.log('shared', goal);
+      expect(goal.names.length).to.eql(tabs.length * 2);
 
       tabs.forEach((tab, i) => {
         expect(tab.state.shared).to.eql(goal, i + 'tab state');
