@@ -2,7 +2,7 @@
 import Shared from '../Shared';
 import Tab from '../Tab';
 
-import {socketPair, laggySocketPair} from './helpers';
+import {socketPair, laggySocketPair, randomSocketPair, checkUntil} from './helpers';
 import {expect} from 'chai';
 
 function rebaser(actions, oldTail, newTail) {
@@ -83,7 +83,11 @@ describe('TabShared stuff', () => {
 
     tabs.forEach((tab, i) => tab.addAction({name: 'first ' + i}));
     tabs.forEach((tab, i) => tab.addAction({name: 'second ' + i}));
-    setTimeout(() => {
+
+    checkUntil(() => {
+      var goal = shared.state.pending.reduce(reducer, null);
+      return goal.names.length === tabs.length * 2;
+    }, () => {
       var goal = shared.state.pending.reduce(reducer, null);
       console.log('shared', goal);
       expect(goal.names.length).to.eql(tabs.length * 2);
@@ -93,7 +97,38 @@ describe('TabShared stuff', () => {
         expect(tab.state.local).to.eql(goal, i + 'tab local');
       });
       done();
-    }, 1000);
+    }, 50, 1000);
+  });
+
+  it('should reconcile contending actions from a few tabs, lots of actions', done => {
+    var shared = new Shared(null, rebaser);
+
+    var tabs = [];
+    for (var i=0; i<3; i++) {
+      var [tabSock, sharedSock] = randomSocketPair(5, 10);
+      var tab = new Tab(tabSock, reducer, rebaser);
+      shared.addConnection(sharedSock);
+      tabs.push(tab);
+    }
+
+    for (var i=0; i<10; i++) {
+      tabs.forEach((tab, t) => tab.addAction({name: 'round ' + i + ' tab ' + t}));
+    }
+
+    checkUntil(() => {
+      var goal = shared.state.pending.reduce(reducer, null);
+      return goal.names.length === tabs.length * 10;
+    }, () => {
+      var goal = shared.state.pending.reduce(reducer, null);
+      console.log('shared', goal);
+      expect(goal.names.length).to.eql(tabs.length * 10);
+
+      tabs.forEach((tab, i) => {
+        expect(tab.state.shared).to.eql(goal, i + 'tab state');
+        expect(tab.state.local).to.eql(goal, i + 'tab local');
+      });
+      done();
+    }, 50, 1000);
   });
 });
 
