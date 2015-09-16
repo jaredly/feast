@@ -1,9 +1,15 @@
 
+import debug from 'debug';
+const info = debug('sync:shared:info');
+const warn = debug('sync:shared:warn');
+const error = debug('sync:shared:error');
+
 import * as handlers from './shared-handlers';
 
 export default class Shared {
-  constructor(ws, rebaser) {
-    this.ws = ws;
+  constructor(local, remote, rebaser) {
+    this.local = local;
+    this.remote = remote;
     this.clients = [];
     this.fns = {rebaser};
     this.state = {
@@ -11,11 +17,31 @@ export default class Shared {
       pendingStart: 0,
       pending: [],
     };
-    /*
-    this.ws.on('message', ({type, data}) => {
+
+    this.remote.on('message', ({type, data}) => {
+      if (type === 'result') {
+        return this.gotResult();
+      }
       this.process(type, data);
     });
-     */
+  }
+
+  init() {
+    this.local.dump().then(({pending, data, serverHead}) => {
+      this.state = {
+        pending,
+        serverHead,
+        pendingStart: 0,
+      };
+      this.clients.forEach(client => {
+        client.send({type: 'dump', data: {
+          serverHead,
+          server: data,
+          sharedActions: pending,
+          sharedHead: pending.length,
+        }});
+      });
+    });
   }
 
   addConnection(ws) {
@@ -23,15 +49,34 @@ export default class Shared {
     ws.on('message', ({type, data}) => {
       var result = this.process(type, data);
       // TODO give receipt messages?
-      // ws.send({type: 'result', result});
+      ws.send({type: 'result', result});
+    });
+  }
+
+  gotResult() {
+    this.waiting = false;
+    if (this.state.pending.length) {
+      this.enqueueSend();
+    }
+  }
+
+  enqueueSend() {
+    if (this.waiting) return;
+    this.waiting = true;
+    this.remote.send({
+      type: 'addActions',
+      data: {
+        serverHead: this.state.serverHead,
+        actions: this.state.pending,
+      },
     });
   }
 
   process(type, data) {
-    console.log('shared process', type, data);
+    info('shared process', type, data);
     var oldState = this.state;
     var result = handlers[type](this.state, this.fns, data);
-    console.log(this.state, result);
+    info(this.state, result);
     if (!result) {
       return false;
     }
@@ -50,6 +95,9 @@ export default class Shared {
           },
         });
       });
+    }
+    if (result.pending) {
+      this.enqueueSend();
     }
     return true;
   }

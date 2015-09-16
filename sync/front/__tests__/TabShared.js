@@ -2,7 +2,7 @@
 import Shared from '../Shared';
 import Tab from '../Tab';
 
-import {socketPair, laggySocketPair, randomSocketPair, checkUntil} from './helpers';
+import {fakeDb, socketPair, laggySocketPair, randomSocketPair, checkUntil} from './helpers';
 import {expect} from 'chai';
 
 function rebaser(actions, oldTail, newTail) {
@@ -18,7 +18,9 @@ describe('TabShared stuff', () => {
   it('tab add action should sync w/ shared', () => {
     var [tabSock, sharedSock] = socketPair();
     var tab = new Tab(tabSock, reducer, rebaser);
-    var shared = new Shared(null, rebaser);
+    var [remoteSock, sharedEnd] = socketPair();
+    var localDb = fakeDb();
+    var shared = new Shared(localDb, sharedEnd, rebaser);
     shared.addConnection(sharedSock);
 
     tab.addAction({name: 'hello'});
@@ -28,7 +30,9 @@ describe('TabShared stuff', () => {
   });
 
   it('should sync between two tabs', () => {
-    var shared = new Shared(null, rebaser);
+    var [remoteSock, sharedEnd] = socketPair();
+    var localDb = fakeDb();
+    var shared = new Shared(localDb, sharedEnd, rebaser);
 
     var [tabSock, sharedSock] = socketPair();
     var tab = new Tab(tabSock, reducer, rebaser);
@@ -47,7 +51,9 @@ describe('TabShared stuff', () => {
   });
 
   it('should reconcile contending actions from two tabs', done => {
-    var shared = new Shared(null, rebaser);
+    var [remoteSock, sharedEnd] = socketPair();
+    var localDb = fakeDb();
+    var shared = new Shared(localDb, sharedEnd, rebaser);
 
     var [tabSock, sharedSock] = laggySocketPair(2);
     var tab = new Tab(tabSock, reducer, rebaser);
@@ -71,7 +77,9 @@ describe('TabShared stuff', () => {
   });
 
   it('should reconcile contending actions from lots of tabs', done => {
-    var shared = new Shared(null, rebaser);
+    var [remoteSock, sharedEnd] = socketPair();
+    var localDb = fakeDb();
+    var shared = new Shared(localDb, sharedEnd, rebaser);
 
     var tabs = [];
     for (var i=0; i<10; i++) {
@@ -89,7 +97,7 @@ describe('TabShared stuff', () => {
       return goal.names.length === tabs.length * 2;
     }, () => {
       var goal = shared.state.pending.reduce(reducer, null);
-      console.log('shared', goal);
+      // console.log('shared', goal);
       expect(goal.names.length).to.eql(tabs.length * 2);
 
       tabs.forEach((tab, i) => {
@@ -101,7 +109,9 @@ describe('TabShared stuff', () => {
   });
 
   it('should reconcile contending actions from a few tabs, lots of actions', done => {
-    var shared = new Shared(null, rebaser);
+    var [remoteSock, sharedEnd] = socketPair();
+    var localDb = fakeDb();
+    var shared = new Shared(localDb, sharedEnd, rebaser);
 
     var tabs = [];
     for (var i=0; i<3; i++) {
@@ -120,7 +130,7 @@ describe('TabShared stuff', () => {
       return goal.names.length === tabs.length * 10;
     }, () => {
       var goal = shared.state.pending.reduce(reducer, null);
-      console.log('shared', goal);
+      // console.log('shared', goal);
       expect(goal.names.length).to.eql(tabs.length * 10);
 
       tabs.forEach((tab, i) => {

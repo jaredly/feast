@@ -5,11 +5,11 @@ export function socketPair() {
   var one = new EventEmitter();
   var two = new EventEmitter();
   one.send = data => {
-    console.log('one -> two', data);
+    // console.log('one -> two', data);
     two.emit('message', data);
   };
   two.send = data => {
-    console.log('two -> one', data);
+    // console.log('two -> one', data);
     one.emit('message', data);
   };
   return [one, two];
@@ -20,11 +20,11 @@ export function laggySocketPair(lag) {
   var one = new EventEmitter();
   var two = new EventEmitter();
   one.send = data => {
-    console.log('one -> two', data);
+    // console.log('one -> two', data);
     setTimeout(() => two.emit('message', data), lag);
   };
   two.send = data => {
-    console.log('two -> one', data);
+    // console.log('two -> one', data);
     setTimeout(() => one.emit('message', data), lag);
   };
   return [one, two];
@@ -54,11 +54,11 @@ export function randomSocketPair(min, range) {
   var qOne = randomQueue(min, range);
   var qTwo = randomQueue(min, range);
   one.send = data => {
-    console.log('one -> two', data);
+    // console.log('one -> two', data);
     qOne(() => two.emit('message', data));
   };
   two.send = data => {
-    console.log('two -> one', data);
+    // console.log('two -> one', data);
     qTwo(() => one.emit('message', data));
   };
   return [one, two];
@@ -71,7 +71,9 @@ export function checkUntil(fn, then, tick, wait) {
     if (fn()) {
       clearTimeout(timeout);
       clearInterval(interval);
-      then();
+      setTimeout(() => {
+        then();
+      }, tick);
     }
   }, tick);
 
@@ -79,5 +81,34 @@ export function checkUntil(fn, then, tick, wait) {
     clearInterval(interval);
     then();
   }, wait);
+}
+
+export function fakeDb(reducer, data, pending) {
+  var added = [];
+  return {
+    async dumpData() {
+      return added.reduce(reducer, data);
+    },
+    async dump() {
+      return {
+        pending: pending || [],
+        data: added.reduce(reducer, data),
+      };
+    },
+    // fire & forget
+    addPending(pending) {
+    },
+    // normally would 1) apply actions to db, 2) remove pending
+    commitPending(pending) {
+      added = added.concat(pending);
+    },
+    // after a rebase, need to remove the old pending, and replace with the
+    // rebased pending.
+    replacePending(oldPending, newPending) {
+    },
+    addActions(actions) {
+      added = added.concat(actions);
+    },
+  };
 }
 

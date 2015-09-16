@@ -1,5 +1,9 @@
 
+import debug from 'debug';
 import * as handlers from './tab-handlers';
+
+const info = debug('sync:tab:info');
+const error = debug('sync:tab:error');
 
 function makeRebaser(rebaser) {
   return (actions, prevTail, newTail) => {
@@ -24,10 +28,21 @@ export default class Tab {
       pending: [],
     };
     this.fns = {reducer, rebaser: makeRebaser(rebaser)};
+    this.waiting = false;
     this.ws = ws;
     this.ws.on('message', payload => {
+      if (payload.type === 'result') {
+        return this.gotResult();
+      }
       this.process(payload.type, payload.data);
     });
+  }
+
+  gotResult() {
+    this.waiting = false;
+    if (this.state.pending.length) {
+      this.enqueueSend();
+    }
   }
 
   addAction(action) {
@@ -35,27 +50,28 @@ export default class Tab {
   }
 
   enqueueSend(data) {
-    this.ws.send({type: 'addActions', data});
+    if (this.waiting) return;
+    this.waiting = true;
+    this.ws.send({type: 'addActions', data: {
+      actions: this.state.pending,
+      serverHead: this.state.serverHead,
+      sharedHead: this.state.sharedHead,
+    }});
   }
 
   process(type, data) {
-    console.log('process', type, data);
+    info('process', type, data);
     if (!handlers[type]) {
-      return console.log('no handler for', type, data);
+      return warn('no handler for', type, data);
     }
     var result = handlers[type](this.state, this.fns, data);
-    console.log(this.state, result);
+    info(this.state, result);
     if (!result) {
       return false;
     }
     this.state = result;
     if (result.pending.length) {
-      console.log('sending');
-      this.enqueueSend({
-        actions: result.pending,
-        serverHead: result.serverHead,
-        sharedHead: result.sharedHead,
-      });
+      this.enqueueSend();
     }
 
     return true;
