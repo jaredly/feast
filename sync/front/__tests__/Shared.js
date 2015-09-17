@@ -66,5 +66,39 @@ describe('Shared.js', () => {
   });
 
   pit('should sync to remote', async () => {
+    var remote = new MemRemote([{id: 'first', action: {name: 'thefirst'}}]);
+    var db = fakeDb(reducer, null);
+    var shared = new Shared(db, remote, rebaser, 1);
+
+    await shared.init();
+    await pwait(2);
+
+    expect(shared.state.serverHead).to.equal('first', 'shared serverHead');
+    expect((await db.dumpData()).data).to.eql({names: ['thefirst']}, 'db dump');
+  });
+
+  pit('should sync a remote w/ pending', async () => {
+    var remote = new MemRemote([{id: 'first', action: {name: 'thefirst'}}]);
+    var db = fakeDb(reducer, null);
+    var shared = new Shared(db, remote, rebaser, 1);
+
+    await shared.init();
+    await pwait(2);
+
+    expect(shared.state.serverHead).to.equal('first');
+
+    /*
+    var [tabSock, sharedSock] = socketPair();
+    var tab = new Tab(tabSock, reducer, rebaser);
+    shared.addConnection(sharedSock);
+
+    await Promise.all([shared.init(), tab.init()]);
+    tab.addAction({name: 'new'});
+    tab.addAction({name: 'thing'});
+    await pwait(100);
+    var goal = {names: ['woah', 'awesome', 'new', 'thing']}
+    expect(tab.state.local).to.eql(goal, 'tab local');
+    expect(shared.state.pending.reduce(reducer, tab.state.server)).to.eql(goal, 'shared state');
+    */
   });
 });

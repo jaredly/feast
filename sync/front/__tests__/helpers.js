@@ -1,4 +1,9 @@
 
+import debug from 'debug';
+const info = debug('sync:test:info');
+const warn = debug('sync:test:warn');
+const error = debug('sync:test:error');
+
 import {EventEmitter} from 'events';
 
 export const prom = fn => new Promise((res, rej) => fn((err, val) => err ? rej(err) : res(val)));
@@ -123,12 +128,14 @@ export function fakeDb(reducer, data, serverHead, pending) {
   serverHead = serverHead || null;
   return {
     async dumpData() {
+      info('dumping', data, added, serverHead);
       return {
         data: added.reduce(reducer, data),
         serverHead,
       };
     },
     async dump() {
+      info('dumping', serverHead, data, added, pending);
       return {
         serverHead,
         pending: pending || [],
@@ -148,8 +155,10 @@ export function fakeDb(reducer, data, serverHead, pending) {
     replacePending(oldPending, newPending, newServerHead) {
       serverHead = newServerHead;
     },
-    addActions(actions) {
+    addActions(actions, newServerHead) {
+      info('adding actions', actions, newServerHead, added);
       added = added.concat(actions);
+      serverHead = newServerHead;
     },
   };
 }

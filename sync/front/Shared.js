@@ -58,6 +58,7 @@ export default class Shared extends ShallowShared {
       actions: this.state.pending,
       serverHead: this.state.serverHead,
     }).then(data => {
+      info('poll result', data);
       this._poll = null;
       if (!data.actions) {
         data.actions = sending;
@@ -67,6 +68,55 @@ export default class Shared extends ShallowShared {
       if (!this._poll) {
         this._poll = setTimeout(this.sync.bind(this), this.pollTime);
       }
+    }).catch(err => error(err));
+  }
+
+  process(type, data) {
+    info('shared process', type, data);
+    var oldState = this.state;
+    var result = handlers[type](this.state, this.fns, data);
+    info(this.state, result);
+    if (!result) {
+      return false;
+    }
+    this.state = result;
+
+    // server rebase
+    if (type === 'serverSync' && result.serverHead != oldState.serverHead) {
+      info('server sync', oldState, result, data);
+      if (data.rebase) {
+        this.local.addActions(data.actions, result.serverHead);
+      } else {
+        this.local.commitPending(data.actions, result.serverHead);
+      }
+      this.sendServerSync(result, oldState, data);
+      if (data.rebase) {
+        this.sync();
+      }
+    }
+
+    // got add actions
+    if (type === 'addActions') {
+      this.local.addPending(data.actions);
+      this.sendSharedSync(result, oldState, data);
+    }
+    return true;
+  }
+
+  sendServerSync(result, oldState, data) {
+    this.clients.forEach(client => {
+      client.send({
+        type: 'remoteSync',
+        data: {
+          remoteActions: data.actions,
+          oldServerHead: oldState.serverHead,
+          newServerHead: result.serverHead,
+          oldActions: oldState.pending,
+          newActions: result.pending,
+          oldSharedHead: oldState.pendingStart + oldState.pending.length,
+          newSharedHead: result.pendingStart + result.pending.length,
+        },
+      });
     });
   }
 }

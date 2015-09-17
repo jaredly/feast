@@ -15,11 +15,23 @@ export default class MemRemote extends Remote {
   }
 
   async getActionsBetween(first, second) {
-    var i1 = first === null ? 0 : this.ids.indexOf(first);
-    var i2 = second === null ? 0 : this.idx.indexOf(second);
+    var i1 = -1, i2 = -1;
+    if (first !== null) {
+      i1 = this.ids.indexOf(first);
+      if (i1 === -1) {
+        error('Unknown get actions between', first, second);
+        throw new Error('Invalid action range');
+      }
+    }
+    if (second !== null) {
+      i2 = this.ids.indexOf(second);
+      if (i2 === -1) {
+        error('Unknown get actions between', first, second);
+        throw new Error('Invalid action range');
+      }
+    }
+    info('getting actions', first, i1, second, i2, this.ids)
     if (i1 === -1 || i2 === -1) {
-      error('Unknown get actions between', first, second);
-      throw new Error('Invalid action range');
     }
     return this.actions.slice(i1 + 1, i2 + 1);
   }
