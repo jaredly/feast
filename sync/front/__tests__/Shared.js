@@ -130,8 +130,7 @@ describe('Shared.js', () => {
     var shared2 = new Shared(db2, remote, rebaser, 2);
     shared2.id = chalk.green('shared2')
 
-    await shared1.init();
-    await shared2.init();
+    await Promise.all([shared1.init(), shared2.init()]);
     await pwait(50);
 
     shared1.clearPoll();
@@ -144,7 +143,42 @@ describe('Shared.js', () => {
     expect((await db2.dumpData()).data).to.eql(goalData, 'db2 data');
   });
 
+  pit('full stack tab -> shared -> remote', async () => {
+    var remote = new MemRemote(reducer, []);
+    var db = fakeDb(reducer, null, false);
+    var shared = new Shared(db, remote, rebaser, 10);
+
+    var [tabSock, sharedSock] = socketPair();
+    var tab = new Tab(tabSock, reducer, rebaser);
+    shared.addConnection(sharedSock);
+
+    await shared.init();
+    tab.addAction({name: 'hello'});
+
+    await pwait(100);
+
+    expect(shared.state.serverHead).to.equal(remote.head, 'shared serverHead');
+    expect(tab.state.serverHead).to.equal(remote.head, 'tab serverHead');
+
+    var goalData = remote.actions.reduce(reducer, null);
+    expect(tab.state.local).to.eql(goalData, 'tab-local');
+    expect(tab.state.shared).to.eql(goalData, 'tab-shared');
+    expect(tab.state.server).to.eql(goalData, 'tab-server');
+    expect((await db.dumpData()).data).to.eql(goalData, 'db dump');
+    // remote -> shared (db) -> tab
+  });
+
+
   pit('full stack sync', async () => {
+    var remote = new MemRemote(reducer, [{id: 'first', action: {name: 'thefirst'}}]);
+    var db = fakeDb(reducer, null, false);
+    var shared = new Shared(db, remote, rebaser, 1);
+
+    await shared.init();
+    await pwait(2);
+
+    expect(shared.state.serverHead).to.equal('first', 'shared serverHead');
+    expect((await db.dumpData()).data).to.eql({names: ['thefirst']}, 'db dump');
     // remote -> shared (db) -> tab
   });
 

@@ -22,6 +22,7 @@ export default class Shared extends ShallowShared {
     let {pending, data, serverHead} = await this.local.dump();
     if (serverHead === false) {
       const result = await this.remote.dump();
+      info(this.id, 'got remote dump', result);
       data = result.data;
       serverHead = result.serverHead;
       this.local.setDump({data, serverHead, pending});
@@ -61,7 +62,7 @@ export default class Shared extends ShallowShared {
         sharedActions: this.state.pending,
         sharedHead: this.state.pendingStart + this.state.pending.length,
       }});
-    }).catch(err => error('FAIL in connection init', err));
+    }).catch(err => error('FAIL in connection init', err, err.stack));
   }
 
   clearPoll() {
@@ -85,7 +86,7 @@ export default class Shared extends ShallowShared {
       }
       this.process('serverSync', data);
       this.startPolling();
-    }).catch(err => error('FAIL syncing', err));
+    }).catch(err => error('FAIL syncing', err, err.stack));
   }
 
   process(type, data) {
@@ -117,13 +118,13 @@ export default class Shared extends ShallowShared {
   sendServerSync(result, oldState, data) {
     this.clients.forEach(client => {
       client.send({
-        type: 'remoteSync',
+        type: 'serverSync',
         data: {
-          remoteActions: data.actions,
+          serverActions: data.actions,
           oldServerHead: oldState.serverHead,
           newServerHead: result.serverHead,
-          oldActions: oldState.pending,
-          newActions: result.pending,
+          oldSharedActions: oldState.pending,
+          newSharedActions: result.pending,
           oldSharedHead: oldState.pendingStart + oldState.pending.length,
           newSharedHead: result.pendingStart + result.pending.length,
         },

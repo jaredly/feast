@@ -3,6 +3,7 @@ import debug from 'debug';
 import * as handlers from './tab-handlers';
 
 const info = debug('sync:tab:info');
+const warn = debug('sync:tab:warn');
 const error = debug('sync:tab:error');
 
 function makeRebaser(rebaser) {
