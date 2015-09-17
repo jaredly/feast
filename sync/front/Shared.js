@@ -8,18 +8,12 @@ import * as handlers from './shared-handlers';
 import ShallowShared from './ShallowShared';
 
 export default class Shared extends ShallowShared {
-  constructor(local, remote, rebaser) {
+  constructor(local, remote, rebaser, pollTime) {
     super(rebaser);
     this.local = local;
     this.remote = remote;
     this.state = null;
-
-    this.remote.on('message', ({type, data}) => {
-      if (type === 'result') {
-        return this.gotResult();
-      }
-      this.process(type, data);
-    });
+    this.pollTime = pollTime || 1000;
   }
 
   init() {
@@ -37,6 +31,7 @@ export default class Shared extends ShallowShared {
           sharedHead: pending.length,
         }});
       });
+      this._poll = setTimeout(this.sync.bind(this), this.pollTime);
     });
   }
 
@@ -55,24 +50,24 @@ export default class Shared extends ShallowShared {
     }).catch(err => error(err));
   }
 
-  gotResult() {
-    this.waiting = false;
-    if (this.state.pending.length) {
-      this.enqueueSend();
-    }
-  }
-
-  enqueueSend() {
-    if (this.waiting) return;
-    this.waiting = true;
-    this.remote.send({
-      type: 'addActions',
-      data: {
-        serverHead: this.state.serverHead,
-        actions: this.state.pending,
-      },
+  sync() {
+    clearTimeout(this._poll);
+    this._poll = true;
+    var sending = this.state.pending;
+    this.remote.sync({
+      actions: this.state.pending,
+      serverHead: this.state.serverHead,
+    }).then(data => {
+      this._poll = null;
+      if (!data.actions) {
+        data.actions = sending;
+      }
+      this.process('serverSync', data);
+    }).then(() => {
+      if (!this._poll) {
+        this._poll = setTimeout(this.sync.bind(this), this.pollTime);
+      }
     });
   }
 }
-
 

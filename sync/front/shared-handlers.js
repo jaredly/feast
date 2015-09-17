@@ -24,3 +24,21 @@ export function addActions({pending, pendingStart, ...state}, {rebaser}, {action
   };
 }
 
+// remote stuff
+
+export function serverSync({pending, pendingStart, serverHead, ...state}, {rebaser}, {actions, oldServerHead, newServerHead}) {
+  if (oldServerHead === newServerHead) {
+    return // noop
+  }
+  if (serverHead !== oldServerHead) {
+    warn('invalid remote sync', serverHead, oldServerHead);
+  }
+  var rebased = rebaser(pending, null, actions);
+  if (rebased.length < pending.length) {
+    pendingStart += pending.length - rebased.length;
+  }
+  serverHead = newServerHead
+  pending = rebased
+  return {pending, serverHead, pendingStart};
+}
+

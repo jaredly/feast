@@ -47,7 +47,7 @@ describe('TabShared stuff', () => {
     expect(tab2.state.local).to.eql({names: ['hello']});
   });
 
-  it('should reconcile contending actions from two tabs', pit(async () => {
+  pit('should reconcile contending actions from two tabs', async () => {
     var shared = new ShallowShared(rebaser);
 
     var [tabSock, sharedSock] = laggySocketPair(2);
@@ -69,9 +69,9 @@ describe('TabShared stuff', () => {
     expect(tab.state.local).to.eql(goal, 'tab local');
     expect(tab2.state.shared).to.eql(goal, 'tab2 shared');
     expect(tab2.state.local).to.eql(goal, 'tab2 local');
-  }));
+  });
 
-  it('should reconcile contending actions from lots of tabs', pit(async () => {
+  pit('should reconcile contending actions from lots of tabs', async () => {
     var shared = new ShallowShared(rebaser);
 
     var tabs = [];
@@ -100,9 +100,9 @@ describe('TabShared stuff', () => {
       expect(tab.state.shared).to.eql(goal, i + 'tab state');
       expect(tab.state.local).to.eql(goal, i + 'tab local');
     });
-  }));
+  });
 
-  it('should reconcile contending actions from a few tabs, lots of actions', pit(async () => {
+  pit('should reconcile contending actions from a few tabs, lots of actions', async () => {
     var shared = new ShallowShared(rebaser);
 
     var tabs = [];
@@ -132,6 +132,6 @@ describe('TabShared stuff', () => {
       expect(tab.state.shared).to.eql(goal, i + 'tab state');
       expect(tab.state.local).to.eql(goal, i + 'tab local');
     });
-  }));
+  });
 });
 

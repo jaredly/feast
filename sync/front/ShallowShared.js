@@ -52,6 +52,23 @@ export default class ShallowShared {
     }
     this.state = result;
 
+    // server rebase
+    if (result.serverHead != oldState.serverHead) {
+      this.clients.forEach(client => {
+        client.send({
+          type: 'remoteSync',
+          data: {
+            oldServerHead: oldState.serverHead,
+            newServerHead: result.serverHead,
+            oldActions: oldState.pending,
+            newActions: result.pending,
+            oldSharedHead: oldState.pendingStart + oldState.pending.length,
+            newSharedHead: result.pendingStart + result.pending.length,
+          },
+        });
+      });
+    }
+
     // got add actions
     if (result.pending.length > oldState.pending.length) {
       this.clients.forEach(client => {
@@ -65,9 +82,6 @@ export default class ShallowShared {
           },
         });
       });
-    }
-    if (result.pending) {
-      this.enqueueSend();
     }
     return true;
   }

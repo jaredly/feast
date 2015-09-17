@@ -42,8 +42,18 @@ export function sharedSync({shared, local, pending, sharedHead, ...state}, {redu
   return {shared, local, pending, sharedHead, ...state};
 }
 
-export function serverSync({server, shared, local, pending, sharedHead, serverHead}, {reducer},
-                           {serverActions, oldServerHead, newServerHead}) {
-  var x;
+export function serverSync(
+  {server, shared, local, pending, sharedHead, serverHead},
+  {reducer},
+  {serverActions, oldServerHead, newServerHead, oldSharedHEad, newSharedHead}
+) {
+  if (oldSharedHead !== sharedHead) {
+    info('[shared sync] bad shared head', oldSharedHead, sharedHead);
+    return;
+  }
+  if (serverHead !== state.serverHead) {
+    info('[shared sync] bad server head', serverHead, state.serverHead);
+    return;
+  }
 }
 

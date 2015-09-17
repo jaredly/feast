@@ -3,13 +3,15 @@ import {EventEmitter} from 'events';
 
 export const prom = fn => new Promise((res, rej) => fn((err, val) => err ? rej(err) : res(val)));
 
-export function pit(fn) {
-  return function (done) {
-    fn().then(
+export function pit(text, fn) {
+  return it(text, done => {
+    fn().then(() => done(), done);
+    /*
       () => setTimeout(() => done(), 0),
       err => setTimeout(() => done(err), 0)
     );
-  };
+    */
+  });
 }
 
 export function pwait(time) {
