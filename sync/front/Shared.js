@@ -4,6 +4,7 @@ const info = debug('sync:shared:info');
 const warn = debug('sync:shared:warn');
 const error = debug('sync:shared:error');
 
+import chalk from 'chalk';
 import * as handlers from './shared-handlers';
 import ShallowShared from './ShallowShared';
 
@@ -42,7 +43,7 @@ export default class Shared extends ShallowShared {
   }
 
   startPolling() {
-    info(this.id, 'start polling', this._poll);
+    info(this.id, chalk.red('start polling'), this._poll);
     if (!this._poll) {
       this._poll = setTimeout(this.sync.bind(this), this.pollTime);
     }
