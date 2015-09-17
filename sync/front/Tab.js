@@ -67,7 +67,7 @@ export default class Tab {
       return warn('no handler for', type, data);
     }
     var result = handlers[type](this.state, this.fns, data);
-    info(this.state, result);
+    info('tab process', this.state, result);
     if (!result) {
       return false;
     }

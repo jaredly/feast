@@ -6,9 +6,21 @@ const error = debug('sync:shared:error');
 
 import * as handlers from './shared-handlers';
 
+function makeRebaser(rebaser) {
+  return (actions, prevTail, newTail) => {
+    if (!prevTail) {
+      if (actions.length && newTail.length && actions.length >= newTail.length && actions[0].id === newTail[0].id) {
+        return actions.slice(newTail.length);
+      }
+      prevTail = [];
+    }
+    return rebaser(actions, prevTail, newTail);
+  };
+}
+
 export default class ShallowShared {
   constructor(rebaser) {
-    this.fns = {rebaser};
+    this.fns = {rebaser: makeRebaser(rebaser)};
     this.clients = [];
     this.state = {
       pending: [],
@@ -46,7 +58,7 @@ export default class ShallowShared {
     info('shared process', type, data);
     var oldState = this.state;
     var result = handlers[type](this.state, this.fns, data);
-    info(this.state, result);
+    info('shared result', this.state, result);
     if (!result) {
       return false;
     }

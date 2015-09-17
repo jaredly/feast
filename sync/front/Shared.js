@@ -14,6 +14,7 @@ export default class Shared extends ShallowShared {
     this.remote = remote;
     this.state = null;
     this.pollTime = pollTime || 1000;
+    this.id = Math.random().toString(16).slice(2);
   }
 
   async init() {
@@ -55,6 +56,11 @@ export default class Shared extends ShallowShared {
     }).catch(err => error(err));
   }
 
+  clearPoll() {
+    clearTimeout(this._poll);
+    this._poll = null;
+  }
+
   sync() {
     clearTimeout(this._poll);
     this._poll = true;
@@ -63,7 +69,7 @@ export default class Shared extends ShallowShared {
       actions: this.state.pending,
       serverHead: this.state.serverHead,
     }).then(data => {
-      info('poll result', data);
+      console.warn(this.id, 'poll result', data);
       this._poll = null;
       if (!data.actions) {
         data.actions = sending;
@@ -77,18 +83,18 @@ export default class Shared extends ShallowShared {
   }
 
   process(type, data) {
-    info('shared process', type, data);
+    info(this.id, 'shared process', type, data);
     var oldState = this.state;
     var result = handlers[type](this.state, this.fns, data);
-    info(this.state, result);
     if (!result) {
+      info(this.id, 'no effect', this.state);
       return false;
     }
+    info(this.id, 'shared result', this.state, result);
     this.state = result;
 
     // server rebase
     if (type === 'serverSync' && result.serverHead != oldState.serverHead) {
-      info('server sync', oldState, result, data);
       if (data.rebase) {
         this.local.addActions(data.actions, result.serverHead);
       } else {
