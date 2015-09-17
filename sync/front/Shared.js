@@ -83,7 +83,6 @@ export default class Shared extends ShallowShared {
       if (!data.actions) {
         data.actions = sending;
       }
-      info(this.id, 'onprocess');
       this.process('serverSync', data);
       this.startPolling();
     }).catch(err => error('FAIL syncing', err));

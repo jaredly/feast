@@ -114,11 +114,12 @@ describe('Shared.js', () => {
 
     expect(shared1.state.serverHead).to.equal(remote.head, 'shared1 head');
     expect(shared2.state.serverHead).to.equal(remote.head, 'shared2 head');
-    expect((await db1.dumpData()).data).to.eql({names: ['thefirst', 'thesecond+', 'thethird+']}, 'db dump');
-    expect((await db2.dumpData()).data).to.eql({names: ['thefirst', 'thesecond+', 'thethird+']}, 'db dump');
+    var goalData = remote.actions.reduce(reducer, null);
+    expect((await db1.dumpData()).data).to.eql(goalData);
+    expect((await db2.dumpData()).data).to.eql(goalData);
   });
 
-  pit.only('two shared sync - w/ lag', async () => {
+  pit('two shared sync - w/ lag', async () => {
     var remote = new LaggyMemRemote(reducer, [{id: 'first', action: {name: 'thefirst'}}], 5);
 
     var db1 = fakeDb(reducer, null, null, [{id: 'second', action: {name: 'thesecond'}}]);
@@ -131,14 +132,13 @@ describe('Shared.js', () => {
 
     await shared1.init();
     await shared2.init();
-    await pwait(1000);
+    await pwait(50);
 
     shared1.clearPoll();
     shared2.clearPoll();
 
     expect(shared1.state.serverHead).to.equal(remote.head, 'shared1 head');
     expect(shared2.state.serverHead).to.equal(remote.head, 'shared2 head');
-    var actions = remote.actions;
     var goalData = remote.actions.reduce(reducer, null);
     expect((await db1.dumpData()).data).to.eql(goalData, 'db1 data');
     expect((await db2.dumpData()).data).to.eql(goalData, 'db2 data');
