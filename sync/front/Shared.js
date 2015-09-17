@@ -38,7 +38,14 @@ export default class Shared extends ShallowShared {
         sharedHead: pending.length,
       }});
     });
-    this._poll = setTimeout(this.sync.bind(this), this.pollTime);
+    this.startPolling();
+  }
+
+  startPolling() {
+    info(this.id, 'start polling', this._poll);
+    if (!this._poll) {
+      this._poll = setTimeout(this.sync.bind(this), this.pollTime);
+    }
   }
 
   initConnection(ws) {
@@ -53,7 +60,7 @@ export default class Shared extends ShallowShared {
         sharedActions: this.state.pending,
         sharedHead: this.state.pendingStart + this.state.pending.length,
       }});
-    }).catch(err => error(err));
+    }).catch(err => error('FAIL in connection init', err));
   }
 
   clearPoll() {
@@ -62,6 +69,7 @@ export default class Shared extends ShallowShared {
   }
 
   sync() {
+    info(this.id, 'sync', this.state.pending, this.state.serverHead);
     clearTimeout(this._poll);
     this._poll = true;
     var sending = this.state.pending;
@@ -69,29 +77,20 @@ export default class Shared extends ShallowShared {
       actions: this.state.pending,
       serverHead: this.state.serverHead,
     }).then(data => {
-      console.warn(this.id, 'poll result', data);
+      info(this.id, 'sync result', data);
       this._poll = null;
       if (!data.actions) {
         data.actions = sending;
       }
       this.process('serverSync', data);
-    }).then(() => {
-      if (!this._poll) {
-        this._poll = setTimeout(this.sync.bind(this), this.pollTime);
-      }
-    }).catch(err => error(err));
+      this.startPolling();
+    }).catch(err => error('FAIL syncing', err));
   }
 
   process(type, data) {
-    info(this.id, 'shared process', type, data);
     var oldState = this.state;
-    var result = handlers[type](this.state, this.fns, data);
-    if (!result) {
-      info(this.id, 'no effect', this.state);
-      return false;
-    }
-    info(this.id, 'shared result', this.state, result);
-    this.state = result;
+    var result = this.doAction(type, data);
+    if (!result) return;
 
     // server rebase
     if (type === 'serverSync' && result.serverHead != oldState.serverHead) {

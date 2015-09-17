@@ -54,15 +54,22 @@ export default class ShallowShared {
     // noop
   }
 
-  process(type, data) {
-    info('shared process', type, data);
-    var oldState = this.state;
+  doAction(type, data) {
+    info(this.id, 'process', type, data);
     var result = handlers[type](this.state, this.fns, data);
-    info('shared result', this.state, result);
     if (!result) {
+      info(this.id, 'no effect', this.state);
       return false;
     }
+    info(this.id, 'result', this.state, result);
     this.state = result;
+    return result;
+  }
+
+  process(type, data) {
+    var oldState = this.state;
+    var result = this.doAction(type, data);
+    if (!result) return;
 
     // got add actions
     if (type === 'addActions') {

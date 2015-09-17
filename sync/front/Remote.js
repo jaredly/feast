@@ -29,7 +29,8 @@ export default class Remote {
 
   async sync({actions, serverHead}) {
     if (this.head !== serverHead) {
-      return {actions: await this.getActionsBetween(serverHead, this.head), oldServerHead: serverHead, newServerHead: this.head, rebase: true};
+      var head = this.head;
+      return {actions: await this.getActionsBetween(serverHead, head), oldServerHead: serverHead, newServerHead: head, rebase: true};
     }
     if (!actions.length) {
       return {actions: null, rebase: false, oldServerHead: this.head, newServerHead: this.head};
@@ -39,6 +40,7 @@ export default class Remote {
     this.addActions(actions).catch(err => {
       error('failed to add actions', actions, err);
     }); // no need to wait
+    info('new server head', this.head);
     return {
       rebase: false,
       actions: null,

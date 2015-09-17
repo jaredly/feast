@@ -1,4 +1,5 @@
 
+import LaggyMemRemote from '../LaggyMemRemote';
 import MemRemote from '../MemRemote';
 import Shared from '../Shared';
 import Tab from '../Tab';
@@ -92,18 +93,14 @@ describe('Shared.js', () => {
     expect((await db.dumpData()).data).to.eql({names: ['thefirst', 'thesecond+']}, 'db dump');
   });
 
-  pit.only('two shared sync', async () => {
+  pit('two shared sync', async () => {
     var remote = new MemRemote(reducer, [{id: 'first', action: {name: 'thefirst'}}]);
 
-    var db1 = fakeDb(reducer, null, null, [{
-      id: 'second', action: {name: 'thesecond'},
-    }]);
+    var db1 = fakeDb(reducer, null, null, [{id: 'second', action: {name: 'thesecond'}}]);
     var shared1 = new Shared(db1, remote, rebaser, 1);
     shared1.id = 'shared1'
 
-    var db2 = fakeDb(reducer, null, null, [{
-      id: 'third', action: {name: 'thethird'},
-    }]);
+    var db2 = fakeDb(reducer, null, null, [{id: 'third', action: {name: 'thethird'}}]);
     var shared2 = new Shared(db2, remote, rebaser, 1);
     shared2.id = 'shared2'
 
@@ -118,6 +115,32 @@ describe('Shared.js', () => {
     expect(shared2.state.serverHead).to.equal(remote.head, 'shared2 head');
     expect((await db1.dumpData()).data).to.eql({names: ['thefirst', 'thesecond+', 'thethird+']}, 'db dump');
     expect((await db2.dumpData()).data).to.eql({names: ['thefirst', 'thesecond+', 'thethird+']}, 'db dump');
+  });
+
+  pit.only('two shared sync - w/ lag', async () => {
+    var remote = new LaggyMemRemote(reducer, [{id: 'first', action: {name: 'thefirst'}}], 5);
+
+    var db1 = fakeDb(reducer, null, null, [{id: 'second', action: {name: 'thesecond'}}]);
+    var shared1 = new Shared(db1, remote, rebaser, 2);
+    shared1.id = 'shared1'
+
+    var db2 = fakeDb(reducer, null, null, [{id: 'third', action: {name: 'thethird'}}]);
+    var shared2 = new Shared(db2, remote, rebaser, 2);
+    shared2.id = 'shared2'
+
+    await shared1.init();
+    await shared2.init();
+    await pwait(1000);
+
+    shared1.clearPoll();
+    shared2.clearPoll();
+
+    expect(shared1.state.serverHead).to.equal(remote.head, 'shared1 head');
+    expect(shared2.state.serverHead).to.equal(remote.head, 'shared2 head');
+    var actions = remote.actions;
+    var goalData = remote.actions.reduce(reducer, null);
+    expect((await db1.dumpData()).data).to.eql(goalData, 'db1 data');
+    expect((await db2.dumpData()).data).to.eql(goalData, 'db2 data');
   });
 
   pit('full stack sync', async () => {
