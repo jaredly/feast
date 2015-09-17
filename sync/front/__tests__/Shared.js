@@ -169,17 +169,30 @@ describe('Shared.js', () => {
   });
 
 
-  pit('full stack sync', async () => {
+  pit('full stack sync remote -> shared -> tab -> shared -> remote', async () => {
     var remote = new MemRemote(reducer, [{id: 'first', action: {name: 'thefirst'}}]);
-    var db = fakeDb(reducer, null, false);
+    // db starts synced.
+    var db = fakeDb(reducer, null, null);
     var shared = new Shared(db, remote, rebaser, 1);
+    shared.id = chalk.blue('shared');
+
+    var [tabSock, sharedSock] = socketPair();
+    var tab = new Tab(tabSock, reducer, rebaser);
+    tab.id = chalk.green('tab');
+    shared.addConnection(sharedSock);
 
     await shared.init();
-    await pwait(2);
+    tab.addAction({name: 'hello'});
 
-    expect(shared.state.serverHead).to.equal('first', 'shared serverHead');
-    expect((await db.dumpData()).data).to.eql({names: ['thefirst']}, 'db dump');
-    // remote -> shared (db) -> tab
+    await pwait(100);
+    expect(shared.state.serverHead).to.equal(remote.head, 'shared serverHead');
+    expect(tab.state.serverHead).to.equal(remote.head, 'tab serverHead');
+
+    var goalData = remote.actions.reduce(reducer, null);
+    expect(tab.state.local).to.eql(goalData, 'tab-local');
+    expect(tab.state.shared).to.eql(goalData, 'tab-shared');
+    expect(tab.state.server).to.eql(goalData, 'tab-server');
+    expect((await db.dumpData()).data).to.eql(goalData, 'db dump');
   });
 
   pit('two shared, four tabs, all the rebases', async () => {
