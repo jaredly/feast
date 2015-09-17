@@ -151,7 +151,7 @@ export function fakeDb(reducer, data, serverHead, pending) {
     },
     // normally would 1) apply actions to db, 2) remove pending
     commitPending(pending, newServerHead) {
-      info('committing actions', actions, newServerHead, added);
+      info('committing actions', pending, newServerHead, added);
       added = added.concat(pending);
       serverHead = newServerHead;
     },

@@ -6,6 +6,7 @@ import Tab from '../Tab';
 
 import {pit, pwait, pcheck, prom, fakeDb, socketPair, laggySocketPair, randomSocketPair, checkUntil} from './helpers';
 import {expect} from 'chai';
+import chalk from 'chalk';
 
 
 function rebaser(actions, oldTail, newTail) {
@@ -122,11 +123,11 @@ describe('Shared.js', () => {
 
     var db1 = fakeDb(reducer, null, null, [{id: 'second', action: {name: 'thesecond'}}]);
     var shared1 = new Shared(db1, remote, rebaser, 2);
-    shared1.id = 'shared1'
+    shared1.id = chalk.blue('shared1')
 
     var db2 = fakeDb(reducer, null, null, [{id: 'third', action: {name: 'thethird'}}]);
     var shared2 = new Shared(db2, remote, rebaser, 2);
-    shared2.id = 'shared2'
+    shared2.id = chalk.green('shared2')
 
     await shared1.init();
     await shared2.init();
