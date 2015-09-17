@@ -3,16 +3,15 @@ import {EventEmitter} from 'events';
 
 export const prom = fn => new Promise((res, rej) => fn((err, val) => err ? rej(err) : res(val)));
 
-export function pit(text, fn) {
-  return it(text, done => {
-    fn().then(() => done(), done);
-    /*
-      () => setTimeout(() => done(), 0),
-      err => setTimeout(() => done(err), 0)
-    );
-    */
-  });
+function asyncer(wrap) {
+  return (text, fn) => {
+    return wrap(text, done => fn().then(() => done(), done));
+  }
 }
+
+export var pit = asyncer(it);
+pit.only = asyncer(it.only.bind(it));
+pit.skip = asyncer(it.skip.bind(it));
 
 export function pwait(time) {
   return new Promise((res) => setTimeout(() => res(), time));
@@ -121,7 +120,7 @@ export function checkUntil(fn, then, tick, wait) {
 
 export function fakeDb(reducer, data, serverHead, pending) {
   var added = [];
-  serverHead = serverHead || 0;
+  serverHead = serverHead || null;
   return {
     async dumpData() {
       return {
