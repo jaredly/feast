@@ -125,7 +125,6 @@ export function checkUntil(fn, then, tick, wait) {
 
 export function fakeDb(reducer, data, serverHead, pending) {
   var added = [];
-  serverHead = serverHead || null;
   return {
     async dumpData() {
       info('dumping', data, added, serverHead);
@@ -141,6 +140,11 @@ export function fakeDb(reducer, data, serverHead, pending) {
         pending: pending || [],
         data: added.reduce(reducer, data),
       };
+    },
+    async setDump(stuff) {
+      data = stuff.data
+      pending = stuff.pending
+      serverHead = stuff.serverHead
     },
     // fire & forget
     addPending(pending) {

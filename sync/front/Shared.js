@@ -16,23 +16,28 @@ export default class Shared extends ShallowShared {
     this.pollTime = pollTime || 1000;
   }
 
-  init() {
-    return this.local.dump().then(({pending, data, serverHead}) => {
-      this.state = {
-        pending,
+  async init() {
+    let {pending, data, serverHead} = await this.local.dump();
+    if (serverHead === false) {
+      const result = await this.remote.dump();
+      data = result.data;
+      serverHead = result.serverHead;
+      this.local.setDump({data, serverHead, pending});
+    }
+    this.state = {
+      pending,
+      serverHead,
+      pendingStart: 0,
+    };
+    this.clients.forEach(client => {
+      client.send({type: 'dump', data: {
         serverHead,
-        pendingStart: 0,
-      };
-      this.clients.forEach(client => {
-        client.send({type: 'dump', data: {
-          serverHead,
-          server: data,
-          sharedActions: pending,
-          sharedHead: pending.length,
-        }});
-      });
-      this._poll = setTimeout(this.sync.bind(this), this.pollTime);
+        server: data,
+        sharedActions: pending,
+        sharedHead: pending.length,
+      }});
     });
+    this._poll = setTimeout(this.sync.bind(this), this.pollTime);
   }
 
   initConnection(ws) {

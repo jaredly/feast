@@ -7,8 +7,8 @@ const error = debug('sync:remote:error');
 import Remote from './Remote';
 
 export default class MemRemote extends Remote {
-  constructor(actions) {
-    super();
+  constructor(reducer, actions) {
+    super(reducer);
     this.actions = actions || [];
     this.ids = this.actions.map(a => a.id);
     this.head = this.ids.length ? this.ids[this.ids.length - 1] : null;

@@ -19,7 +19,7 @@ function reducer(state, {action}) {
 
 describe('Shared.js', () => {
   pit('should initialize a tab', async () => {
-    var remote = new MemRemote();
+    var remote = new MemRemote(reducer);
     var db = fakeDb(reducer, {names: ['woah']}, 1, [{id: 'theid', action: {name: 'awesome'}}]);
     var shared = new Shared(db, remote);
 
@@ -32,7 +32,7 @@ describe('Shared.js', () => {
   });
 
   pit('should initialize after added', async () => {
-    var remote = new MemRemote();
+    var remote = new MemRemote(reducer);
     var db = fakeDb(reducer, {names: ['woah']}, 1, [{id: 'theid', action: {name: 'awesome'}}]);
     var shared = new Shared(db, remote);
 
@@ -48,7 +48,7 @@ describe('Shared.js', () => {
   });
 
   pit('should play well with tab adding action', async () => {
-    var remote = new MemRemote();
+    var remote = new MemRemote(reducer);
     var db = fakeDb(reducer, {names: ['woah']}, 1, [{id: 'theid', action: {name: 'awesome'}}]);
     var shared = new Shared(db, remote);
 
@@ -66,8 +66,8 @@ describe('Shared.js', () => {
   });
 
   pit('should sync to remote', async () => {
-    var remote = new MemRemote([{id: 'first', action: {name: 'thefirst'}}]);
-    var db = fakeDb(reducer, null);
+    var remote = new MemRemote(reducer, [{id: 'first', action: {name: 'thefirst'}}]);
+    var db = fakeDb(reducer, null, false);
     var shared = new Shared(db, remote, rebaser, 1);
 
     await shared.init();
@@ -78,14 +78,18 @@ describe('Shared.js', () => {
   });
 
   pit('should sync a remote w/ pending', async () => {
-    var remote = new MemRemote([{id: 'first', action: {name: 'thefirst'}}]);
-    var db = fakeDb(reducer, null);
+    var remote = new MemRemote(reducer, [{id: 'first', action: {name: 'thefirst'}}]);
+    var db = fakeDb(reducer, null, null, [{
+      id: 'second',
+      action: {name: 'thesecond'},
+    }]);
     var shared = new Shared(db, remote, rebaser, 1);
 
     await shared.init();
     await pwait(2);
 
-    expect(shared.state.serverHead).to.equal('first');
+    expect(shared.state.serverHead).to.equal('second');
+    expect((await db.dumpData()).data).to.eql({names: ['thefirst', 'thesecond+']}, 'db dump');
 
     /*
     var [tabSock, sharedSock] = socketPair();

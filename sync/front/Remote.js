@@ -5,8 +5,18 @@ const warn = debug('sync:remote:warn');
 const error = debug('sync:remote:error');
 
 export default class Remote {
-  constructor() {
+  constructor(reducer) {
     this.head = null;
+    this.reducer = reducer;
+  }
+
+  async dump() {
+    const head = this.head;
+    const actions = await this.getActionsBetween(null, head);
+    return {
+      data: actions.reduce(this.reducer, null),
+      serverHead: head,
+    };
   }
 
   async getActionsBetween(first, second) {
@@ -20,6 +30,9 @@ export default class Remote {
   async sync({actions, serverHead}) {
     if (this.head !== serverHead) {
       return {actions: await this.getActionsBetween(serverHead, this.head), oldServerHead: serverHead, newServerHead: this.head, rebase: true};
+    }
+    if (!actions.length) {
+      return {actions: null, rebase: false, oldServerHead: this.head, newServerHead: this.head};
     }
 
     this.head = actions[actions.length - 1].id;
