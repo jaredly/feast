@@ -44,7 +44,7 @@ export default class Shared extends ShallowShared {
   }
 
   startPolling() {
-    info(this.id, chalk.red('start polling'), this._poll);
+    info(this.id, chalk.red('start polling'), !!this._poll);
     if (!this._poll) {
       this._poll = setTimeout(this.sync.bind(this), this.pollTime);
     }
@@ -86,7 +86,10 @@ export default class Shared extends ShallowShared {
       }
       this.process('serverSync', data);
       this.startPolling();
-    }).catch(err => error('FAIL syncing', err, err.stack));
+    }, err => {
+      error('FAIL syncing', err, err.stack)
+      this._poll = null;
+    }).then(() => this.startPolling(), err => error('FAIL processing sync', err, err.stack));
   }
 
   process(type, data) {

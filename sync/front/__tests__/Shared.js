@@ -288,7 +288,7 @@ describe('Shared.js', () => {
     expect((await db2.dumpData()).data).to.eql(goalData, 'db2 dump');
   });
 
-  pit.only('many shared, many tabs', async () => {
+  pit('many shared, many tabs', async () => {
     var stored = [];
     var num_stored = rand(4, 10);
     for (var i=0; i<num_stored; i++) {
@@ -353,8 +353,5 @@ describe('Shared.js', () => {
       var db = dbs[i];
       expect((await db.dumpData()).data).to.eql(goalData, 'db' + i + ' dump');
     }
-  });
-
-  pit('three shared w/ temporary partition', async () => {
   });
 });
