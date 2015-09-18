@@ -11,7 +11,7 @@ const pwait = time => new Promise(res => setTimeout(() => res(), time));
 export default class LaggyMemRemote extends MemRemote {
   constructor(reducer, actions, time) {
     super(reducer, actions);
-    this.waitTime = time;
+    this.waitTime = time || 5;
   }
 
   async getActionsBetween(first, second) {

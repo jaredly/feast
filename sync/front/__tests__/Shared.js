@@ -195,7 +195,49 @@ describe('Shared.js', () => {
     expect((await db.dumpData()).data).to.eql(goalData, 'db dump');
   });
 
-  pit('two shared, four tabs, all the rebases', async () => {
+  pit.only('two shared, four tabs, all the rebases', async () => {
+    var remote = new LaggyMemRemote(reducer, [{id: 'first', action: {name: 'thefirst'}}], 10);
+
+    var db1 = fakeDb(reducer, null, null);
+    var shared1 = new Shared(db1, remote, rebaser, 1);
+    shared1.id = chalk.blue('shared1');
+
+    var db2 = fakeDb(reducer, null, null);
+    var shared2 = new Shared(db2, remote, rebaser, 1);
+    shared2.id = chalk.green('shared2');
+
+    var shareds = [shared1, shared2];
+    
+    var tabs = [];
+    shareds.forEach((shared, s) => {
+      for (var i=0; i<2; i++) {
+        var n = s * 2 + i;
+        var [tabSock, sharedSock] = socketPair();
+        var tab = new Tab(tabSock, reducer, rebaser);
+        tab.id = chalk.green('tab' + n);
+        shared.addConnection(sharedSock);
+        tabs.push(tab);
+      }
+    });
+
+    await Promise.all(shareds.concat(tabs).map(s => s.init()));
+
+    tabs[0].addAction({name: 'hello'});
+    tabs.forEach((tab, i) => tab.addAction({name: 'from' + i}));
+
+    await pwait(100);
+    expect(shared1.state.serverHead).to.equal(remote.head, 'shared serverHead');
+    expect(shared2.state.serverHead).to.equal(remote.head, 'shared serverHead');
+    var goalData = remote.actions.reduce(reducer, null);
+    tabs.forEach((tab, i) => {
+      expect(tab.state.serverHead).to.equal(remote.head, 'tab serverHead' + i);
+
+      expect(tab.state.local).to.eql(goalData, 'tab-local' + i);
+      expect(tab.state.shared).to.eql(goalData, 'tab-shared' + i);
+      expect(tab.state.server).to.eql(goalData, 'tab-server' + i);
+    });
+    expect((await db1.dumpData()).data).to.eql(goalData, 'db1 dump');
+    expect((await db2.dumpData()).data).to.eql(goalData, 'db2 dump');
   });
 
   pit('many shared, many tabs', async () => {
