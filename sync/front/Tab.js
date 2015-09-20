@@ -62,6 +62,10 @@ export default class Tab {
     }});
   }
 
+  setState(state) {
+    this.state = state;
+  }
+
   process(type, data) {
     info('process', type, data);
     if (!handlers[type]) {
@@ -77,7 +81,7 @@ export default class Tab {
       this._initpair = null;
       this._initwait = null;
     }
-    this.state = result;
+    this.setState(result);
     if (result.pending.length) {
       this.enqueueSend();
     }

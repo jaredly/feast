@@ -1,3 +1,4 @@
+importScripts('./Dexie.js');
 
 var db = new Dexie('todo-stampy');
 
@@ -5,7 +6,7 @@ db.version(1).stores({
   items: 'id, completed, owner',
 
   // bookkeeping
-  pending: 'id',
+  pending: '++idx, id',
   meta: 'id',
 })
 

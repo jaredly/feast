@@ -2,10 +2,13 @@
 
 module.exports = {
   devtool: 'cheap-module-eval-source-map',
-  entry: './front/run',
+  entry: {
+    shared: './shared',
+    client: './client',
+  },
   output: {
     path: __dirname + '/build', // eslint-disable-line no-path-concat
-    filename: 'build.js',
+    filename: '[name].js',
   },
 
   module: {
@@ -18,5 +21,6 @@ module.exports = {
     }]
   },
 };
+
 
 
