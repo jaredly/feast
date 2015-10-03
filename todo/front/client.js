@@ -5,15 +5,19 @@ import Tab from '../../sync/front/Tab';
 
 import reducer from './reducer';
 
+require('debug').enable('*warn,*error')
 
 function rebaser(actions, oldTail, newTail) {
   return actions.map(({id, action: {name}}) => ({id, action: {name: name + '+'}}));
 }
 
 var worker = new SharedWorker('./build/shared.js');
+window.shared_worker = worker
+worker.onerror = err => console.log('Shared worker failed to start', err);
 var shared = new EventEmitter();
 worker.port.onmessage = e => {console.log('from shared', e.data); shared.emit('message', e.data);};
 shared.send = data => {console.log('to shared', data); worker.port.postMessage(data);};
+
 
 var tab = new Tab(shared, reducer, rebaser);
 

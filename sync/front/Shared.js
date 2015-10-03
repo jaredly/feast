@@ -25,7 +25,9 @@ export default class Shared extends ShallowShared {
       info(this.id, 'got remote dump', result);
       data = result.data;
       serverHead = result.serverHead;
-      this.local.setDump({data, serverHead, pending});
+      this.local.setDump({data, serverHead, pending}).catch(err => {
+        console.error('failed to set dump', err);
+      });
     }
     this.state = {
       pending,
@@ -52,9 +54,11 @@ export default class Shared extends ShallowShared {
 
   initConnection(ws) {
     this.local.dumpData().then(({serverHead, data}) => {
+      console.log('got dump');
       if (serverHead !== this.state.serverHead) {
         warn('Trying to initialize a connection, and there is too much traffick... trying again', serverHead, this.state.serverHead);
-        return this.initConnection(ws);
+        console.log('server head off', serverHead, this.state.serverHead);
+        return setTimeout(() => this.initConnection(ws), 50);
       }
       ws.send({type: 'dump', data: {
         server: data,
@@ -62,7 +66,10 @@ export default class Shared extends ShallowShared {
         sharedActions: this.state.pending,
         sharedHead: this.state.pendingStart + this.state.pending.length,
       }});
-    }).catch(err => error('FAIL in connection init', err, err.stack));
+    }).catch(err => {
+      console.log('dump failed', err);
+      error('FAIL in connection init', err, err.stack)
+    });
   }
 
   clearPoll() {

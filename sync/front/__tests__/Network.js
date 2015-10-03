@@ -146,7 +146,7 @@ describe('testing network interop', () => {
     expect(tab2.state.server).to.eql(goalData, 'tab2 server');
   });
 
-  pit.only('two shared, one loses connection', async () => {
+  pit('two shared, one loses connection', async () => {
     var remote = new DisconnectedMemRemote(reducer, [{id: 'first', action: {name: 'thefirst'}}]);
 
     var db = fakeDb(reducer, null, null, [{

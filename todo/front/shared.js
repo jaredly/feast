@@ -8,6 +8,8 @@ import MemRemote from '../../sync/front/MemRemote';
 import DexieDB from './DexieDB';
 import reducer from './reducer';
 
+require('debug').enable('*warn,*error')
+
 var local = new DexieDB(db);
 var remote = new MemRemote(reducer);
 var shared = new Shared(local, remote, reducer);
@@ -16,16 +18,25 @@ shared.init().then(
   err => console.error('Shared init failed - ', err)
 );
 
+var id = 0;
 var self = new Function('return this')();
 self.shared = shared;
 // connections from open tabs
 self.onconnect = function (e) {
+  console.log('adding connection');
+  var num = ++id;
   var port = e.ports[0];
   port.start();
 
   var client = new EventEmitter();
-  port.onmessage = e => client.emit('message', e.data);
-  client.send = data => port.postMessage(data);
+  port.onmessage = e => {
+    console.log('fron client', num, e.data)
+    client.emit('message', e.data);
+  }
+  client.send = data => {
+    console.log('to client', num, data)
+    port.postMessage(data);
+  }
 
   shared.addConnection(client);
 }
