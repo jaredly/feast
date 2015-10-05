@@ -6,7 +6,8 @@ import MemRemote from '../MemRemote';
 import Shared from '../Shared';
 import Tab from '../Tab';
 
-import {pit, pwait, pcheck, prom, fakeDb, socketPair, laggySocketPair, randomSocketPair, checkUntil} from './helpers';
+import {pit, pwait, pcheck, prom, socketPair, laggySocketPair, randomSocketPair, checkUntil} from './helpers';
+import fakeDb from './fakeDb';
 import {expect} from 'chai';
 import chalk from 'chalk';
 

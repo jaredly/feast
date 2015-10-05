@@ -3,7 +3,7 @@ import ShallowShared from '../ShallowShared';
 import Shared from '../Shared';
 import Tab from '../Tab';
 
-import {pit, pwait, pcheck, prom, fakeDb, socketPair, laggySocketPair, randomSocketPair, checkUntil} from './helpers';
+import {pit, pwait, pcheck, prom, socketPair, laggySocketPair, randomSocketPair, checkUntil} from './helpers';
 import {expect} from 'chai';
 
 function rebaser(actions, oldTail, newTail) {

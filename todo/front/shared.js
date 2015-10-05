@@ -6,11 +6,13 @@ import Shared from '../../sync/front/Shared';
 import MemRemote from '../../sync/front/MemRemote';
 
 import DexieDB from './DexieDB';
+import fakeDb from '../../sync/front/__tests__/fakeDb';
 import reducer from './reducer';
 
 require('debug').enable('*warn,*error')
 
-var local = new DexieDB(db);
+var local = fakeDb(reducer, null, false);
+//var local = new DexieDB(db);
 var remote = new MemRemote(reducer);
 var shared = new Shared(local, remote, reducer);
 shared.init().then(
