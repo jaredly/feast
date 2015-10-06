@@ -1,0 +1,18 @@
+<!doctype html>
+<meta charset=utf8>
+<link rel="stylesheet" href="../../../../node_modules/mocha/mocha.css">
+<script src="../../../../node_modules/mocha/mocha.js"></script>
+<div id="mocha"></div>
+<script>
+window.Dexie = require('dexie');
+/*
+var mocha = require('mocha');
+var m = new mocha();
+m.addFile('../fake.js');
+m.run();
+*/
+mocha.ui('bdd');
+require('babel-core/register');
+require('../fake.js');
+mocha.run();
+</script>

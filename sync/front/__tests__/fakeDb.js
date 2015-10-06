@@ -27,13 +27,15 @@ export default function fakeDb(reducer, data, serverHead, pending) {
       serverHead = stuff.serverHead
     },
     // fire & forget
-    addPending(pending) {
+    addPending(morePending) {
+      pending = pending.concat(morePending);
     },
     // normally would 1) apply actions to db, 2) remove pending
-    commitPending(pending, newServerHead) {
-      info('committing actions', pending, newServerHead, added);
-      added = added.concat(pending);
+    commitPending(pendingToCommit, newServerHead) {
+      info('committing actions', pendingToCommit, newServerHead, added);
+      added = added.concat(pendingToCommit);
       serverHead = newServerHead;
+      pending = pending.slice(pendingToCommit.length);
     },
     // after a rebase, need to remove the old pending, and replace with the
     // rebased pending.
@@ -45,6 +47,9 @@ export default function fakeDb(reducer, data, serverHead, pending) {
       added = added.concat(actions);
       serverHead = newServerHead;
     },
+
+    async delete() {
+    }
   };
 }
 

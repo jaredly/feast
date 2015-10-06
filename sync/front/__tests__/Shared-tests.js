@@ -26,7 +26,9 @@ function reducer(state, {action}) {
 export default (makeDb/*, makeRemote*/) => {
   const makeLocal = async (reducer, data, serverHead, pending) => {
     const db = makeDb(reducer);
-    await db.setDump({data, serverHead, pending})
+    if (data || serverHead || pending) {
+      await db.setDump({data, serverHead, pending})
+    }
     return db;
   };
 
