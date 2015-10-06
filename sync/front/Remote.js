@@ -20,11 +20,11 @@ export default class Remote {
   }
 
   async getActionsBetween(first, second) {
-    throw new Error();
+    throw new Error('not implemented');
   }
 
   async addActions(actions) {
-    throw new Error();
+    throw new Error('not implemented');
   }
 
   async sync({actions, serverHead}) {

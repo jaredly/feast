@@ -1,3 +1,4 @@
+// UNUSED
 
 export default class DexieDB {
   constructor(db) {

@@ -22,7 +22,7 @@ export default (name, makeDb) => {
     return db;
   };
 
-  describe.only('Database Tests - ' + name, () => {
+  describe('Database Tests - ' + name, () => {
     pit('should init', async () => {
       const db = await makeDb(reducer);
       await db.delete();
@@ -42,6 +42,19 @@ export default (name, makeDb) => {
       await db.delete();
     });
 
+    pit('should load & dump (to tab)', async () => {
+      const init = {
+        data: {names: ['awesome']},
+        serverHead: 1,
+        pending: [{id: 'pend', action: {name: 'next'}}],
+      };
+      const db = await makeDb(reducer, init.data, init.serverHead, init.pending);
+      const {data, serverHead} = await db.dumpData();
+      expect(data).to.eql(init.data);
+      expect(serverHead).to.eql(init.serverHead);
+      await db.delete();
+    });
+
     pit('should set, get, and commit pending', async () => {
       const db = await makeDb(reducer, {names: []}, 1, []);
       const pending = [
@@ -56,6 +69,9 @@ export default (name, makeDb) => {
       expect(updated.pending).to.eql([]);
       expect(updated.serverHead).to.eql('b');
       await db.delete();
+    });
+
+    pit('should replace pending', async () => {
     });
   });
 

@@ -19,10 +19,7 @@ function setData(db, data) {
   return db.names.clear().then(() => Promise.all(data.names.map(name => db.names.put({name}))))
 }
 
-
-
-// DBtests('fake', fakeDb);
-DBtests('dexie', async (_, data, serverHead, pending) => {
+async function makeDexie(_, data, serverHead, pending) {
   const name = 'db-test-' + Math.random().toString(16).slice(2)
   console.log('new db', name);
   const db = new Dexie(name);
@@ -37,5 +34,8 @@ DBtests('dexie', async (_, data, serverHead, pending) => {
     await local.setDump({data, serverHead, pending});
   }
   return local;
-});
+}
+
+DBtests('fake', fakeDb);
+// DBtests('dexie', makeDexie);
 
