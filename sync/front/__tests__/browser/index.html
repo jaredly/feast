@@ -15,4 +15,11 @@ mocha.ui('bdd');
 require('babel-core/register');
 require('../fake.js');
 mocha.run();
+function clearDBs() {
+    Dexie.getDatabaseNames().then(function (names) {
+        names.forEach(function(name) {
+            new Dexie(name).delete();
+        });
+    });
+}
 </script>
