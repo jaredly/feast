@@ -27,11 +27,7 @@ export default (app, remote) => {
   }
 
   get('dump', () => remote.dump());
-  post('getActionsBetween', ({first, second}) =>
-    remote.getActionsBetween(first, second));
-  post('addActions', ({actions}) =>
-    remote.addActions(actions));
-  post('sync', ({actions, serverHead}) =>
-    remote.sync({actions, serverHead}));
+  post('sync', ({actions, serverHead, clientId}) =>
+    remote.sync({actions, serverHead, clientId}));
 }
 

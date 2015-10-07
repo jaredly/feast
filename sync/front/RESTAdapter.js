@@ -1,7 +1,6 @@
 
 import axios from 'axios';
 
-
 export default base => {
   const get = endp =>
     axios.get(base + endp)
@@ -12,12 +11,8 @@ export default base => {
 
   return {
     dump: () => get('dump'),
-    getActionsBetween: (first, second) =>
-      post('getActionsBetween', {first, second}),
-    addActions: actions =>
-      post('addActions', {actions}),
-    sync: ({actions, serverHead}) =>
-      post('sync', {actions, serverHead})
+    sync: ({actions, serverHead, clientId}) =>
+      post('sync', {actions, serverHead, clientId})
   }
 }
 

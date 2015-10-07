@@ -54,7 +54,6 @@ export default class Shared extends ShallowShared {
 
   initConnection(ws) {
     this.local.dumpData().then(({serverHead, data}) => {
-      console.log('got dump');
       if (serverHead !== this.state.serverHead) {
         warn('Trying to initialize a connection, and there is too much traffick... trying again', serverHead, this.state.serverHead);
         console.log('server head off', serverHead, this.state.serverHead);
