@@ -7,6 +7,7 @@ const error = debug('sync:shared:error');
 import chalk from 'chalk';
 import * as handlers from './shared-handlers';
 import ShallowShared from './ShallowShared';
+debugger;
 
 export default class Shared extends ShallowShared {
   constructor(local, remote, rebaser, pollTime) {
@@ -42,10 +43,20 @@ export default class Shared extends ShallowShared {
         sharedHead: pending.length,
       }});
     });
+    if (this.remote.onExtra) {
+      this.remote.onExtra(data => {
+        try {
+          this.process('serverSync', data);
+        } catch (e) {
+          console.error('FAIL remote server sync extra', e, e.stack, data);
+        }
+      });
+    }
     this.startPolling();
   }
 
   startPolling() {
+    return console.log('not polling');
     info(this.id, chalk.red('start polling'), !!this._poll);
     if (!this._poll) {
       this._poll = setTimeout(this.sync.bind(this), this.pollTime);
@@ -125,6 +136,8 @@ export default class Shared extends ShallowShared {
     if (type === 'addActions') {
       this.local.addPending(data.actions);
       this.sendSharedSync(result, oldState, data);
+      // TODO: throttle this?
+      this.sync();
     }
     return true;
   }

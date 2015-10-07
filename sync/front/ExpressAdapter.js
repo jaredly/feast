@@ -19,7 +19,7 @@ export default (app, remote) => {
         res.set('content-type', 'application/json');
         res.end(JSON.stringify(val));
       }, err => {
-        console.log('fail', err);
+        console.log('fail', err, err.stack);
         res.status(500);
         res.end(err.message);
       }).catch(err => console.log('WWWW', err));

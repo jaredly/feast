@@ -6,6 +6,7 @@ import {EventEmitter} from 'events';
 import Shared from '../../sync/front/Shared';
 import MemRemote from '../../sync/front/MemRemote';
 import RESTAdapter from '../../sync/front/RESTAdapter';
+import WebSocketWrapper from '../../sync/front/WebsocketWrapper';
 
 import makeLocal from './local-db';
 import fakeDb from '../../sync/front/__tests__/fakeDb';
@@ -22,7 +23,10 @@ function rebaser(actions, oldTail, newTail) {
 
 // var local = fakeDb(reducer, null, false);
 const local = makeLocal(db);
-const remote = RESTAdapter('http://localhost:6110/')
+const remote = WebSocketWrapper(
+  'ws://localhost:6110/',
+  RESTAdapter('http://localhost:6110/')
+);
 // const remote = new MemRemote(reducer);
 const shared = new Shared(local, remote, rebaser);
 shared.init().then(

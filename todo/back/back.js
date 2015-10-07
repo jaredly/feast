@@ -8,13 +8,15 @@ import ExpressAdapter from '../../sync/front/ExpressAdapter';
 import MemRemote from '../../sync/front/MemRemote';
 
 import reducer from '../front/reducer';
+import WebsocketBack from '../../sync/front/WebsocketBack';  
 
-const server = http.server();
+const server = new http.Server();
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 const remote = new MemRemote(reducer);
-// const wsManager = new WSManager(server, remote);
+WebsocketBack(server, remote);
 ExpressAdapter(app, remote);
 
-app.listen(6110, () => console.log('Listening on http://localhost:6110'));
+server.on('request', app);
+server.listen(6110, () => console.log('Listening on http://localhost:6110'));
