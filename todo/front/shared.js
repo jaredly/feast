@@ -1,27 +1,36 @@
 require('babel-core/polyfill');
 
+import './enable-debug';
 import db from './db';
 import {EventEmitter} from 'events';
 import Shared from '../../sync/front/Shared';
 import MemRemote from '../../sync/front/MemRemote';
+import RESTAdapter from '../../sync/front/RESTAdapter';
 
 import makeLocal from './local-db';
 import fakeDb from '../../sync/front/__tests__/fakeDb';
 import reducer from './reducer';
 
-require('debug').enable('*warn,*error')
+var self = new Function('return this')();
+self.dbg = require('debug');
+self.document = {documentElement: {style: {WebkitAppearance: true}}};
+
+function rebaser(actions, oldTail, newTail) {
+  return actions;
+  // return actions.map(({id, action: {name}}) => ({id, action: {name: name + '+'}}));
+}
 
 // var local = fakeDb(reducer, null, false);
-var local = makeLocal(db);
-var remote = new MemRemote(reducer);
-var shared = new Shared(local, remote, reducer);
+const local = makeLocal(db);
+const remote = RESTAdapter('http://localhost:6110/')
+// const remote = new MemRemote(reducer);
+const shared = new Shared(local, remote, rebaser);
 shared.init().then(
   () => console.log('Shared initialized'),
   err => console.error('Shared init failed - ', err)
 );
 
 var id = 0;
-var self = new Function('return this')();
 self.shared = shared;
 // connections from open tabs
 self.onconnect = function (e) {

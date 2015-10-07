@@ -3,6 +3,7 @@ export default (app, remote) => {
   const get = (endp, handler) => {
     app.get('/' + endp, (req, res) => {
       handler().then(val => {
+        res.set('content-type', 'application/json');
         res.end(JSON.stringify(val));
       }, err => {
         console.log('fail', err, err.stack);
@@ -13,8 +14,9 @@ export default (app, remote) => {
   }
 
   const post = (endp, handler) => {
-    app.get('/' + endp, (req, res) => {
+    app.post('/' + endp, (req, res) => {
       handler(req.body).then(val => {
+        res.set('content-type', 'application/json');
         res.end(JSON.stringify(val));
       }, err => {
         console.log('fail', err);

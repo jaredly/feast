@@ -18,6 +18,7 @@
     "webpack": "^1.11.0"
   },
   "dependencies": {
+    "axios": "^0.7.0",
     "dexie": "^1.1.0",
     "immutable": "^3.7.4",
     "object-assign": "^4.0.1",

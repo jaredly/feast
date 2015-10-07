@@ -1,6 +1,7 @@
 
 import axios from 'axios';
 
+
 export default base => {
   const get = endp =>
     axios.get(base + endp)

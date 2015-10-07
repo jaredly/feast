@@ -96,7 +96,12 @@ export default class Shared extends ShallowShared {
     }, err => {
       error('FAIL syncing', err, err.stack)
       this._poll = null;
-    }).then(() => this.startPolling(), err => error('FAIL processing sync', err, err.stack));
+    }).then(
+      () => this.startPolling(),
+      err => {
+        error('FAIL processing sync', err, err.stack)
+      }
+    );
   }
 
   process(type, data) {

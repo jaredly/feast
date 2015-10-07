@@ -37,6 +37,7 @@ export default class MemRemote extends Remote {
   }
 
   async addActions(actions) {
+    info('Adding actions', actions);
     this.actions = this.actions.concat(actions);
     this.ids = this.ids.concat(actions.map(a => a.id));
   }

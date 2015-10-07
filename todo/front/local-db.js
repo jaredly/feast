@@ -14,17 +14,17 @@ function applyAction(db, action) {
 
 function dump(db) {
   return db.items.toArray().then(
-    items => items.reduce(
+    items => ({items: items.reduce(
       (data, item) => (data[item.id] = item, data),
       {}
-    )
+    )})
   );
 }
 
 function setData(db, data) {
   if (!data || !data.items) return;
-  return Promise.all(data.items.map(
-    item => db.items.add(item)
+  return Promise.all(Object.keys(data.items).map(
+    id => db.items.add(data.items[id])
   ));
 }
 

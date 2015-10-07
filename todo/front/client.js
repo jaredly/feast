@@ -6,7 +6,7 @@ import Tab from '../../sync/front/Tab';
 import reducer from './reducer';
 import * as creators from './creators';
 
-require('debug').enable('*warn,*error')
+require('debug').enable('*info,*warn,*error')
 
 function rebaser(actions, oldTail, newTail) {
   return actions.map(({id, action: {name}}) => ({id, action: {name: name + '+'}}));
@@ -18,7 +18,14 @@ var worker = new SharedWorker('./build/shared.js');
 window.shared_worker = worker
 worker.onerror = err => console.log('Shared worker failed to start', err);
 var shared = new EventEmitter();
-worker.port.onmessage = e => {console.log('from shared', e.data); shared.emit('message', e.data);};
+worker.port.onmessage = e => {
+  console.log('from shared', e.data);
+  try {
+    shared.emit('message', e.data);
+  } catch (e) {
+    console.log('failed', e, e.stack);
+  }
+};
 shared.send = data => {console.log('to shared', data); worker.port.postMessage(data);};
 
 
@@ -29,7 +36,7 @@ import React from 'react';
 class App extends React.Component {
   constructor() {
     super();
-    this.state = {items: tab.state.local.items, newText: ''};
+    this.state = {items: (tab.state.local || {}).items, newText: ''};
     var oldSet = tab.setState;
     tab.setState = (state, type) => {
       this.setState({items: state.local.items});
@@ -51,7 +58,7 @@ class App extends React.Component {
 
   render() {
     const {items} = this.state;
-    const ids = Object.keys(items);
+    const ids = items ? Object.keys(items) : [];
     return <div>
       State!
       <ul style={styles.list}>
@@ -96,5 +103,7 @@ const styles = {
 window.ttab = tab;
 
 tab.init().then(() => {
+  console.log('pre');
   React.render(<App/>, document.body);
-});
+  console.log('post');
+}).catch(err => console.log('Error from render', err, err.stack));
