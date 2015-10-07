@@ -1,15 +1,14 @@
 require('babel-core/polyfill');
 
+import './enable-debug';
 import {EventEmitter} from 'events';
 import Tab from '../../sync/front/Tab';
 
 import reducer from './reducer';
 import * as creators from './creators';
 
-require('debug').enable('*info,*warn,*error')
-
 function rebaser(actions, oldTail, newTail) {
-  return actions.map(({id, action: {name}}) => ({id, action: {name: name + '+'}}));
+  return actions;
 }
 
 const uuid = () => Math.random().toString(16).slice(2);
@@ -26,7 +25,7 @@ worker.port.onmessage = e => {
     console.log('failed', e, e.stack);
   }
 };
-shared.send = data => {console.log('to shared', data); worker.port.postMessage(data);};
+shared.send = data => worker.port.postMessage(data);
 
 
 var tab = new Tab(shared, reducer, rebaser);
@@ -56,9 +55,14 @@ class App extends React.Component {
     tab.addAction(creators.add(id, newText));
   }
 
+  remove(id) {
+    tab.addAction(creators.remove(id));
+  }
+
   render() {
     const {items} = this.state;
     const ids = items ? Object.keys(items) : [];
+    ids.sort();
     return <div>
       State!
       <ul style={styles.list}>
@@ -70,6 +74,7 @@ class App extends React.Component {
               checked={items[id].completed}
             />
             <span style={styles.text}>{items[id].text}</span>
+            <button style={styles.remove} onClick={() => this.remove(id)}>&times;</button>
           </label>
         </li>)}
       </ul>
@@ -91,6 +96,10 @@ const styles = {
   text: {
     paddingLeft: 10,
     display: 'inline-block',
+    width: '200px',
+  },
+  remove: {
+    cursor: 'pointer',
   },
 
   item: {
