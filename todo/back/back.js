@@ -6,6 +6,7 @@ import cors from 'cors';
 
 import ExpressAdapter from '../../sync/front/ExpressAdapter';
 import MemRemote from '../../sync/front/MemRemote';
+import FileRemote from '../../sync/front/FileRemote';
 
 import reducer from '../front/reducer';
 import WebsocketBack from '../../sync/front/WebsocketBack';  
@@ -14,7 +15,7 @@ const server = new http.Server();
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
-const remote = new MemRemote(reducer);
+const remote = new FileRemote(reducer, __dirname + '/actions.txt');
 WebsocketBack(server, remote);
 ExpressAdapter(app, remote);
 
