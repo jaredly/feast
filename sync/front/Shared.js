@@ -52,11 +52,16 @@ export default class Shared extends ShallowShared {
         }
       });
     }
-    this.startPolling();
+    if (this.remote.onDisconnect) {
+      this.remote.onDisconnect(() => {
+        this.startPolling();
+      });
+    }
+    // this.startPolling();
   }
 
+  // If a sync request fails, poll until it works.
   startPolling() {
-    return console.log('not polling');
     info(this.id, chalk.red('start polling'), !!this._poll);
     if (!this._poll) {
       this._poll = setTimeout(this.sync.bind(this), this.pollTime);
@@ -102,12 +107,12 @@ export default class Shared extends ShallowShared {
         data.actions = sending;
       }
       this.process('serverSync', data);
-      this.startPolling();
     }, err => {
       error('FAIL syncing', err, err.stack)
       this._poll = null;
+      this.startPolling();
     }).then(
-      () => this.startPolling(),
+      () => {},
       err => {
         error('FAIL processing sync', err, err.stack)
       }
