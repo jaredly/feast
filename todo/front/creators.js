@@ -5,11 +5,12 @@ export const update = (id, update) => ({
   type: 'edit',
 });
 
-export const add = (id, text) => ({
+export const add = (id, text, color) => ({
   type: 'add',
   item: {
     id,
     text,
+    color,
     added: new Date(),
     completed: false,
   },

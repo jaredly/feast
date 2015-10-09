@@ -32,6 +32,7 @@ export function serverSync({pending, pendingStart, serverHead, ...state}, {rebas
   }
   if (serverHead !== oldServerHead) {
     warn('invalid remote sync', serverHead, oldServerHead);
+    throw new Error('Wrong server head');
   }
   var rebased = rebaser(pending, null, actions);
   if (rebased.length < pending.length) {

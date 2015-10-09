@@ -1,7 +1,6 @@
 require('babel-core/polyfill');
 
 // Enable this for fuzz testing
-// import './fuzz';
 import './enable-debug';
 import {EventEmitter} from 'events';
 import Tab from '../../sync/front/Tab';
@@ -57,6 +56,15 @@ class App extends React.Component {
     tab.addAction(creators.add(id, newText));
   }
 
+  clear() {
+    Object.keys(tab.state.local.items).map(id => this.remove(id));
+  }
+
+  async kill() {
+    await new Dexie('todo-stampy').delete();
+    location.reload();
+  }
+
   remove(id) {
     tab.addAction(creators.remove(id));
   }
@@ -66,10 +74,17 @@ class App extends React.Component {
     const ids = items ? Object.keys(items) : [];
     ids.sort();
     return <div>
+      {/*
+      <button onClick={() => rando(200, 20)}>Fuzz!</button>
+      <button onClick={() => rando(200, 20, 1000)}>Fuzzsec!</button>
+      <button onClick={() => this.clear()}>Clear</button>
+      <button onClick={() => this.kill()}>kill</button>
+      <br/>
+      */}
       State!
       <ul style={styles.list}>
         {ids.map(id => <li>
-          <label style={styles.item}>
+          <label style={{...styles.item, backgroundColor: items[id].color}}>
             <input
               type="checkbox"
               onClick={() => this.setCompleted(id, !items[id].completed)}
@@ -112,6 +127,7 @@ const styles = {
 };
 
 window.ttab = tab;
+// require('./fuzz')(tab);
 
 tab.init().then(() => {
 

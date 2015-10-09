@@ -57,7 +57,7 @@ export default class Shared extends ShallowShared {
         this.startPolling();
       });
     }
-    // this.startPolling();
+    this.sync();
   }
 
   // If a sync request fails, poll until it works.
@@ -115,6 +115,8 @@ export default class Shared extends ShallowShared {
       () => {},
       err => {
         error('FAIL processing sync', err, err.stack)
+        this._poll = null;
+        this.startPolling();
       }
     );
   }
