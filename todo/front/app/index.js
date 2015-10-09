@@ -1,47 +1,22 @@
-require('babel-core/polyfill');
 
-// Enable this for fuzz testing
-import './enable-debug';
-import {EventEmitter} from 'events';
-import Tab from '../../sync/front/Tab';
-
-import rebaser from './rebaser';
-import reducer from './reducer';
-import * as creators from './creators';
+import * as creators from '../util/creators';
+import React from 'react';
 
 const uuid = () => Math.random().toString(16).slice(2);
 
-var worker = new SharedWorker('./build/shared.js');
-window.shared_worker = worker
-worker.onerror = err => console.log('Shared worker failed to start', err);
-var shared = new EventEmitter();
-worker.port.onmessage = e => {
-  console.log('from shared', e.data);
-  try {
-    shared.emit('message', e.data);
-  } catch (e) {
-    console.log('failed', e, e.stack);
-  }
-};
-shared.send = data => worker.port.postMessage(data);
-
-var tab = new Tab(shared, reducer, rebaser);
-
-import React from 'react';
-
-class App extends React.Component {
-  constructor() {
-    super();
-    this.state = {items: (tab.state.local || {}).items, newText: ''};
-    var oldSet = tab.setState;
-    tab.setState = (state, type) => {
+export default class App extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {items: (props.tab.state.local || {}).items, newText: ''};
+    var oldSet = props.tab.setState;
+    props.tab.setState = (state, type) => {
       this.setState({items: state.local.items});
-      oldSet.call(tab, state, type);
+      oldSet.call(props.tab, state, type);
     };
   }
 
   setCompleted(id, completed) {
-    tab.addAction(creators.update(id, {completed}));
+    this.props.tab.addAction(creators.update(id, {completed}));
   }
 
   add() {
@@ -49,11 +24,11 @@ class App extends React.Component {
     const {newText} = this.state;
     this.setState({newText: ''});
     const id = uuid();
-    tab.addAction(creators.add(id, newText));
+    this.props.tab.addAction(creators.add(id, newText));
   }
 
   clear() {
-    Object.keys(tab.state.local.items).map(id => this.remove(id));
+    Object.keys(this.props.tab.state.local.items).map(id => this.remove(id));
   }
 
   async kill() {
@@ -62,7 +37,7 @@ class App extends React.Component {
   }
 
   remove(id) {
-    tab.addAction(creators.remove(id));
+    this.props.tab.addAction(creators.remove(id));
   }
 
   render() {
@@ -120,12 +95,3 @@ const styles = {
   },
 };
 
-window.ttab = tab;
-require('./fuzz')(tab);
-
-tab.init().then(() => {
-
-  console.log('pre');
-  React.render(<App/>, document.body);
-  console.log('post');
-}).catch(err => console.log('Error from render', err, err.stack));

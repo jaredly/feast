@@ -4,7 +4,7 @@ module.exports = {
   devtool: 'cheap-module-eval-source-map',
   entry: {
     shared: './shared',
-    client: './client',
+    client: './app/run',
   },
   output: {
     path: __dirname + '/build', // eslint-disable-line no-path-concat

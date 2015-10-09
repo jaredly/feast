@@ -1,5 +1,5 @@
 
-import * as creators from './creators';
+import * as creators from '../util/creators';
 const uuid = () => Math.random().toString(16).slice(2);
 
 module.exports = tab => {

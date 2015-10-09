@@ -20,6 +20,7 @@ meta: sync
 
 */
 
+/*
 // Todo Example thing
 
 function applyAction(db, action) {
@@ -48,14 +49,15 @@ function dump(db) {
 function setData(db, data) {
   return db.names.clear().then(() => Promise.all(data.names.map(name => db.names.put({name}))))
 }
+*/
 
 export default class DexieAdapter {
-  constructor(db, tables, applyAction, dump, setData) {
+  constructor(db, {tables, applyAction, dump, setData}) {
     this._db = db;
     this._applyAction = applyAction
     this._dump = dump;
     this._setData = setData;
-    this._tables = tables.concat([db.pending, db.meta]);;
+    this._tables = tables(db).concat([db.pending, db.meta]);;
   }
 
   setHead(head) {

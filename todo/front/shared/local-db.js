@@ -1,7 +1,7 @@
 
-import DexieAdapter from '../../sync/front/DexieDB';
+export const tables = db => [db.items];
 
-function applyAction(db, action) {
+export const applyAction = (db, action) => {
   switch (action.type) {
     case 'add':
       return db.items.add(action.item);
@@ -12,7 +12,7 @@ function applyAction(db, action) {
   }
 }
 
-function dump(db) {
+export const dump = (db) => {
   return db.items.toArray().then(
     items => ({items: items.reduce(
       (data, item) => (data[item.id] = item, data),
@@ -21,12 +21,10 @@ function dump(db) {
   );
 }
 
-function setData(db, data) {
+export const setData = (db, data) => {
   if (!data || !data.items) return;
   return Promise.all(Object.keys(data.items).map(
     id => db.items.add(data.items[id])
   ));
 }
-
-export default db => new DexieAdapter(db, [db.items], applyAction, dump, setData)
 

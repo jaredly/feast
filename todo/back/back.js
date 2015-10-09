@@ -2,22 +2,24 @@
 
 import http from 'http';
 import express from 'express';
-import bodyParser from 'body-parser';
-import cors from 'cors';
 
 import ExpressAdapter from '../../sync/back/ExpressAdapter';
+import WebsocketBack from '../../sync/back/WebsocketBack';  
 import FileRemote from '../../sync/back/FileRemote';
 
-import reducer from '../front/reducer';
-import WebsocketBack from '../../sync/back/WebsocketBack';  
+import reducer from '../front/util/reducer';
 
-const server = new http.Server();
 const app = express();
-app.use(cors());
-app.use(bodyParser.json());
+const server = http.createServer(app);
+
+app.use(require('cors')());
+app.use(require('body-parser').json());
+
 const remote = new FileRemote(reducer, __dirname + '/actions.txt');
+
+// make a websocket server, and decorate `remote` to broadcast changes
 WebsocketBack(server, remote);
+// make the enpoints on `app` to interact with `remote`
 ExpressAdapter(app, remote);
 
-server.on('request', app);
 server.listen(6110, () => console.log('Listening on http://localhost:6110'));
