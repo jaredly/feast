@@ -4,22 +4,17 @@ import './enable-debug';
 import db from './db';
 import {EventEmitter} from 'events';
 import Shared from '../../sync/front/Shared';
-import MemRemote from '../../sync/front/MemRemote';
 import RESTAdapter from '../../sync/front/RESTAdapter';
 import WebSocketWrapper from '../../sync/front/WebsocketWrapper';
 
 import makeLocal from './local-db';
 import fakeDb from '../../sync/front/__tests__/fakeDb';
 import reducer from './reducer';
+import rebaser from './rebaser';
 
 var self = new Function('return this')();
 self.dbg = require('debug');
 self.document = {documentElement: {style: {WebkitAppearance: true}}};
-
-function rebaser(actions, oldTail, newTail) {
-  return actions;
-  // return actions.map(({id, action: {name}}) => ({id, action: {name: name + '+'}}));
-}
 
 // var local = fakeDb(reducer, null, false);
 const local = makeLocal(db);
@@ -27,7 +22,6 @@ const remote = WebSocketWrapper(
   'ws://localhost:6110/',
   RESTAdapter('http://localhost:6110/')
 );
-// const remote = new MemRemote(reducer);
 const shared = new Shared(local, remote, rebaser);
 shared.init().then(
   () => console.log('Shared initialized'),

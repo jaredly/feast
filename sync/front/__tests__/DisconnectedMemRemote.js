@@ -4,7 +4,7 @@ const info = debug('sync:remote:info');
 const warn = debug('sync:remote:warn');
 const error = debug('sync:remote:error');
 
-import MemRemote from './MemRemote';
+import MemRemote from '../../back/MemRemote';
 
 const pwait = time => new Promise(res => setTimeout(() => res(), time));
 

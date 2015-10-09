@@ -1,15 +1,15 @@
+#!/usr/bin/env babel-node
 
 import http from 'http';
 import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 
-import ExpressAdapter from '../../sync/front/ExpressAdapter';
-import MemRemote from '../../sync/front/MemRemote';
-import FileRemote from '../../sync/front/FileRemote';
+import ExpressAdapter from '../../sync/back/ExpressAdapter';
+import FileRemote from '../../sync/back/FileRemote';
 
 import reducer from '../front/reducer';
-import WebsocketBack from '../../sync/front/WebsocketBack';  
+import WebsocketBack from '../../sync/back/WebsocketBack';  
 
 const server = new http.Server();
 const app = express();

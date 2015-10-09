@@ -5,12 +5,9 @@ import './enable-debug';
 import {EventEmitter} from 'events';
 import Tab from '../../sync/front/Tab';
 
+import rebaser from './rebaser';
 import reducer from './reducer';
 import * as creators from './creators';
-
-function rebaser(actions, oldTail, newTail) {
-  return actions;
-}
 
 const uuid = () => Math.random().toString(16).slice(2);
 
@@ -27,7 +24,6 @@ worker.port.onmessage = e => {
   }
 };
 shared.send = data => worker.port.postMessage(data);
-
 
 var tab = new Tab(shared, reducer, rebaser);
 

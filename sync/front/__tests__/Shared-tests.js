@@ -1,6 +1,6 @@
 
-import LaggyMemRemote from '../LaggyMemRemote';
-import MemRemote from '../MemRemote';
+import LaggyMemRemote from './LaggyMemRemote';
+import MemRemote from '../../back/MemRemote';
 import Shared from '../Shared';
 import Tab from '../Tab';
 

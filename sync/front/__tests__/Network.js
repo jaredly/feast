@@ -1,8 +1,8 @@
 
 import FlakyProxy from '../FlakyProxy';
-import DisconnectedMemRemote from '../DisconnectedMemRemote';
-import LaggyMemRemote from '../LaggyMemRemote';
-import MemRemote from '../MemRemote';
+import DisconnectedMemRemote from './DisconnectedMemRemote';
+import LaggyMemRemote from './LaggyMemRemote';
+import MemRemote from '../../back/MemRemote';
 import Shared from '../Shared';
 import Tab from '../Tab';
 
