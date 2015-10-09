@@ -44,13 +44,14 @@ export default class App extends React.Component {
     const {items} = this.state;
     const ids = items ? Object.keys(items) : [];
     ids.sort();
+    const idSum = ids.reduce((s, id) => s + parseInt(id, 16), 0).toString(16);
     return <div>
       <button onClick={() => rando(200, 20)}>Fuzz!</button>
       <button onClick={() => rando(200, 20, 1000)}>Fuzzsec!</button>
       <button onClick={() => this.clear()}>Clear</button>
       <button onClick={() => this.kill()}>kill</button>
       <br/>
-      State!
+      State! {ids.length} items : sum {idSum}
       <ul style={styles.list}>
         {ids.map(id => <li>
           <label style={{...styles.item, backgroundColor: items[id].color}}>
