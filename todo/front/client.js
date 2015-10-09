@@ -1,5 +1,7 @@
 require('babel-core/polyfill');
 
+// Enable this for fuzz testing
+// import './fuzz';
 import './enable-debug';
 import {EventEmitter} from 'events';
 import Tab from '../../sync/front/Tab';
@@ -112,6 +114,7 @@ const styles = {
 window.ttab = tab;
 
 tab.init().then(() => {
+
   console.log('pre');
   React.render(<App/>, document.body);
   console.log('post');
