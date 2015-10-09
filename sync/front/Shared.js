@@ -48,7 +48,8 @@ export default class Shared extends ShallowShared {
         try {
           this.process('serverSync', data);
         } catch (e) {
-          console.error('FAIL remote server sync extra', e, e.stack, data);
+          console.warn('FAIL remote server sync extra', e, e.stack, data);
+          this.sync();
         }
       });
     }
@@ -115,8 +116,10 @@ export default class Shared extends ShallowShared {
       () => {},
       err => {
         error('FAIL processing sync', err, err.stack)
-        this._poll = null;
-        this.startPolling();
+        // the issue was probably a bad serverHead
+        setTimeout(() => {
+          this.sync();
+        }, 10);
       }
     );
   }

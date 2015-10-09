@@ -74,13 +74,11 @@ class App extends React.Component {
     const ids = items ? Object.keys(items) : [];
     ids.sort();
     return <div>
-      {/*
       <button onClick={() => rando(200, 20)}>Fuzz!</button>
       <button onClick={() => rando(200, 20, 1000)}>Fuzzsec!</button>
       <button onClick={() => this.clear()}>Clear</button>
       <button onClick={() => this.kill()}>kill</button>
       <br/>
-      */}
       State!
       <ul style={styles.list}>
         {ids.map(id => <li>
@@ -127,7 +125,7 @@ const styles = {
 };
 
 window.ttab = tab;
-// require('./fuzz')(tab);
+require('./fuzz')(tab);
 
 tab.init().then(() => {
 
