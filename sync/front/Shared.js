@@ -1,3 +1,4 @@
+/* @flow */
 
 import debug from 'debug';
 const info = debug('sync:shared:info');
@@ -9,17 +10,28 @@ import * as handlers from './shared-handlers';
 import ShallowShared from './ShallowShared';
 debugger;
 
-export default class Shared extends ShallowShared {
-  constructor(local, remote, rebaser, pollTime) {
+import type {Sender, Pendings, Remote, Local, Rebaser, SharedState} from './types';
+
+export default class Shared<Action> extends ShallowShared {
+  local: Local<Action>;
+  remote: Remote<Action>;
+  state: SharedState<Action>;
+  pollTime: number;
+  id: string;
+  _poll: ?number | bool;
+
+  constructor(local: Local<Action>, remote: Remote<Action>, rebaser: Rebaser<Action>, pollTime: number) {
+    // $FlowFixMe
     super(rebaser);
     this.local = local;
     this.remote = remote;
+    // $FlowFixMe
     this.state = null;
     this.pollTime = pollTime || 1000;
     this.id = Math.random().toString(16).slice(2);
   }
 
-  async init() {
+  async init(): Promise<void> {
     let {pending, data, serverHead} = await this.local.dump();
     if (serverHead === false) {
       const result = await this.remote.dump();
@@ -69,7 +81,7 @@ export default class Shared extends ShallowShared {
     }
   }
 
-  initConnection(ws) {
+  initConnection(ws: Sender) {
     this.local.dumpData().then(({serverHead, data}) => {
       if (serverHead !== this.state.serverHead) {
         warn('Trying to initialize a connection, and there is too much traffick... trying again', serverHead, this.state.serverHead);
@@ -124,7 +136,7 @@ export default class Shared extends ShallowShared {
     );
   }
 
-  process(type, data) {
+  process(type: string, data: any): ?boolean {
     var oldState = this.state;
     var result = this.doAction(type, data);
     if (!result) return;
@@ -152,7 +164,7 @@ export default class Shared extends ShallowShared {
     return true;
   }
 
-  sendServerSync(result, oldState, data) {
+  sendServerSync(result: SharedState<Action>, oldState: SharedState<Action>, data: {actions: Pendings<Action>}) {
     this.clients.forEach(client => {
       client.send({
         type: 'serverSync',

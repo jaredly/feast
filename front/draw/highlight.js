@@ -1,5 +1,5 @@
 /**
- * @flow
+ * @ flow
  */
 
 import roundRect from './roundRect';

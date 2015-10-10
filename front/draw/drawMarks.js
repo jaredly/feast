@@ -1,5 +1,5 @@
 /**
- * @flow
+ * @ flow
  */
 
 import sideline from './sideline';

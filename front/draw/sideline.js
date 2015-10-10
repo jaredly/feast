@@ -1,5 +1,5 @@
 /**
- * @flow
+ * @ flow
  */
 
 import type {Context, Mark, FontConfig} from './types';

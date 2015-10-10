@@ -1,4 +1,3 @@
-
 /*
 
 events:
@@ -18,37 +17,6 @@ pending:
 
 meta: sync
 
-*/
-
-/*
-// Todo Example thing
-
-function applyAction(db, action) {
-}
-
-function dump(db) {
-  return db.items.toArray().then(items => {
-    const data = {};
-    items.forEach(item => data[item.id] = item);
-    return data;
-  });
-}
-
-// Test thing
-
-function applyAction(db, action) {
-  return db.names.put({name: action.name});
-}
-
-function dump(db) {
-  return db.names.toArray().then(items => ({
-    names: items.map(item => item.name)
-  }));
-}
-
-function setData(db, data) {
-  return db.names.clear().then(() => Promise.all(data.names.map(name => db.names.put({name}))))
-}
 */
 
 export default class DexieAdapter {

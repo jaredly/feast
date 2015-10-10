@@ -1,5 +1,5 @@
 /**
- * @flow
+ * @ flow
  */
 
 import calcSideLeft from './calcSideLeft';

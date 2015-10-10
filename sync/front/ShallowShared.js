@@ -1,3 +1,4 @@
+/* @flow */
 
 import debug from 'debug';
 const info = debug('sync:shared:info');
@@ -6,7 +7,9 @@ const error = debug('sync:shared:error');
 
 import * as handlers from './shared-handlers';
 
-function makeRebaser(rebaser) {
+import type {Sender, Pendings, Remote, Local, Rebaser, SharedState} from './types';
+
+function makeRebaser<Action>(rebaser: Rebaser<Action>): Rebaser<Action> {
   return (actions, prevTail, newTail) => {
     if (!prevTail) {
       if (actions.length && newTail.length && actions.length >= newTail.length && actions[0].id === newTail[0].id) {
@@ -18,18 +21,24 @@ function makeRebaser(rebaser) {
   };
 }
 
-export default class ShallowShared {
-  constructor(rebaser) {
+export default class ShallowShared<Action> {
+  state: SharedState<Action>;
+  clients: Array<Sender>;
+  fns: {rebaser: Rebaser<Action>};
+  id: string;
+
+  constructor(rebaser: Rebaser<Action>) {
     this.fns = {rebaser: makeRebaser(rebaser)};
     this.clients = [];
     this.state = {
       pending: [],
-      serverHead: 0,
+      serverHead: '',
       pendingStart: 0,
     };;
+    this.id = '';
   }
 
-  addConnection(ws) {
+  addConnection(ws: Sender) {
     this.clients.push(ws);
     ws.on('message', ({type, data}) => {
       var result = this.process(type, data);
@@ -41,7 +50,7 @@ export default class ShallowShared {
     }
   }
 
-  initConnection(ws) {
+  initConnection(ws: Sender) {
     ws.send({type: 'dump', data: {
       server: null,
       serverHead: 0,
@@ -54,7 +63,7 @@ export default class ShallowShared {
     // noop
   }
 
-  doAction(type, data) {
+  doAction(type: string, data: any): false | SharedState<Action> {
     info(this.id, 'process', type, data);
     var result = handlers[type](this.state, this.fns, data);
     if (!result) {
@@ -66,7 +75,7 @@ export default class ShallowShared {
     return result;
   }
 
-  process(type, data) {
+  process(type: string, data: any): ?boolean {
     var oldState = this.state;
     var result = this.doAction(type, data);
     if (!result) return;
@@ -78,7 +87,7 @@ export default class ShallowShared {
     return true;
   }
 
-  sendSharedSync(result, oldState, data) {
+  sendSharedSync(result: SharedState<Action>, oldState: SharedState<Action>, data: {actions: Pendings<Action>}) {
     this.clients.forEach(client => {
       client.send({
         type: 'sharedSync',

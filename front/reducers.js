@@ -1,5 +1,5 @@
 /**
- * @flow
+ * @ flow
  */
 
 import {fromJS} from 'immutable';
