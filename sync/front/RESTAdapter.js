@@ -1,7 +1,10 @@
+// @flow
 
 import axios from 'axios';
 
-export default base => {
+import type {Remote} from './types';
+
+export default function<Action> (base: string): Remote<Action> {
   const get = endp =>
     axios.get(base + endp)
     .then(res => res.data);

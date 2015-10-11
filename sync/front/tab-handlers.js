@@ -1,3 +1,6 @@
+// @ --- flow flow is broken somehow here...
+
+import type {Sender, Pendings, Remote, Local, Reducer, Rebaser, ClientState, HeadID} from './types';
 
 import debug from 'debug';
 const info = debug('sync:tab:info');
@@ -7,7 +10,18 @@ const error = debug('sync:tab:error');
 
 const gen = () => Math.random().toString(16).slice(2);
 
-export function dump(state, {reducer}, {server, sharedActions, serverHead, sharedHead}) {
+type DumpData<State, Action> = {
+  server: State,
+  sharedActions: Pendings<Action>,
+  serverHead: HeadID,
+  sharedHead: HeadID
+};
+
+export function dump<State, Action>(
+  state: ClientState<State, Action>,
+  {reducer}: {reducer: Reducer<State, Action>},
+  {server, sharedActions, serverHead, sharedHead}: DumpData<State, Action>
+): ClientState<State, Action> {
   var shared = sharedActions.reduce(reducer, server);
   var local = shared;
   return {
@@ -16,15 +30,29 @@ export function dump(state, {reducer}, {server, sharedActions, serverHead, share
   };
 }
 
-export function addAction({local, pending, ...state}, {reducer}, {action}) {
+export function addAction<State, Action>(
+  {local, pending, ...state}: ClientState<State, Action>,
+  {reducer}: {reducer: Reducer<State, Action>},
+  {action}: {action: Action}
+): ClientState<State, Action> {
   var item = {id: gen(), action};
   pending = pending.concat([item]);
   local = reducer(local, item);
   return {local, pending, ...state};
 }
 
-export function sharedSync({shared, local, pending, sharedHead, ...state}, {reducer, rebaser},
-                           {actions, oldSharedHead, newSharedHead, serverHead}) {
+type SharedSyncData<Action> = {
+  actions: Pendings<Action>,
+  oldSharedHead: HeadID,
+  newSharedHead: HeadID,
+  serverHead: HeadID,
+};
+
+export function sharedSync<State, Action>(
+  {shared, local, pending, sharedHead, ...state}: ClientState<State, Action>,
+  {reducer, rebaser}: {reducer: Reducer<State, Action>, rebaser: Rebaser<Action>},
+  {actions, oldSharedHead, newSharedHead, serverHead}: SharedSyncData<Action>
+): ClientState<State, Action> {
   if (oldSharedHead !== sharedHead) {
     info('[shared sync] bad shared head', oldSharedHead, sharedHead);
     return;
@@ -42,11 +70,21 @@ export function sharedSync({shared, local, pending, sharedHead, ...state}, {redu
   return {shared, local, pending, sharedHead, ...state};
 }
 
-export function serverSync(
-  {server, shared, local, pending, sharedHead, serverHead},
+type ServerSyncData<Action> = {
+  serverActions: Pendings<Action>,
+  oldServerHead: HeadID,
+  newServerHead: HeadID,
+  oldSharedHead: HeadID,
+  newSharedHead: HeadID,
+  oldSharedActions: Pendings<Action>,
+  newSharedActions: Pendings<Action>,
+};
+
+export function serverSync<State, Action>(
+  {server, shared, local, pending, sharedHead, serverHead}: ClientState<State, Action>,
   {reducer, rebaser},
-  {serverActions, oldServerHead, newServerHead, oldSharedHead, newSharedHead, oldSharedActions, newSharedActions}
-) {
+  {serverActions, oldServerHead, newServerHead, oldSharedHead, newSharedHead, oldSharedActions, newSharedActions}: ServerSyncData<Action>
+): ClientState<State, Action> {
   if (oldSharedHead !== sharedHead) {
     info('[shared sync] bad shared head', oldSharedHead, sharedHead);
     return;

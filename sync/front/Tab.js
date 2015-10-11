@@ -1,3 +1,4 @@
+// @flow
 
 import debug from 'debug';
 import * as handlers from './tab-handlers';
@@ -6,7 +7,9 @@ const info = debug('sync:tab:info');
 const warn = debug('sync:tab:warn');
 const error = debug('sync:tab:error');
 
-function makeRebaser(rebaser) {
+import type {Sender, Pendings, Remote, Local, Reducer, Rebaser, ClientState} from './types';
+
+function makeRebaser<Action>(rebaser: Rebaser<Action>): Rebaser<Action> {
   return (actions, prevTail, newTail) => {
     if (!prevTail) {
       if (actions.length && newTail.length && actions.length >= newTail.length && actions[0].id === newTail[0].id) {
@@ -18,9 +21,17 @@ function makeRebaser(rebaser) {
   };
 }
 
-export default class Tab {
-  constructor(ws, reducer, rebaser) {
+export default class Tab<State, Action> {
+  state: ClientState<Action, State>;
+  fns: {reducer: Reducer<State, Action>, rebaser: Rebaser<Action>};
+  waiting: boolean;
+  ws: Sender;
+  _initwait: ?Promise<any>;
+  _initpair: ?{res: () => void, rej: () => void};
+
+  constructor(ws: Sender, reducer: Reducer<State, Action>, rebaser: Rebaser<Action>) {
     // State is initialized when a `dump` is received from the shared manager
+    // $FlowFixMe
     this.state = null;
     this.fns = {reducer, rebaser: makeRebaser(rebaser)};
     this.waiting = false;
@@ -33,12 +44,12 @@ export default class Tab {
     });
   }
 
-  async init() {
+  async init(): Promise<void> {
     if (this.state) return;
     if (!this._initwait) {
-      this._initwait = new Promise((res, rej) => this._initpair = {res, rej});
+      this._initwait = new Promise((res, rej) => {this._initpair = {res, rej}});
     }
-    return await this._initwait;
+    await this._initwait;
   }
 
   gotResult() {
@@ -48,11 +59,11 @@ export default class Tab {
     }
   }
 
-  addAction(action) {
+  addAction(action: Action) {
     this.process('addAction', {action});
   }
 
-  enqueueSend(data) {
+  enqueueSend() {
     if (this.waiting) return;
     this.waiting = true;
     this.ws.send({type: 'addActions', data: {
@@ -62,11 +73,11 @@ export default class Tab {
     }});
   }
 
-  setState(state) {
+  setState(state: ClientState<Action, State>) {
     this.state = state;
   }
 
-  process(type, data) {
+  process(type: string, data: any): ?boolean {
     info('process', type, data);
     if (!handlers[type]) {
       return warn('no handler for', type, data);

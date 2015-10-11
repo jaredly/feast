@@ -12,6 +12,11 @@ export type Rebaser<Action> = (
   newTail: Pendings<Action>
 ) => Pendings<Action>;
 
+export type Reducer<State, Action> = (
+  state: State,
+  action: Pending<Action>,
+) => State;
+
 export type ServerSync<Action> = {
   actions: ?Pendings<Action>,
   oldServerHead: HeadID,
@@ -28,7 +33,7 @@ export type Remote<Action> = {
   dump: () => Promise<{data: Object, serverHead: HeadID}>,
   onExtra?: (fn: (data: any) => any) => void,
   onDisconnect?: (fn: () => void) => void,
-  sync: (args: {actions: Pendings<Action>, serverHead: HeadID}) => Promise<ServerSync<Action>>,
+  sync: (args: {actions: Pendings<Action>, serverHead: HeadID, [key: string]: any}) => Promise<ServerSync<Action>>,
 };
 
 export type LocalDump<Action> = {data: Object, serverHead: HeadID, pending: Pendings<Action>};
@@ -47,6 +52,15 @@ export type SharedState<Action> = {
   serverHead: HeadID,
   pending: Pendings<Action>,
   pendingStart: number,
+};
+
+export type ClientState<Action, State> = {
+  server: State,
+  shared: State,
+  local: State,
+  serverHead: HeadID,
+  sharedHead: HeadID,
+  pending: Pendings<Action>,
 };
 
 export type Sender = {
