@@ -20,15 +20,16 @@ export default class FileRemote extends Remote {
   // TODO async?
   _load() {
     try {
-      this.actions = fs.readFileSync(this._path)
-        .toString('utf8')
-        .split(/\n/g)
-        .filter(n => n.trim())
-        .map(line => JSON.parse(line));
+      fs.statSync(this._path);
     } catch (e) {
-      console.log('fail', e, e.stack);
-      this.actions = []
+      this.actions = [];
+      return;
     }
+    this.actions = fs.readFileSync(this._path)
+      .toString('utf8')
+      .split(/\n/g)
+      .filter(n => n.trim())
+      .map(line => JSON.parse(line));
   }
 
   async getActionsBetween(first, second) {

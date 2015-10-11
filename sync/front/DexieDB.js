@@ -93,8 +93,8 @@ export default class DexieAdapter {
 
   addActions(pending, newServerHead) {
     return this._db.transaction('rw', this._tables, () => {
-      var actions = pending.reduce((p, {action}) => {
-        return p.then(() => this._applyAction(this._db, action));
+      var actions = pending.reduce((p, {action, pid}) => {
+        return p.then(() => this._applyAction(this._db, action, pid));
       }, Promise.resolve(true));
       return Promise.all([this.setHead(newServerHead), actions]);
     });

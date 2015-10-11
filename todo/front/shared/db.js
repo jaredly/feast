@@ -18,6 +18,15 @@ db.version(2).stores({
   meta: 'id',
 });
 
+db.version(3).stores({
+  items: 'id, completed, owner',
+  audit: '++num',
+
+  // bookkeeping
+  pending: 'id',
+  meta: 'id',
+});
+
 db.open().catch(
   err => console.error('failed to open db', err)
 );

@@ -7,10 +7,17 @@ const uuid = () => Math.random().toString(16).slice(2);
 export default class App extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {items: (props.tab.state.local || {}).items, newText: ''};
+    this.state = {
+      audit: (props.tab.state.local || {}).audit || [],
+      items: (props.tab.state.local || {}).items || {},
+      newText: '',
+    };
     var oldSet = props.tab.setState;
     props.tab.setState = (state, type) => {
-      this.setState({items: state.local.items});
+      this.setState({
+        items: state.local.items,
+        audit: state.local.audit,
+      });
       oldSet.call(props.tab, state, type);
     };
   }
@@ -41,7 +48,7 @@ export default class App extends React.Component {
   }
 
   render() {
-    const {items} = this.state;
+    const {items, audit} = this.state;
     const ids = items ? Object.keys(items) : [];
     ids.sort();
     const idSum = ids.reduce((s, id) => s + parseInt(id, 16), 0).toString(16);
@@ -70,6 +77,7 @@ export default class App extends React.Component {
         onChange={e => this.setState({newText: e.target.value})}
         value={this.state.newText}
       />
+      {audit.length} Audits
     </div>;
   }
 }
